@@ -181,7 +181,7 @@ public class Timetable implements Serializable {
                     }
                 }
             } else {
-                index = TripTimes.binarySearchArrivals(sorted, stopIndex, time);
+                index = TripTimes.binarySearchArrivals(sorted, stopIndex - 1, time);
                 while (index >= 0) {
                     TripTimes tt = sorted[index--];
                     if (tt.tripAcceptable(options, haveBicycle, stopIndex)) {
@@ -204,7 +204,7 @@ public class Timetable implements Serializable {
                         bestTime = depTime;
                     }
                 } else {
-                    int arvTime = tt.getArrivalTime(stopIndex);
+                    int arvTime = tt.getArrivalTime(stopIndex - 1);
                     if (arvTime <= time && arvTime > bestTime && tt.tripAcceptable(options, haveBicycle, stopIndex)) {
                         bestTrip = tt;
                         bestTime = arvTime;
