@@ -76,6 +76,9 @@ public class Timetable implements Serializable {
     /** For each stop, the best dwell time. This serves to provide lower bounds on traversal time. */
     private transient int bestDwellTimes[];
 
+    /** Holds stop-specific information such as wheelchair accessibility and pickup/dropoff roles. */
+    private int[] perStopFlags;
+
     /** Construct an empty Timetable. */
     public Timetable(TableTripPattern pattern) {
         tripTimes = new ArrayList<TripTimes>();
@@ -88,6 +91,8 @@ public class Timetable implements Serializable {
      */
     private Timetable (Timetable tt) {
         tripTimes = new ArrayList<TripTimes>(tt.tripTimes);
+        if(tt.perStopFlags != null)
+            perStopFlags = tt.perStopFlags.clone();
         this.pattern = tt.pattern;
     }
     
@@ -98,6 +103,29 @@ public class Timetable implements Serializable {
      */
     public Timetable copy() {
         return new Timetable(this);
+    }
+
+    /** Returns whether passengers can alight at a given stop */
+    public boolean canAlight(int stopIndex, int tripIndex) {
+        return tripTimes.get(tripIndex).canAlight(stopIndex);
+    }
+
+    /** Returns whether passengers can board at a given stop */
+    public boolean canBoard(int stopIndex, int tripIndex) {
+        return tripTimes.get(tripIndex).canBoard(stopIndex);
+    }
+
+    public int getAlightType(int stopIndex, int tripIndex) {
+        return tripTimes.get(tripIndex).getAlightType(stopIndex);
+    }
+
+    public int getBoardType(int stopIndex, int tripIndex) {
+        return tripTimes.get(tripIndex).getBoardType(stopIndex);
+    }
+    
+    /** Returns if the trip is wheelchair accessible. */
+    public boolean isWheelchairAccessible(int trip) {
+        return tripTimes.get(trip).isWheelchairAccessible();
     }
     
     /**
@@ -175,7 +203,7 @@ public class Timetable implements Serializable {
                 index = TripTimes.binarySearchDepartures(sorted, stopIndex, time);
                 while (index < sorted.length) {
                     TripTimes tt = sorted[index++];
-                    if (tt.tripAcceptable(options, haveBicycle, stopIndex)) {
+                    if (tt.tripAcceptable(options, haveBicycle, stopIndex, boarding)) {
                         bestTrip = tt;
                         break;
                     }
@@ -184,7 +212,7 @@ public class Timetable implements Serializable {
                 index = TripTimes.binarySearchArrivals(sorted, stopIndex - 1, time);
                 while (index >= 0) {
                     TripTimes tt = sorted[index--];
-                    if (tt.tripAcceptable(options, haveBicycle, stopIndex)) {
+                    if (tt.tripAcceptable(options, haveBicycle, stopIndex, boarding)) {
                         bestTrip = tt;
                         break;
                     }
@@ -199,13 +227,13 @@ public class Timetable implements Serializable {
                 // hoping JVM JIT will distribute the loop over the if clauses as needed
                 if (boarding) {
                     int depTime = tt.getDepartureTime(stopIndex);
-                    if (depTime >= time && depTime < bestTime && tt.tripAcceptable(options, haveBicycle, stopIndex)) {
+                    if (depTime >= time && depTime < bestTime && tt.tripAcceptable(options, haveBicycle, stopIndex, boarding)) {
                         bestTrip = tt;
                         bestTime = depTime;
                     }
                 } else {
                     int arvTime = tt.getArrivalTime(stopIndex - 1);
-                    if (arvTime <= time && arvTime > bestTime && tt.tripAcceptable(options, haveBicycle, stopIndex)) {
+                    if (arvTime <= time && arvTime > bestTime && tt.tripAcceptable(options, haveBicycle, stopIndex, boarding)) {
                         bestTrip = tt;
                         bestTime = arvTime;
                     }

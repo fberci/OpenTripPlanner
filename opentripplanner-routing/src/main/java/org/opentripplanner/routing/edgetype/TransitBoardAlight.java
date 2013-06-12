@@ -136,12 +136,13 @@ public class TransitBoardAlight extends TablePatternEdge implements OnBoardForwa
                 return null;
             }
             StateEditor s1 = state0.edit(this);
-            
-            int type;            
+
+            TripTimes tripTimes = state0.getTripTimes();
+            int type;
             if (boarding)
-                type = getPattern().getBoardType(stopIndex);
+                type = tripTimes.getBoardType(stopIndex);
             else
-                type = getPattern().getAlightType(stopIndex);
+                type = tripTimes.getAlightType(stopIndex);
                 
             if (TransitUtils.handleBoardAlightType(s1, type)) {
                 return null;
@@ -181,13 +182,12 @@ public class TransitBoardAlight extends TablePatternEdge implements OnBoardForwa
 
                 for (int tripIndex = 0; tripIndex < numTrips; tripIndex++) {
                     nextDeparture = getPattern().getDepartureTime(stopIndex, tripIndex);
-        
-                    if (nextDeparture > thisDeparture) {
+                    if (getPattern().canBoard(stopIndex, tripIndex) && nextDeparture > thisDeparture) {
                         s1.setLastNextArrivalDelta(nextDeparture - thisDeparture);
                         break;
                     }
                 }
-            }            
+            }
 
             s1.setBackMode(getMode());
             return s1.makeState();
@@ -265,9 +265,10 @@ public class TransitBoardAlight extends TablePatternEdge implements OnBoardForwa
             s1.setBackMode(getMode());
             int type;
             if (boarding)
-                type = getPattern().getBoardType(stopIndex);
+                type = bestTripTimes.getBoardType(stopIndex);
             else
-                type = getPattern().getAlightType(stopIndex);
+                type = bestTripTimes.getAlightType(stopIndex);
+
             // check: isn't this now handled inside the trip search? (AMB)
             if (TransitUtils.handleBoardAlightType(s1, type)) {
                 return null;
