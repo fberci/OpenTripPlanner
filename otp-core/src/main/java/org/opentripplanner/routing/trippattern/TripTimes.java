@@ -81,6 +81,11 @@ public abstract class TripTimes {
     /** Return the stopSequence for the given stop. */
     public abstract int getStopSequence(int stopIndex);
 
+    /**
+     * @return is this trip wheelchair accessible?
+     */
+    public abstract boolean isWheelchairAccessible();
+        
     /* IMPLEMENTED INSTANCE METHODS */
     
     /** 
@@ -279,8 +284,10 @@ public abstract class TripTimes {
                 return false;
             }
         }
-        if (options.wheelchairAccessible && trip.getWheelchairAccessible() != 1)
+
+        if (options.wheelchairAccessible && !isWheelchairAccessible())
             return false;
+
         if (bicycle)
             if ((trip.getTripBikesAllowed() != 2) &&    // trip does not explicitly allow bikes and
                 (trip.getRoute().getBikesAllowed() != 2 // route does not explicitly allow bikes or  

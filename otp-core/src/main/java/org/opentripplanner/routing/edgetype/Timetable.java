@@ -122,6 +122,11 @@ public class Timetable implements Serializable {
         return tripTimes.get(tripIndex).getStopSequence(stopIndex);
     }
     
+    /** Returns if the trip is wheelchair accessible. */
+    public boolean isWheelchairAccessible(int trip) {
+        return tripTimes.get(trip).isWheelchairAccessible();
+    }
+    
     /**
      * Produces 2D index arrays that are stop-major and sorted, allowing binary search at any 
      * given stop. It is of course inefficient to call this after updating only one or two 
