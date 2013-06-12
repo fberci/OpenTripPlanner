@@ -38,6 +38,8 @@ public abstract class DelegatingTripTimes extends TripTimes {
 
     @Override public int getStopSequence(int stopIndex) { return base.getStopSequence(stopIndex); }
     
+    @Override public boolean isWheelchairAccessible() { return base.isWheelchairAccessible(); }
+
     @Override public String getHeadsign(int hop) { return base.getHeadsign(hop); }
  
     @Override public String toString() { return base.toString(); }

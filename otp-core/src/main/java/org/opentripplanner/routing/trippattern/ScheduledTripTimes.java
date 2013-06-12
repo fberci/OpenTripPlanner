@@ -22,6 +22,7 @@ import lombok.Getter;
 import org.onebusaway.gtfs.model.StopTime;
 import org.onebusaway.gtfs.model.Trip;
 import org.opentripplanner.common.MavenVersion;
+import org.opentripplanner.routing.edgetype.TableTripPattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -154,6 +155,10 @@ public class ScheduledTripTimes extends TripTimes implements Serializable {
         }
 
         return stopIndex + 1;
+    }
+    
+    public boolean isWheelchairAccessible() {
+        return getTrip().getWheelchairAccessible() == TableTripPattern.FLAG_WHEELCHAIR_ACCESSIBLE;
     }
 
     /** {@inheritDoc} Replaces the arrivals array with null if all dwell times are zero. */
