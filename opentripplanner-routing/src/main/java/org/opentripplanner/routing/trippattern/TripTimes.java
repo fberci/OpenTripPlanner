@@ -127,7 +127,23 @@ public abstract class TripTimes {
      * inter-stop segment ("hop"). 
      */
     public int getRunningTime(int hop) {
-        return getArrivalTime(hop) - getDepartureTime(hop);
+        int arrivalTime   = getArrivalTime(hop);
+        int departureTime = getDepartureTime(hop);
+
+        if(arrivalTime == TripTimes.CANCELED) {
+            return 0;
+        }
+
+        while(hop >= 0 && departureTime == TripTimes.CANCELED) {
+            hop--;
+            departureTime = getDepartureTime(hop);
+        }
+
+        if(departureTime == TripTimes.CANCELED) {
+            return 0;
+        }
+
+        return arrivalTime - departureTime;
     }
 
     /** @return the difference between the scheduled and actual departure times for this hop. */
@@ -193,6 +209,10 @@ public abstract class TripTimes {
         for (int hop = 0; hop < nHops; hop++) {
             int dep = getDepartureTime(hop);
             int arr = getArrivalTime(hop);
+            if(arr == CANCELED || dep == CANCELED) {
+                continue;
+            }
+
             if (arr < dep) { // negative hop time
                 LOG.error("Negative hop time in TripTimes at index {}.", hop);
                 increasing = false;
