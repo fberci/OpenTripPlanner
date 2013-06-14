@@ -30,6 +30,7 @@ import lombok.Setter;
 
 import org.onebusaway.gtfs.model.Stop;
 import org.onebusaway.gtfs.model.Trip;
+import org.onebusaway.gtfs.model.calendar.ServiceDate;
 import org.opentripplanner.common.MavenVersion;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.trippattern.TripTimes;
@@ -171,12 +172,12 @@ public class TableTripPattern implements TripPattern, Serializable {
      * @param boarding true means find next departure, false means find previous arrival 
      * @return a TripTimes object providing all the arrival and departure times on the best trip.
      */
-    public TripTimes getNextTrip(int stopIndex, int time, boolean haveBicycle,
-            RoutingRequest options, boolean boarding) {
+    public TripTimes getNextTrip(int stopIndex, ServiceDate serviceDate, int time, 
+            boolean haveBicycle, RoutingRequest options, boolean boarding) {
         Timetable timetable = scheduledTimetable;
         TimetableResolver snapshot = options.rctx.timetableSnapshot;
         if (snapshot != null)
-            timetable = snapshot.resolve(this);
+            timetable = snapshot.resolve(this, serviceDate);
 
         if(options.isWheelchairAccessible() && getStops().get(stopIndex).getWheelchairBoarding() != TripTimes.WHEELCHAIR_ACCESSIBLE)
             return null;
