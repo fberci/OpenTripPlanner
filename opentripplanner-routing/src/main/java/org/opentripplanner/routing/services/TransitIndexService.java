@@ -26,6 +26,8 @@ import org.onebusaway.gtfs.model.Stop;
 import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.edgetype.PreAlightEdge;
 import org.opentripplanner.routing.edgetype.PreBoardEdge;
+import org.opentripplanner.routing.edgetype.TableTripPattern;
+import org.opentripplanner.routing.edgetype.factory.GTFSPatternHopFactory;
 import org.opentripplanner.routing.transit_index.RouteVariant;
 
 import com.vividsolutions.jts.geom.Coordinate;
@@ -47,6 +49,8 @@ public interface TransitIndexService {
     
     public Collection<Stop> getStopsForRoute(AgencyAndId route);
 
+    public TableTripPattern getPatternForTrip(AgencyAndId tripId);
+    
     public List<TraverseMode> getAllModes();
 
     public Collection<AgencyAndId> getAllRouteIds();
@@ -83,4 +87,7 @@ public interface TransitIndexService {
      * 
      */
     int getOvernightBreak();
+
+    public void add(GTFSPatternHopFactory.Result result);
+    public void remove(GTFSPatternHopFactory.Result result);
 }
