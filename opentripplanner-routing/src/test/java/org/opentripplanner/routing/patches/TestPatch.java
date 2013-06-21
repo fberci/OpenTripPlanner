@@ -216,6 +216,11 @@ public class TestPatch extends TestCase {
                 // TODO Auto-generated method stub
                 
             }
+
+            @Override
+            public TraverseMode getModeForStop(AgencyAndId stop) {
+                return null;
+            }
         };
         graph.putService(TransitIndexService.class, index);
     }

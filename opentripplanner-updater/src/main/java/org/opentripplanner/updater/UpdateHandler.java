@@ -74,6 +74,7 @@ public class UpdateHandler {
         alertText.alertDescriptionText = deBuffer(alert.getDescriptionText());
         alertText.alertHeaderText = deBuffer(alert.getHeaderText());
         alertText.alertUrl = deBuffer(alert.getUrl());
+        alertText.alertId = new AgencyAndId(defaultAgencyId, id);
         ArrayList<TimePeriod> periods        = new ArrayList<TimePeriod>();
         ArrayList<TimePeriod> displayPeriods = new ArrayList<TimePeriod>();
         long bestStartTime = Long.MAX_VALUE;

@@ -44,6 +44,7 @@ import org.opentripplanner.routing.vertextype.TransitStopDepart;
 import org.opentripplanner.util.MapUtils;
 
 import com.vividsolutions.jts.geom.Coordinate;
+import org.opentripplanner.gtfs.GtfsLibrary;
 
 public class TransitIndexServiceImpl implements TransitIndexService, Serializable {
     private static final long serialVersionUID = -8147894489513820239L;
@@ -341,12 +342,38 @@ public class TransitIndexServiceImpl implements TransitIndexService, Serializabl
         for (Edge e: edge.getToVertex().getOutgoing()) {
             if (e instanceof TransitBoardAlight && ((TransitBoardAlight) e).isBoarding()) {
                 TransitBoardAlight board = (TransitBoardAlight) e;
-                for (Trip t : board.getPattern().getTrips()) {
-                    out.add(t.getRoute().getId());
-                }
+                out.add(board.getPattern().getExemplar().getRoute().getId());
             }
         }
         return new ArrayList<AgencyAndId>(out);
+    }
+
+    @Override
+    public TraverseMode getModeForStop(AgencyAndId stop) {
+        TraverseMode mode = null;
+        
+        Edge edge = preBoardEdges.get(stop);
+        if (edge != null) {
+            for (Edge e: edge.getToVertex().getOutgoing()) {
+                if (e instanceof TransitBoardAlight) {
+                    TransitBoardAlight board = (TransitBoardAlight) e;
+                    if(mode == null || mode.equals(TraverseMode.BUS))
+                        mode = GtfsLibrary.getTraverseMode(board.getPattern().getExemplar().getRoute());
+                }
+            }
+        }
+        
+        edge = preAlightEdges.get(stop);
+        if (edge != null) {
+            for (Edge e: edge.getFromVertex().getIncoming()) {
+                if (e instanceof TransitBoardAlight) {
+                    TransitBoardAlight alight = (TransitBoardAlight) e;
+                    if(mode == null || mode.equals(TraverseMode.BUS))
+                        mode = GtfsLibrary.getTraverseMode(alight.getPattern().getExemplar().getRoute());
+                }
+            }
+        }
+        return mode;
     }
 
     public void setCenter(Coordinate coord) {

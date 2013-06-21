@@ -19,6 +19,7 @@ import java.util.HashSet;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
+import org.onebusaway.gtfs.model.AgencyAndId;
 
 @XmlType
 public class Alert implements Serializable {
@@ -35,6 +36,8 @@ public class Alert implements Serializable {
     @XmlElement
     public TranslatedString alertUrl;
 
+    public AgencyAndId alertId;
+    
     //null means unknown
     @XmlElement
     public Date effectiveStartDate;

@@ -63,7 +63,6 @@ import org.opentripplanner.routing.transit_index.adapters.ServiceCalendarDateTyp
 import org.opentripplanner.routing.transit_index.adapters.ServiceCalendarType;
 import org.opentripplanner.routing.transit_index.adapters.StopType;
 import org.opentripplanner.routing.transit_index.adapters.TripType;
-import org.opentripplanner.routing.vertextype.TransitStop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,6 +70,45 @@ import com.sun.jersey.api.core.InjectParam;
 import com.sun.jersey.api.spring.Autowire;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.TimeZone;
+import java.util.TreeMap;
+import javax.ws.rs.DefaultValue;
+import org.onebusaway.gtfs.model.Trip;
+import org.onebusaway.gtfs.model.calendar.ServiceDate;
+import org.onebusaway.gtfs.services.calendar.CalendarService;
+import org.opentripplanner.api.ws.transit.TransitAlert;
+import org.opentripplanner.api.ws.transit.TransitResponse;
+import org.opentripplanner.api.ws.transit.TransitResponseBuilder;
+import org.opentripplanner.api.ws.transit.TransitRoute;
+import org.opentripplanner.api.ws.transit.TransitRouteSchedule;
+import org.opentripplanner.api.ws.transit.TransitRouteScheduleForDirection;
+import org.opentripplanner.api.ws.transit.TransitSchedule;
+import org.opentripplanner.api.ws.transit.TransitScheduleGroup;
+import org.opentripplanner.api.ws.transit.TransitScheduleStopTime;
+import org.opentripplanner.api.ws.transit.TransitStop;
+import org.opentripplanner.api.ws.transit.TransitStopTime;
+import org.opentripplanner.api.ws.transit.TransitTrip;
+import org.opentripplanner.api.ws.transit.TransitVehicle;
+import org.opentripplanner.common.model.T2;
+import org.opentripplanner.routing.core.ServiceDay;
+import org.opentripplanner.routing.edgetype.PreAlightEdge;
+import org.opentripplanner.routing.edgetype.PreBoardEdge;
+import org.opentripplanner.routing.edgetype.TableTripPattern;
+import org.opentripplanner.routing.edgetype.Timetable;
+import org.opentripplanner.routing.edgetype.TransitBoardAlight;
+import org.opentripplanner.routing.patch.Alert;
+import org.opentripplanner.routing.patch.Patch;
+import org.opentripplanner.routing.services.PatchService;
+import org.opentripplanner.routing.trippattern.TripTimes;
+import org.opentripplanner.updater.vehicle_location.VehicleLocation;
+import org.opentripplanner.updater.vehicle_location.VehicleLocationService;
+import org.opentripplanner.util.MapUtils;
 
 // NOTE - /ws/transit is the full path -- see web.xml
 
@@ -86,7 +124,15 @@ public class TransitIndex {
     @Setter @InjectParam 
     private GraphService graphService;
 
+    @Setter @InjectParam
+    private PatchService patchService;
+    
     private static final long MAX_STOP_TIME_QUERY_INTERVAL = 86400 * 2;
+    
+    private static final SimpleDateFormat ymdParser = new SimpleDateFormat("yyyyMMdd");
+    {
+        ymdParser.setTimeZone(TimeZone.getTimeZone("GMT"));
+    }
 
     /**
      * Return a list of all agency ids in the graph
@@ -229,7 +275,7 @@ public class TransitIndex {
         }
 
         StreetVertexIndexService streetVertexIndexService = graph.streetIndex;
-        List<TransitStop> stops = streetVertexIndexService.getNearbyTransitStops(new Coordinate(
+        List<org.opentripplanner.routing.vertextype.TransitStop> stops = streetVertexIndexService.getNearbyTransitStops(new Coordinate(
                 lon, lat), searchRadius);
         TransitIndexService transitIndexService = graph.getService(TransitIndexService.class);
         if (transitIndexService == null) {
@@ -238,7 +284,7 @@ public class TransitIndex {
         }
 
         StopList response = new StopList();
-        for (TransitStop transitStop : stops) {
+        for (org.opentripplanner.routing.vertextype.TransitStop transitStop : stops) {
             AgencyAndId stopId = transitStop.getStopId();
             if (agency != null && !agency.equals(stopId.getAgencyId()))
                 continue;
@@ -649,61 +695,6 @@ public class TransitIndex {
     }
 
     /**
-     * Return a list of all stops that are inside a rectangle given by lat lon positions.
-     */
-    @GET
-    @Path("/stopsInRectangle")
-    @Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, MediaType.TEXT_XML })
-    public Object stopsInRectangle(@QueryParam("agency") String agency,
-            @QueryParam("leftUpLat") Double leftUpLat, @QueryParam("leftUpLon") Double leftUpLon,
-            @QueryParam("rightDownLat") Double rightDownLat,
-            @QueryParam("rightDownLon") Double rightDownLon, @QueryParam("extended") Boolean extended,
-            @QueryParam("routerId") String routerId) throws JSONException {
-
-        Graph graph = getGraph(routerId);
-        StopList response = new StopList();
-
-        StreetVertexIndexService streetVertexIndexService = graph.streetIndex;
-        if (leftUpLat == null || leftUpLon == null || rightDownLat == null || rightDownLon == null) {
-            double METERS_PER_DEGREE_LAT = 111111;
-            double distance = 2000;
-            for (Vertex gv : graph.getVertices()) {
-                if (gv instanceof TransitStop) {
-                    Coordinate c = gv.getCoordinate();
-                    Envelope env = new Envelope(c);
-                    double meters_per_degree_lon_here = METERS_PER_DEGREE_LAT
-                            * Math.cos(Math.toRadians(c.y));
-                    env.expandBy(distance / meters_per_degree_lon_here, distance
-                            / METERS_PER_DEGREE_LAT);
-                    StopType stop = new StopType(((TransitStop) gv).getStop(), extended);
-                    response.stops.add(stop);
-                }
-            }
-        } else {
-            Coordinate cOne = new Coordinate(leftUpLon, leftUpLat);
-            Coordinate cTwo = new Coordinate(rightDownLon, rightDownLat);
-            List<TransitStop> stops = streetVertexIndexService.getNearbyTransitStops(cOne, cTwo);
-            TransitIndexService transitIndexService = graph.getService(TransitIndexService.class);
-            if (transitIndexService == null) {
-                return new TransitError(
-                        "No transit index found.  Add TransitIndexBuilder to your graph builder configuration and rebuild your graph.");
-            }
-
-            for (TransitStop transitStop : stops) {
-                AgencyAndId stopId = transitStop.getStopId();
-                if (agency != null && !agency.equals(stopId.getAgencyId()))
-                    continue;
-                StopType stop = new StopType(transitStop.getStop(), extended);
-                if (extended != null && extended.equals(true))
-                    stop.routes = transitIndexService.getRoutesForStop(stopId);
-                response.stops.add(stop);
-            }
-        }
-
-        return response;
-    }
-
-    /**
      * Return a list of all routes that operate between start stop and end stop.
      */
     @GET
@@ -764,4 +755,810 @@ public class TransitIndex {
         }
         return agencyList;
     }
+    
+    /* REWRITE */
+    
+    @GET
+    @Path("/stop")
+    @Produces({ MediaType.APPLICATION_JSON })
+    public TransitResponse stop(@QueryParam("stopId") String id, @QueryParam("routerId") String routerId) throws JSONException {
+
+        Graph graph = getGraph(routerId);
+        TransitIndexService transitIndexService = graph.getService(TransitIndexService.class);
+        if (transitIndexService == null) {
+            return TransitResponseBuilder.getFailResponse(
+                    "No transit index found.  Add TransitIndexBuilder to your graph builder configuration and rebuild your graph.");
+        }
+        
+        AgencyAndId stopId = parseAgencyAndId(id);
+        Stop stop = transitIndexService.getAllStops().get(stopId);
+        if(stop == null) {
+            return TransitResponseBuilder.getFailResponse("Unknown stopId.");
+        }
+
+        return TransitResponseBuilder.getResponseForStop(graph, stop);
+    }
+    
+    @GET
+    @Path("/stops-for-location")
+    @Produces({ MediaType.APPLICATION_JSON })
+    public TransitResponse stopsForLocation(@QueryParam("agency") String agency,
+            @QueryParam("neLonLat") String ne, @QueryParam("swLonLat") String sw,
+            @QueryParam("extended") Boolean extended, @QueryParam("routerId") String routerId) throws JSONException {
+
+        Graph graph = getGraph(routerId);
+        TransitIndexService transitIndexService = graph.getService(TransitIndexService.class);
+        if (transitIndexService == null) {
+            return TransitResponseBuilder.getFailResponse(
+                    "No transit index found.  Add TransitIndexBuilder to your graph builder configuration and rebuild your graph.");
+        }
+        
+        Coordinate c1 = null, c2 = null;
+        if(ne != null && sw != null) {
+            if(ne.indexOf(',') > 0 && sw.indexOf(',') > 0
+                    && ne.indexOf(',') == ne.lastIndexOf(',') && sw.indexOf(',') == sw.lastIndexOf(',')) {
+                String[] parts1 = ne.split(",");
+                String[] parts2 = sw.split(",");
+                c1 = new Coordinate(Double.parseDouble(parts1[0]), Double.parseDouble(parts1[1]));
+                c2 = new Coordinate(Double.parseDouble(parts2[0]), Double.parseDouble(parts2[1]));
+            }
+            
+            if(c1 == null || c2 == null)
+                return TransitResponseBuilder.getFailResponse("Failed to parse coordinates.");
+        }
+    
+        List<Stop> stops = new LinkedList<Stop>();
+        if (c1 == null || c2 == null) {
+            for (Vertex gv : graph.getVertices()) {
+                if (gv instanceof org.opentripplanner.routing.vertextype.TransitStop) {
+                    stops.add(((org.opentripplanner.routing.vertextype.TransitStop) gv).getStop());
+                }
+            }
+        } else {
+            StreetVertexIndexService streetVertexIndexService = graph.streetIndex;
+            List<org.opentripplanner.routing.vertextype.TransitStop> stopVertices = streetVertexIndexService.getNearbyTransitStops(c1, c2);
+
+            for (org.opentripplanner.routing.vertextype.TransitStop transitStop : stopVertices) {
+                AgencyAndId stopId = transitStop.getStopId();
+                if (agency != null && !agency.equals(stopId.getAgencyId()))
+                    continue;
+               stops.add(transitStop.getStop());
+            }
+        }
+
+        return TransitResponseBuilder.getResponseForStops(graph, stops);
+    }
+    
+    @GET
+    @Path("/route")
+    @Produces({ MediaType.APPLICATION_JSON })
+    public TransitResponse route(@QueryParam("routeId") String id, @QueryParam("routerId") String routerId) throws JSONException {
+
+        Graph graph = getGraph(routerId);
+        TransitIndexService transitIndexService = graph.getService(TransitIndexService.class);
+        if (transitIndexService == null) {
+            return TransitResponseBuilder.getFailResponse(
+                    "No transit index found.  Add TransitIndexBuilder to your graph builder configuration and rebuild your graph.");
+        }
+        
+        AgencyAndId routeId = parseAgencyAndId(id);
+        Route route =  transitIndexService.getAllRoutes().get(routeId);
+        if(route == null) {
+            return TransitResponseBuilder.getFailResponse("Unknown routeId.");
+        }
+
+        return TransitResponseBuilder.getResponseForRoute(graph, route);
+    }
+    
+    @GET
+    @Path("/route-details")
+    @Produces({ MediaType.APPLICATION_JSON })
+    public TransitResponse routeDetails(@QueryParam("routeId") String id, @QueryParam("date") String date, @QueryParam("routerId") String routerId) throws JSONException {
+
+        Graph graph = getGraph(routerId);
+        TransitIndexService transitIndexService = graph.getService(TransitIndexService.class);
+        if (transitIndexService == null) {
+            return TransitResponseBuilder.getFailResponse(
+                    "No transit index found.  Add TransitIndexBuilder to your graph builder configuration and rebuild your graph.");
+        }
+        
+        TransitResponseBuilder builder = new TransitResponseBuilder(graph);
+        AgencyAndId routeId = parseAgencyAndId(id);
+        Route route =  transitIndexService.getAllRoutes().get(routeId);
+        if(route == null) {
+            return TransitResponseBuilder.getFailResponse("Unknown routeId.");
+        }
+        
+        ServiceDate serviceDate = new ServiceDate();
+        if(date != null) {
+            try {
+                serviceDate = new ServiceDate(ymdParser.parse(date));
+            } catch (ParseException ex) {
+                return TransitResponseBuilder.getFailResponse("Failed to parse service date.");
+            }
+        }
+        
+        long startTime = serviceDate.getAsDate().getTime() / 1000;
+        long endTime = serviceDate.next().getAsDate().getTime() / 1000;
+        RoutingRequest options = makeTraverseOptions(startTime, routerId);
+        
+        List<String> alertIds = getAlertsForRoute(builder, routeId, options, startTime, endTime);
+        
+        List<RouteVariant> routeVariants = transitIndexService.getVariantsForRoute(routeId);
+        
+        return builder.getResponseForRoute(route, routeVariants, alertIds);
+    }
+    
+    @GET
+    @Path("/route-details-for-stop")
+    @Produces({ MediaType.APPLICATION_JSON })
+    public TransitResponse routeDetailsForStop(@QueryParam("stopId") String id, @QueryParam("routerId") String routerId) throws JSONException {
+
+        Graph graph = getGraph(routerId);
+        TransitIndexService transitIndexService = graph.getService(TransitIndexService.class);
+        if (transitIndexService == null) {
+            return TransitResponseBuilder.getFailResponse(
+                    "No transit index found.  Add TransitIndexBuilder to your graph builder configuration and rebuild your graph.");
+        }
+        
+        AgencyAndId stopId = parseAgencyAndId(id);
+        Stop stop =  transitIndexService.getAllStops().get(stopId);
+        if(stop == null) {
+            return TransitResponseBuilder.getFailResponse("Unknown stopId.");
+        }
+        
+        TransitResponseBuilder builder = new TransitResponseBuilder(graph);
+        List<TransitRoute> routes = new LinkedList<TransitRoute>();
+        for(AgencyAndId routeId : transitIndexService.getRoutesForStop(stopId)) {
+            Route route = transitIndexService.getAllRoutes().get(routeId);
+            List<RouteVariant> routeVariants = transitIndexService.getVariantsForRoute(routeId);
+            TransitRoute transitRoute = builder.getRoute(route, routeVariants, Collections.<String> emptyList()); // TODO: alerts?
+            routes.add(transitRoute);
+        }
+        
+        return builder.getResponseForRoutes(routes);
+    }
+    
+    @GET
+    @Path("/trip")
+    @Produces({ MediaType.APPLICATION_JSON })
+    public TransitResponse trip(@QueryParam("tripId") String id, @QueryParam("routerId") String routerId) throws JSONException {
+
+        Graph graph = getGraph(routerId);
+        TransitIndexService transitIndexService = graph.getService(TransitIndexService.class);
+        if (transitIndexService == null) {
+            return TransitResponseBuilder.getFailResponse(
+                    "No transit index found.  Add TransitIndexBuilder to your graph builder configuration and rebuild your graph.");
+        }
+        
+        AgencyAndId tripId = parseAgencyAndId(id);
+        if(transitIndexService.getPatternForTrip(tripId) == null)
+            return TransitResponseBuilder.getFailResponse("Unknown tripId.");
+        
+        Trip trip = getTrip(transitIndexService, tripId);
+        return TransitResponseBuilder.getResponseForTrip(graph, trip);
+    }
+    
+    @GET
+    @Path("/trip-details")
+    @Produces({ MediaType.APPLICATION_JSON })
+    public TransitResponse tripDetails(@QueryParam("tripId") String id, @QueryParam("date") String date, @QueryParam("routerId") String routerId) throws JSONException {
+
+        Graph graph = getGraph(routerId);
+        VehicleLocationService vehicleLocationService = graph.getService(VehicleLocationService.class);
+        TransitIndexService transitIndexService = graph.getService(TransitIndexService.class);
+        if (transitIndexService == null) {
+            return TransitResponseBuilder.getFailResponse(
+                    "No transit index found.  Add TransitIndexBuilder to your graph builder configuration and rebuild your graph.");
+        }
+        
+        AgencyAndId tripId = parseAgencyAndId(id);
+        if(transitIndexService.getPatternForTrip(tripId) == null)
+            return TransitResponseBuilder.getFailResponse("Unknown tripId.");
+            
+        Trip trip = getTrip(transitIndexService, tripId);
+        ServiceDate serviceDate = new ServiceDate();
+        if(date != null) {
+            try {
+                serviceDate = new ServiceDate(ymdParser.parse(date));
+            } catch (ParseException ex) {
+                return TransitResponseBuilder.getFailResponse("Failed to parse service date.");
+            }
+        }
+        
+        TransitResponseBuilder builder = new TransitResponseBuilder(graph);
+        CalendarService calendarService = graph.getCalendarService();
+        ServiceDay serviceDay = new ServiceDay(graph, serviceDate.getAsDate().getTime() / 1000, calendarService, trip.getId().getAgencyId());
+        
+        long startTime = serviceDate.getAsDate().getTime() / 1000;
+        long endTime = serviceDate.next().getAsDate().getTime() / 1000;
+        RoutingRequest options = makeTraverseOptions(startTime, routerId);
+        
+        RouteVariant variant = transitIndexService.getVariantForTrip(tripId);
+        
+        TableTripPattern pattern = transitIndexService.getPatternForTrip(tripId);
+        if(!serviceDay.serviceIdRunning(pattern.getServiceId()))
+            return TransitResponseBuilder.getFailResponse("Trip isn't operation on the given service date.");
+        
+        int tripIndex = pattern.getTripIndex(tripId);
+        Timetable timetable;
+        if(graph.timetableSnapshotSource != null && graph.timetableSnapshotSource.getSnapshot() != null) {
+            timetable = graph.timetableSnapshotSource.getSnapshot().resolve(pattern, serviceDate);
+        } else {
+            timetable = pattern.getScheduledTimetable();
+        }
+        List<TransitStopTime> stopTimes = getStopTimesForTrip(routerId, tripId, serviceDate, pattern, timetable);
+        List<TransitAlert> alerts = new LinkedList<TransitAlert>(); // TODO
+        
+        TransitVehicle transitVehicle = null;
+        if(vehicleLocationService != null) {
+            VehicleLocation vehicle = vehicleLocationService.getForTrip(tripId);
+            if(vehicle != null)
+                transitVehicle = builder.getVehicle(vehicle);
+        }
+        
+        TransitTrip transitTrip = builder.getTrip(trip);
+        transitTrip.setWheelchairAccessible(timetable.isWheelchairAccessible(tripIndex));
+        
+        AgencyAndId routeId = trip.getRoute().getId();
+        List<String> alertIds = getAlertsForRoute(builder, routeId, options, startTime, endTime);
+                
+        return builder.getResponseForTrip(transitTrip, serviceDate, alertIds, pattern.getStops(), stopTimes, transitVehicle, variant);
+    }
+    
+    public List<TransitStopTime> getStopTimesForTrip(String routerId, AgencyAndId tripId, ServiceDate serviceDate, TableTripPattern pattern, Timetable timetable) {
+
+        List<TransitStopTime> stopTimes = new LinkedList<TransitStopTime>();
+
+        long time = serviceDate.getAsDate().getTime() / 1000;
+        int tripIndex = pattern.getTripIndex(tripId);
+        
+        int numStops = pattern.getStops().size();
+        for(int i = 0; i < numStops; ++i) {
+            TransitStopTime stopTime = new TransitStopTime();
+            stopTime.setStopId(pattern.getStops().get(i).getId().toString());
+
+            TripTimes tripTimes = timetable.getTripTimes(tripIndex);
+            TripTimes scheduledTripTimes = tripTimes.getScheduledTripTimes();
+            
+            if(tripTimes.canBoard(i) && i + 1 < numStops) {
+                if(!tripTimes.isScheduled())
+                    stopTime.setPredictedDepartureTime(time + tripTimes.getDepartureTime(i));
+                if(scheduledTripTimes != null)
+                    stopTime.setDepartureTime(time + scheduledTripTimes.getDepartureTime(i));
+            }
+            if(tripTimes.canAlight(i) && i > 0) {
+                if(!tripTimes.isScheduled())
+                    stopTime.setPredictedArrivalTime(time + tripTimes.getArrivalTime(i - 1));
+                if(scheduledTripTimes != null)
+                    stopTime.setArrivalTime(time + scheduledTripTimes.getArrivalTime(i - 1));
+            }
+            
+            // TODO: alerts?
+            
+            stopTimes.add(stopTime);
+        }
+        
+        return stopTimes;
+    }
+    
+    @GET
+    @Path("/arrivals-and-departures")
+    @Produces({ MediaType.APPLICATION_JSON })
+    public TransitResponse arrivalsAndDepartures(@QueryParam("stopId") String id, @QueryParam("time") Long time, 
+             @QueryParam("minutesBefore") @DefaultValue("2") int minutesBefore, @QueryParam("minutesAfter") @DefaultValue("30") int minutesAfter,
+             @QueryParam("routerId") String routerId ) throws JSONException {
+
+        Graph graph = getGraph(routerId);
+        TransitIndexService transitIndexService = graph.getService(TransitIndexService.class);
+        if (transitIndexService == null) {
+            return TransitResponseBuilder.getFailResponse(
+                    "No transit index found.  Add TransitIndexBuilder to your graph builder configuration and rebuild your graph.");
+        }
+        
+        if(time == null)
+            time = System.currentTimeMillis() / 1000;
+        
+        long startTime = time - minutesBefore * 60;
+        long endTime   = time + minutesAfter  * 60;
+        RoutingRequest options = makeTraverseOptions(startTime, routerId);
+        
+        TransitResponseBuilder builder = new TransitResponseBuilder(graph);
+        AgencyAndId stopId = parseAgencyAndId(id);
+        Stop stop = transitIndexService.getAllStops().get(stopId);
+        if(stop == null)
+            return TransitResponseBuilder.getFailResponse("Unknown stopId.");
+        
+        List<T2<TransitScheduleStopTime, TransitTrip>> stopTimesWithTrips = getStopTimesForStop(routerId, builder, startTime, endTime, stopId);
+        sortStopTimesWithTrips(stopTimesWithTrips);
+        
+        List<TransitScheduleStopTime> stopTimes = new LinkedList<TransitScheduleStopTime>();
+        List<TransitTrip> trips = new LinkedList<TransitTrip>();
+        for(T2<TransitScheduleStopTime, TransitTrip> stopTimeWithTrip : stopTimesWithTrips) {
+            stopTimes.add(stopTimeWithTrip.getFirst());
+            trips.add(stopTimeWithTrip.getSecond());
+        }
+        
+        List<String> alertIds = getAlertsForStop(builder, stopId, options, startTime, endTime);
+
+        return builder.getResponseForStop(stop, stopTimes, alertIds, trips);
+    }
+    
+    // TODO: return alights also
+    private List<T2<TransitScheduleStopTime, TransitTrip>> getStopTimesForStop(String routerId, TransitResponseBuilder builder, long startTime, long endTime, AgencyAndId stopId) {
+        Graph graph = getGraph(routerId);
+        TransitIndexService transitIndexService = graph.getService(TransitIndexService.class);
+        
+        PreAlightEdge preAlightEdge = transitIndexService.getPreAlightEdge(stopId);
+        PreBoardEdge preBoardEdge = transitIndexService.getPreBoardEdge(stopId);
+        
+        RoutingRequest options = makeTraverseOptions(startTime, routerId);
+        List<T2<TransitScheduleStopTime, TransitTrip>> boardingTimes = getStopTimesForPreBoardEdge(builder, stopId.toString(), startTime, endTime, options, preBoardEdge);
+        //List<T2<TransitScheduleStopTime, TransitTrip>> alightingTimes = getStopTimesForPreAlightEdge(builder, stopId.toString(), startTime, endTime, options, preAlightEdge);
+        //List<T2<TransitScheduleStopTime, TransitTrip>> mergedStopTimes = mergeStopTimes(boardingTimes, alightingTimes);
+        
+        return boardingTimes;
+    }
+    
+    private List<T2<TransitScheduleStopTime, TransitTrip>> getStopTimesForPreAlightEdge(TransitResponseBuilder builder, String stopId, long startTime, long endTime,
+            RoutingRequest options, PreAlightEdge edge) {
+        List<T2<TransitScheduleStopTime, TransitTrip>> result = new ArrayList<T2<TransitScheduleStopTime, TransitTrip>>();
+        for(Edge e : edge.getFromVertex().getIncoming()) {
+            if(!(e instanceof TransitBoardAlight))
+                continue;
+            
+            result.addAll(getStopTimesForTransitBoardAlightEdge(builder, stopId, startTime, endTime, options, (TransitBoardAlight) e));
+        }
+        
+        return result;
+    }
+    
+    private List<T2<TransitScheduleStopTime, TransitTrip>> getStopTimesForPreBoardEdge(TransitResponseBuilder builder, String stopId, long startTime, long endTime,
+            RoutingRequest options, PreBoardEdge edge) {
+        List<T2<TransitScheduleStopTime, TransitTrip>> result = new ArrayList<T2<TransitScheduleStopTime, TransitTrip>>();
+        for(Edge e : edge.getToVertex().getOutgoing()) {
+            if(!(e instanceof TransitBoardAlight))
+                continue;
+            
+            result.addAll(getStopTimesForTransitBoardAlightEdge(builder, stopId, startTime, endTime, options, (TransitBoardAlight) e));
+        }
+        
+        return result;
+    }
+
+    private List<T2<TransitScheduleStopTime, TransitTrip>> getStopTimesForTransitBoardAlightEdge(TransitResponseBuilder builder, String stopId, long startTime, long endTime,
+            RoutingRequest options, TransitBoardAlight tba) {
+        List<T2<TransitScheduleStopTime, TransitTrip>> out = new ArrayList<T2<TransitScheduleStopTime, TransitTrip>>();
+        
+        State result;
+        long time = startTime;
+        int stopIndex = tba.getStopIndex();
+        int numStops = tba.getPattern().getStops().size();
+        
+        do {
+            // TODO verify options/state correctness
+            State s0 = new State(tba.getFromVertex(), time, options);
+            result = tba.traverse(s0);
+            if (result == null)
+                break;
+            time = result.getTimeSeconds();
+            if (time > endTime)
+                break;
+            
+            TripTimes tripTimes = result.getTripTimes();
+            TripTimes scheduledTripTimes = tripTimes.getScheduledTripTimes();
+            
+            Trip trip = result.getBackTrip();
+            TransitTrip transitTrip = builder.getTrip(trip);
+            transitTrip.setWheelchairAccessible(tripTimes.isWheelchairAccessible());
+            
+            TransitScheduleStopTime stopTime = new TransitScheduleStopTime();
+            stopTime.setTripId(transitTrip.getId());
+            stopTime.setStopId(stopId);
+            stopTime.setServiceDate(result.getServiceDay().getServiceDate().getAsString());
+            
+            Set<Alert> alerts = result.getBackAlerts();
+            if(alerts != null && !alerts.isEmpty()) {
+                List<String> alertIds = new LinkedList<String>();
+                for(Alert alert : alerts) {
+                    builder.addToReferences(alert);
+                    alertIds.add(alert.alertId.toString());
+                }
+                stopTime.setAlertIds(alertIds);
+            }
+            
+            if(tripTimes.canBoard(stopIndex) && stopIndex + 1 < numStops) {
+                if(!tripTimes.isScheduled())
+                    stopTime.setPredictedDepartureTime(time + tripTimes.getDepartureTime(stopIndex));
+                if(scheduledTripTimes != null)
+                    stopTime.setDepartureTime(time + scheduledTripTimes.getDepartureTime(stopIndex));
+            }
+            if(tripTimes.canAlight(stopIndex) && stopIndex > 0) {
+                if(!tripTimes.isScheduled())
+                    stopTime.setPredictedArrivalTime(time + tripTimes.getArrivalTime(stopIndex - 1));
+                if(scheduledTripTimes != null)
+                    stopTime.setArrivalTime(time + scheduledTripTimes.getArrivalTime(stopIndex - 1));
+            }
+            out.add(new T2<TransitScheduleStopTime, TransitTrip>(stopTime, transitTrip));
+            
+            builder.addToReferences(trip.getRoute());
+
+            time += 1; // move to the next board time
+        } while (true);
+        
+        return out;
+    }
+    
+    @GET
+    @Path("/schedule-for-stop")
+    @Produces({ MediaType.APPLICATION_JSON })
+    public TransitResponse scheduleForStop(@QueryParam("stopId") String id, @QueryParam("date") String date, @QueryParam("routerId") String routerId) throws JSONException {
+
+        Graph graph = getGraph(routerId);
+        TransitIndexService transitIndexService = graph.getService(TransitIndexService.class);
+        if (transitIndexService == null) {
+            return TransitResponseBuilder.getFailResponse(
+                    "No transit index found.  Add TransitIndexBuilder to your graph builder configuration and rebuild your graph.");
+        }
+        
+        ServiceDate serviceDate = new ServiceDate();
+        if(date != null) {
+            try {
+                serviceDate = new ServiceDate(ymdParser.parse(date));
+            } catch (ParseException ex) {
+                return TransitResponseBuilder.getFailResponse("Failed to parse service date.");
+            }
+        }
+        
+        TransitResponseBuilder builder = new TransitResponseBuilder(graph);
+        AgencyAndId stopId = parseAgencyAndId(id);
+        Stop stop = transitIndexService.getAllStops().get(stopId);
+        if(stop == null)
+            return TransitResponseBuilder.getFailResponse("Unknown stopId.");
+        
+        long startTime = serviceDate.getAsDate().getTime() / 1000;
+        long endTime = serviceDate.next().getAsDate().getTime() / 1000;
+        RoutingRequest options = makeTraverseOptions(startTime, routerId);
+        
+        List<T2<TransitScheduleStopTime, TransitTrip>> stopTimesWithTrips = getStopTimesForStop(routerId, builder, startTime, endTime, stopId);
+        
+        Map<T2<String, String>, List<TransitScheduleStopTime>> stopTimesByRoute = new HashMap<T2<String, String>, List<TransitScheduleStopTime>>();
+        for(T2<TransitScheduleStopTime, TransitTrip> stopTimeWithTrip : stopTimesWithTrips) {
+            TransitScheduleStopTime stopTime = stopTimeWithTrip.getFirst();
+            TransitTrip transitTrip = stopTimeWithTrip.getSecond();
+            stopTime.setWheelchairAccessible(transitTrip.isWheelchairAccessible());
+            stopTime.setHeadsign(transitTrip.getHeadsign());
+            //builder.addToReferences(transitTrip);
+            MapUtils.addToMapList(stopTimesByRoute, new T2<String, String>(transitTrip.getRouteId(), transitTrip.getDirectionId()), stopTime);
+        }
+        
+        Map<String, TransitRouteSchedule> scheduleByRoute = new HashMap<String, TransitRouteSchedule>();
+        for(T2<String, String> key : stopTimesByRoute.keySet()) {
+            String SrouteId = key.getFirst();
+            String direction = key.getSecond();
+            
+            TransitRouteSchedule routeSchedule = scheduleByRoute.get(SrouteId);
+            if(routeSchedule == null) {
+                routeSchedule = new TransitRouteSchedule();
+                routeSchedule.setRouteId(SrouteId);
+                scheduleByRoute.put(SrouteId, routeSchedule);
+                
+                AgencyAndId routeId = parseAgencyAndId(SrouteId);
+                List<String> alertIds = getAlertsForRoute(builder, routeId, options, startTime, endTime);
+                routeSchedule.setAlertIds(alertIds);
+            }
+            
+            List<TransitScheduleStopTime> stopTimes = stopTimesByRoute.get(key);
+            sortStopTimes(stopTimes);
+            
+            Map<String, TransitScheduleGroup> groups = new HashMap<String, TransitScheduleGroup>();
+            SortedMap<Integer, Integer> groupCounts = new TreeMap<Integer, Integer>();
+            for(TransitScheduleStopTime stopTime : stopTimes) {
+                AgencyAndId tripId = parseAgencyAndId(stopTime.getTripId());
+                RouteVariant variant = transitIndexService.getVariantForTrip(tripId);
+                Integer groupId = variant.getId();
+                
+                if(!groups.containsKey(groupId.toString())) {
+                    TransitScheduleGroup group = new TransitScheduleGroup();
+                    group.setGroupId(groupId.toString());
+                    group.setDescription(variant.getName());
+                    group.setHeadsign(stopTime.getHeadsign());
+                    groups.put(groupId.toString(), group);
+                }
+                
+                if(groupCounts.containsKey(groupId)) {
+                    groupCounts.put(groupId, groupCounts.get(groupId) + 1);
+                } else {
+                    groupCounts.put(groupId, 1);
+                }
+                
+                stopTime.setGroupIds(Collections.singletonList(groupId.toString()));
+            }
+            
+            TransitRouteScheduleForDirection directionSchedule = new TransitRouteScheduleForDirection();
+            directionSchedule.setDirectionId(direction);
+            directionSchedule.setStopTimes(stopTimes);
+            directionSchedule.setGroups(groups);
+            routeSchedule.getDirections().add(directionSchedule);
+        }
+        
+        List<String> alertIds = getAlertsForStop(builder, stopId, options, startTime, endTime);
+        
+        TransitSchedule schedule = new TransitSchedule();
+        schedule.setStopId(id);
+        schedule.setAlertIds(alertIds);
+        schedule.setServiceDate(serviceDate.getAsString());
+        schedule.setSchedules(new ArrayList<TransitRouteSchedule>(scheduleByRoute.values()));
+        
+        return builder.getResponseForStopSchedule(stop, schedule);
+    }
+    
+    @GET
+    @Path("/vehicles-for-location")
+    @Produces({ MediaType.APPLICATION_JSON })
+    public TransitResponse vehicles(@QueryParam("neLonLat") String ne, @QueryParam("swLonLat") String sw, @QueryParam("routerId") String routerId) throws JSONException {
+
+        Graph graph = getGraph(routerId);
+        TransitIndexService transitIndexService = graph.getService(TransitIndexService.class);
+        if (transitIndexService == null) {
+            return TransitResponseBuilder.getFailResponse(
+                    "No transit index found.  Add TransitIndexBuilder to your graph builder configuration and rebuild your graph.");
+        }
+        
+        VehicleLocationService vehicleLocationService = graph.getService(VehicleLocationService.class);
+        if(vehicleLocationService == null)
+            return TransitResponseBuilder.getFailResponse("VehicleLocationService not found.");
+        
+        TransitResponseBuilder builder = new TransitResponseBuilder(graph);
+        
+        Collection<VehicleLocation> vehicles = null;
+        
+        if(ne != null && sw != null) {
+            Coordinate c1 = null, c2 = null;
+            if(ne.indexOf(',') > 0 && sw.indexOf(',') > 0
+                    && ne.indexOf(',') == ne.lastIndexOf(',') && sw.indexOf(',') == sw.lastIndexOf(',')) {
+                String[] parts1 = ne.split(",");
+                String[] parts2 = sw.split(",");
+                c1 = new Coordinate(Double.parseDouble(parts1[0]), Double.parseDouble(parts1[1]));
+                c2 = new Coordinate(Double.parseDouble(parts2[0]), Double.parseDouble(parts2[1]));
+            }
+            
+            if(c1 == null || c2 == null)
+                return TransitResponseBuilder.getFailResponse("Failed to parse coordinates.");
+            
+            Envelope area = new Envelope(c1, c2);
+            vehicles = vehicleLocationService.getForArea(area);
+        } else {
+            vehicles = vehicleLocationService.getAll();            
+        }
+        
+        List<TransitVehicle> transitVehicles = new LinkedList<TransitVehicle>();
+        for(VehicleLocation vehicle : vehicles) {
+            if(vehicle.getTripId() != null) {
+                builder.addToReferences(getTrip(transitIndexService, vehicle.getTripId()));
+            }
+            transitVehicles.add(builder.getVehicle(vehicle));
+        }
+        
+        return builder.getResponseForVehicles(transitVehicles);
+    }
+    
+    @GET
+    @Path("/vehicle-details")
+    @Produces({ MediaType.APPLICATION_JSON })
+    public TransitResponse vehicle(@QueryParam("vehicleId") String id, @QueryParam("routerId") String routerId) throws JSONException {
+
+        Graph graph = getGraph(routerId);
+        VehicleLocationService vehicleLocationService = graph.getService(VehicleLocationService.class);
+        AgencyAndId vehicleId = parseAgencyAndId(id);
+        
+        if(vehicleLocationService == null)
+            return TransitResponseBuilder.getFailResponse("VehicleLocationService not found.");
+        
+        VehicleLocation vehicle = vehicleLocationService.getForVehicle(vehicleId);
+        if(vehicle == null)
+            return TransitResponseBuilder.getFailResponse("A vehicle of the given id doesn't exist.");
+        
+        if(vehicle.getTripId() != null)
+            return tripDetails(vehicle.getTripId().toString(), vehicle.getServiceDate().getAsString(), routerId);
+        else
+            return TransitResponseBuilder.getResponseForVehicle(graph, vehicle);
+    }
+    
+    @GET
+    @Path("/vehicles-for-route")
+    @Produces({ MediaType.APPLICATION_JSON })
+    public TransitResponse vehiclesForRoute(@QueryParam("routeId") List<String> ids, @QueryParam("routerId") String routerId) throws JSONException {
+
+        Graph graph = getGraph(routerId);
+        TransitIndexService transitIndexService = graph.getService(TransitIndexService.class);
+        if (transitIndexService == null) {
+            return TransitResponseBuilder.getFailResponse(
+                    "No transit index found.  Add TransitIndexBuilder to your graph builder configuration and rebuild your graph.");
+        }
+        
+        VehicleLocationService vehicleLocationService = graph.getService(VehicleLocationService.class);
+        if(vehicleLocationService == null)
+            return TransitResponseBuilder.getFailResponse("VehicleLocationService not found.");
+        
+        TransitResponseBuilder builder = new TransitResponseBuilder(graph);
+        
+        List<TransitVehicle> transitVehicles = new ArrayList<TransitVehicle>();
+        for(String id : ids) {
+            AgencyAndId routeId = parseAgencyAndId(id);
+            Route route = transitIndexService.getAllRoutes().get(routeId);
+            if(route == null)
+                return TransitResponseBuilder.getFailResponse("Unknown route.");
+            transitVehicles.addAll(getTransitVehiclesForRoute(vehicleLocationService, routeId, transitIndexService, graph, builder));
+        }
+        
+        return builder.getResponseForVehicles(transitVehicles);
+    }
+    
+    @GET
+    @Path("/vehicles-for-stop")
+    @Produces({ MediaType.APPLICATION_JSON })
+    public TransitResponse vehiclesForStop(@QueryParam("stopId") String id, @QueryParam("routerId") String routerId) throws JSONException {
+
+        Graph graph = getGraph(routerId);        TransitIndexService transitIndexService = graph.getService(TransitIndexService.class);
+        if (transitIndexService == null) {
+            return TransitResponseBuilder.getFailResponse(
+                    "No transit index found.  Add TransitIndexBuilder to your graph builder configuration and rebuild your graph.");
+        }
+        
+        VehicleLocationService vehicleLocationService = graph.getService(VehicleLocationService.class);
+        if(vehicleLocationService == null)
+            return TransitResponseBuilder.getFailResponse("VehicleLocationService not found.");
+        
+        TransitResponseBuilder builder = new TransitResponseBuilder(graph);
+        AgencyAndId stopId = parseAgencyAndId(id);
+        Stop stop = transitIndexService.getAllStops().get(stopId);
+        if(stop == null)
+            return TransitResponseBuilder.getFailResponse("Unknown stop.");
+        
+        builder.addToReferences(stop);
+
+        List<TransitVehicle> transitVehicles = new ArrayList<TransitVehicle>();
+        for(AgencyAndId routeId : transitIndexService.getRoutesForStop(stopId)) {
+            transitVehicles.addAll(getTransitVehiclesForRoute(vehicleLocationService, routeId, transitIndexService, graph, builder));
+        }
+        
+        return builder.getResponseForVehicles(transitVehicles);
+    }
+
+    private List<TransitVehicle> getTransitVehiclesForRoute(VehicleLocationService vehicleLocationService, AgencyAndId routeId, TransitIndexService transitIndexService, Graph graph, TransitResponseBuilder builder) {
+        List<VehicleLocation> vehicles = new ArrayList<VehicleLocation>(vehicleLocationService.getForRoute(routeId));
+
+        List<TransitVehicle> transitVehicles = new ArrayList<TransitVehicle>(vehicles.size());
+        for(VehicleLocation vehicle : vehicles) {
+            Trip trip = getTrip(transitIndexService, vehicle.getTripId());
+            TableTripPattern pattern = transitIndexService.getPatternForTrip(trip.getId());
+
+            int tripIndex = pattern.getTripIndex(trip.getId());
+            Timetable timetable;
+            if(graph.timetableSnapshotSource != null && graph.timetableSnapshotSource.getSnapshot() != null) {
+                timetable = graph.timetableSnapshotSource.getSnapshot().resolve(pattern, vehicle.getServiceDate());
+            } else {
+                timetable = pattern.getScheduledTimetable();
+            }
+            
+            if(vehicle.getStopId() != null) {
+                Stop vehicleStop = transitIndexService.getAllStops().get(vehicle.getStopId());
+                builder.addToReferences(vehicleStop);
+            }
+
+            TransitTrip transitTrip = builder.getTrip(trip);
+            transitTrip.setWheelchairAccessible(timetable.isWheelchairAccessible(tripIndex));
+            builder.addToReferences(transitTrip);
+
+            TransitVehicle transitVehicle = builder.getVehicle(vehicle);
+            transitVehicle.setTripId(transitTrip.getId());
+            transitVehicles.add(transitVehicle);
+        }
+        
+        return transitVehicles;
+    }
+
+    protected List<String> getAlertsForStop(TransitResponseBuilder builder, AgencyAndId stopId,
+            RoutingRequest options, long startTime, long endTime) {
+        
+        List<String> alertIds = new LinkedList<String>();
+        if(patchService != null) {
+            Collection<Patch> patches = patchService.getStopPatches(stopId);
+            for(Patch patch : patches) {
+                if(patch.activeDuring(options, startTime, endTime)) {
+                    Alert alert = patch.getAlert();
+                    if(alert != null) {
+                        builder.addToReferences(alert);
+                        alertIds.add(alert.alertId.toString());
+                    }
+                }
+            }
+        }
+        return alertIds;
+    }
+
+    protected List<String> getAlertsForRoute(TransitResponseBuilder builder, AgencyAndId routeId, RoutingRequest options, long startTime, long endTime) {
+        List<String> alertIds = new LinkedList<String>();
+        if(patchService != null) {
+            Collection<Patch> patches = patchService.getRoutePatches(routeId);
+            for(Patch patch : patches) {
+                if(patch.activeDuring(options, startTime, endTime)) {
+                    Alert alert = patch.getAlert();
+                    if(alert != null) {
+                        builder.addToReferences(alert);
+                        alertIds.add(alert.alertId.toString());
+                    }
+                }
+            }
+        }
+        return alertIds;
+    }
+    
+    // -- -- -- | -- -- -- //
+    
+    private AgencyAndId parseAgencyAndId(String fullId) {
+        if(!fullId.contains("_"))
+            return null;
+        String[] parts = fullId.split("_", 2);
+        return new AgencyAndId(parts[0], parts[1]);
+    }
+
+    private Trip getTrip(TransitIndexService transitIndexService, AgencyAndId tripId) {
+        TableTripPattern pattern = transitIndexService.getPatternForTrip(tripId);
+        int tripIndex = pattern.getTripIndex(tripId);
+        Trip trip = pattern.getTrip(tripIndex);
+        return trip;
+    }
+
+    private void sortStopTimesWithTrips(List<T2<TransitScheduleStopTime, TransitTrip>> stopTimes) {
+        Collections.sort(stopTimes, new Comparator<T2<TransitScheduleStopTime, TransitTrip>>() {
+
+            @Override
+            public int compare(T2<TransitScheduleStopTime, TransitTrip> t2a, T2<TransitScheduleStopTime, TransitTrip> t2b) {
+                TransitScheduleStopTime a = t2a.getFirst();
+                TransitScheduleStopTime b = t2b.getFirst();
+                
+                return SCHDULE_COMPARATOR.compare(a, b);
+            }
+        });
+    }
+
+    private void sortStopTimes(List<TransitScheduleStopTime> stopTimes) {
+        Collections.sort(stopTimes, SCHDULE_COMPARATOR);
+    }
+    private static class TransitScheduleStopTimeComparator implements Comparator<TransitScheduleStopTime> {
+        @Override
+        public int compare(TransitScheduleStopTime a, TransitScheduleStopTime b) {
+            long ret;
+
+            if(a.getPredictedDepartureTime() != null && b.getPredictedDepartureTime() != null) {
+                ret = a.getPredictedDepartureTime() - b.getPredictedDepartureTime();
+                if(ret != 0)
+                    return (int) ret;
+            }
+
+            if(a.getPredictedArrivalTime() != null && b.getPredictedArrivalTime() != null) {
+                ret = a.getPredictedArrivalTime() - b.getPredictedArrivalTime();
+                if(ret != 0)
+                    return (int) ret;
+            }
+
+            if(a.getDepartureTime() != null && b.getDepartureTime() != null) {
+                ret = a.getDepartureTime() - b.getDepartureTime();
+                if(ret != 0)
+                    return (int) ret;
+            }
+
+            if(a.getArrivalTime() != null && b.getArrivalTime() != null) {
+                ret = a.getArrivalTime() - b.getArrivalTime();
+                if(ret != 0)
+                    return (int) ret;
+            }
+
+            return a.getTripId().compareTo(b.getTripId());
+        }
+    }
+    
+    private static TransitScheduleStopTimeComparator SCHDULE_COMPARATOR = new TransitScheduleStopTimeComparator();
 }

@@ -44,6 +44,8 @@ public interface TransitIndexService {
     public PreAlightEdge getPreAlightEdge(AgencyAndId stop);
 
     public List<AgencyAndId> getRoutesForStop(AgencyAndId stop);
+    
+    public TraverseMode getModeForStop(AgencyAndId stop);
 
     public Collection<String> getDirectionsForRoute(AgencyAndId route);
     

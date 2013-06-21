@@ -81,6 +81,9 @@ public class RouteVariant implements Serializable {
      */
     private static final String MULTIDIRECTION = "[multidirection]";
 
+    private static int ID = 1;
+    private final int id;
+    
     private String name; // "N via Whitehall"
 
     private TraverseMode mode;
@@ -110,9 +113,12 @@ public class RouteVariant implements Serializable {
 
     public RouteVariant() {
         // needed for JAXB but unused
+        id = ++ID;
     }
 
     public RouteVariant(Route route, List<Stop> stops) {
+        id = ++ID;
+        
         this.route = route;
         this.stops = new ArrayList<Stop>(stops);
         trips = new ArrayList<TripsModelInfo>();
@@ -285,5 +291,9 @@ public class RouteVariant implements Serializable {
                 return;
             }
         }
+    }
+    
+    public int getId() {
+        return id;
     }
 }
