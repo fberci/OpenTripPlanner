@@ -13,6 +13,7 @@
 
 package org.opentripplanner.graph_builder.impl.transit_index;
 
+import com.vividsolutions.jts.algorithm.Angle;
 import static org.opentripplanner.common.IterableLibrary.filter;
 
 import java.util.ArrayList;
@@ -63,6 +64,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Geometry;
+import java.util.LinkedList;
+import org.opentripplanner.common.geometry.DirectionUtils;
 
 /**
  * Process GTFS to build transit index for use in patching
@@ -109,11 +113,23 @@ public class TransitIndexBuilder implements GraphBuilderWithGtfsDao {
     @Override
     public void buildGraph(Graph graph) {
         LOG.debug("Building transit index");
+        
+        for(Stop stop : dao.getAllStops()) {
+            stops.put(stop.getId(), stop);
+        }
+        
+        for(Route route : dao.getAllRoutes()) {
+            routes.put(route.getId(), route);
+        }
 
         createRouteVariants(graph);
-        indexTableTripPatternByTrip(graph);
+
+        createTripPatternMapping(graph);
+        
+        computeStopDirection();
 
         nameVariants(variantsByRoute);
+        
         int totalVariants = 0;
         int totalTrips = 0;
         for (List<RouteVariant> variants : variantsByRoute.values()) {
@@ -122,14 +138,6 @@ public class TransitIndexBuilder implements GraphBuilderWithGtfsDao {
                 variant.cleanup();
                 totalTrips += variant.getTrips().size();
             }
-        }
-        
-        for(Stop stop : dao.getAllStops()) {
-            stops.put(stop.getId(), stop);
-        }
-        
-        for(Route route : dao.getAllRoutes()) {
-            routes.put(route.getId(), route);
         }
         
         LOG.debug("Built transit index: " + variantsByAgency.size() + " agencies, "
@@ -201,6 +209,91 @@ public class TransitIndexBuilder implements GraphBuilderWithGtfsDao {
             return -1;
         }
         return best * 60 + 1;
+    }
+
+    private void computeStopDirection() {
+        
+        Map<AgencyAndId, List<Double>> allAngels = new HashMap<AgencyAndId, List<Double>>();
+        for(List<RouteVariant> variants : variantsByRoute.values()) {
+            for(RouteVariant variant : variants) {
+                for(RouteSegment segment : variant.getSegments()) {
+                    List<Double> angles = computeStopDirectionFromSegment(segment);
+                    if(angles.isEmpty()) continue;
+
+                    MapUtils.addToMapList(allAngels, segment.stop, angles);
+                }
+            }
+        }
+        
+        for(AgencyAndId stopId : allAngels.keySet()) {
+            List<Double> angles = allAngels.get(stopId);
+            double angle = getAverageAngle(angles);
+            
+            Stop stop = stops.get(stopId);
+            stop.setDirection(getAngleAsDirection(angle));
+        }
+    }
+
+    private List<Double> computeStopDirectionFromSegment(RouteSegment segment) {
+        List<Double> ret = new LinkedList<Double>();
+        
+        if(segment.hopOut != null) {
+            Geometry geometry = segment.hopOut.getGeometry();
+            Coordinate[] coordinates = geometry.getCoordinates();
+            if(coordinates.length >= 2)
+                ret.add(DirectionUtils.getAzimuth(coordinates[0], coordinates[1]));
+        }
+        if(segment.hopIn != null) {
+            Geometry geometry = segment.hopIn.getGeometry();
+            Coordinate[] coordinates = geometry.getCoordinates();
+            int length = coordinates.length;
+            if(length >= 2)
+                ret.add(DirectionUtils.getAzimuth(coordinates[length - 2], coordinates[length - 1]));
+        }
+        
+        return ret;
+    }
+    
+    private Double getAverageAngle(List<Double> angles) {
+        double x = .0, y = .0;
+        for(double angle : angles) {
+            double radians = Angle.toRadians(angle);
+            x += Math.cos(radians);
+            y += Math.sin(radians);
+        }
+        
+        double theta = Math.atan2(y, x);
+        return Angle.toDegrees(theta);
+    }
+
+    private String getAngleAsDirection(double theta) {
+        return "" + theta;
+        /*double t = 360 / 8;
+
+        int r = (int) Math.floor((theta + t / 2) / t);
+
+        switch (r) {
+            case 0:
+                return "N";
+            case 1:
+                return "NE";
+            case 2:
+                return "E";
+            case 3:
+                return "SE";
+            case 4:
+                return "S";
+            case -1:
+                return "NW";
+            case -2:
+                return "W";
+            case -3:
+                return "SW";
+            case -4:
+                return "S";
+            default:
+                return "?";
+        }*/
     }
 
     /**
@@ -476,7 +569,7 @@ public class TransitIndexBuilder implements GraphBuilderWithGtfsDao {
         }
     }
     
-    private void indexTableTripPatternByTrip(Graph graph) {
+    private void createTripPatternMapping(Graph graph) {
         for (TransitStopDepart tsd : filter(graph.getVertices(), TransitStopDepart.class)) {
             for (TransitBoardAlight tba : filter(tsd.getOutgoing(), TransitBoardAlight.class)) {
                 if (!tba.isBoarding())
