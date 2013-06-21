@@ -36,7 +36,6 @@ import org.onebusaway.gtfs.model.Trip;
 import org.onebusaway.gtfs.model.calendar.CalendarServiceData;
 import org.onebusaway.gtfs.model.calendar.LocalizedServiceId;
 import org.onebusaway.gtfs.model.calendar.ServiceDate;
-import org.opentripplanner.ConstantsForTests;
 import org.opentripplanner.graph_builder.impl.transit_index.TransitIndexBuilder;
 import org.opentripplanner.gtfs.GtfsContext;
 import org.opentripplanner.gtfs.GtfsLibrary;
@@ -78,7 +77,7 @@ public class StoptimeUpdaterTest {
     
     @BeforeClass
     public static void setUpClass() throws Exception {
-        context = GtfsLibrary.readGtfs(new File("../opentripplanner-routing/" + ConstantsForTests.FAKE_GTFS));
+        context = GtfsLibrary.readGtfs(new File("../opentripplanner-routing/src/test/resources/testagency.zip"));
 
         GTFSPatternHopFactory factory = new GTFSPatternHopFactory(context);
         factory.run(graph);
