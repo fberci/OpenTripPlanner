@@ -878,8 +878,8 @@ public class TransitIndex {
             }
         }
         
-        long startTime = serviceDate.getAsDate().getTime() / 1000;
-        long endTime = serviceDate.next().getAsDate().getTime() / 1000;
+        long startTime = serviceDate.getAsDate(graph.getTimeZone()).getTime() / 1000;
+        long endTime = serviceDate.next().getAsDate(graph.getTimeZone()).getTime() / 1000;
         RoutingRequest options = makeTraverseOptions(startTime, routerId);
         
         List<String> alertIds = getAlertsForRoute(builder, routeId, options, startTime, endTime);
@@ -968,10 +968,10 @@ public class TransitIndex {
         
         TransitResponseBuilder builder = new TransitResponseBuilder(graph);
         CalendarService calendarService = graph.getCalendarService();
-        ServiceDay serviceDay = new ServiceDay(graph, serviceDate.getAsDate().getTime() / 1000, calendarService, trip.getId().getAgencyId());
+        ServiceDay serviceDay = new ServiceDay(graph, serviceDate.getAsDate(graph.getTimeZone()).getTime() / 1000, calendarService, trip.getId().getAgencyId());
         
-        long startTime = serviceDate.getAsDate().getTime() / 1000;
-        long endTime = serviceDate.next().getAsDate().getTime() / 1000;
+        long startTime = serviceDate.getAsDate(graph.getTimeZone()).getTime() / 1000;
+        long endTime = serviceDate.next().getAsDate(graph.getTimeZone()).getTime() / 1000;
         RoutingRequest options = makeTraverseOptions(startTime, routerId);
         
         RouteVariant variant = transitIndexService.getVariantForTrip(tripId);
@@ -1009,8 +1009,9 @@ public class TransitIndex {
     public List<TransitStopTime> getStopTimesForTrip(String routerId, AgencyAndId tripId, ServiceDate serviceDate, TableTripPattern pattern, Timetable timetable) {
 
         List<TransitStopTime> stopTimes = new LinkedList<TransitStopTime>();
-
-        long time = serviceDate.getAsDate().getTime() / 1000;
+        
+        Graph graph = getGraph(routerId);
+        long time = serviceDate.getAsDate(graph.getTimeZone()).getTime() / 1000;
         int tripIndex = pattern.getTripIndex(tripId);
         
         int numStops = pattern.getStops().size();
@@ -1128,6 +1129,7 @@ public class TransitIndex {
 
     private List<T2<TransitScheduleStopTime, TransitTrip>> getStopTimesForTransitBoardAlightEdge(TransitResponseBuilder builder, String stopId, long startTime, long endTime,
             RoutingRequest options, TransitBoardAlight tba) {
+        
         List<T2<TransitScheduleStopTime, TransitTrip>> out = new ArrayList<T2<TransitScheduleStopTime, TransitTrip>>();
         
         State result;
@@ -1144,7 +1146,8 @@ public class TransitIndex {
             time = result.getTimeSeconds();
             if (time > endTime)
                 break;
-            
+
+            long midnight = result.getServiceDay().time(0);
             TripTimes tripTimes = result.getTripTimes();
             TripTimes scheduledTripTimes = tripTimes.getScheduledTripTimes();
             
@@ -1169,15 +1172,15 @@ public class TransitIndex {
             
             if(tripTimes.canBoard(stopIndex) && stopIndex + 1 < numStops) {
                 if(!tripTimes.isScheduled())
-                    stopTime.setPredictedDepartureTime(time + tripTimes.getDepartureTime(stopIndex));
+                    stopTime.setPredictedDepartureTime(midnight + tripTimes.getDepartureTime(stopIndex));
                 if(scheduledTripTimes != null)
-                    stopTime.setDepartureTime(time + scheduledTripTimes.getDepartureTime(stopIndex));
+                    stopTime.setDepartureTime(midnight + scheduledTripTimes.getDepartureTime(stopIndex));
             }
             if(tripTimes.canAlight(stopIndex) && stopIndex > 0) {
                 if(!tripTimes.isScheduled())
-                    stopTime.setPredictedArrivalTime(time + tripTimes.getArrivalTime(stopIndex - 1));
+                    stopTime.setPredictedArrivalTime(midnight + tripTimes.getArrivalTime(stopIndex - 1));
                 if(scheduledTripTimes != null)
-                    stopTime.setArrivalTime(time + scheduledTripTimes.getArrivalTime(stopIndex - 1));
+                    stopTime.setArrivalTime(midnight + scheduledTripTimes.getArrivalTime(stopIndex - 1));
             }
             out.add(new T2<TransitScheduleStopTime, TransitTrip>(stopTime, transitTrip));
             
@@ -1216,8 +1219,8 @@ public class TransitIndex {
         if(stop == null)
             return TransitResponseBuilder.getFailResponse("Unknown stopId.");
         
-        long startTime = serviceDate.getAsDate().getTime() / 1000;
-        long endTime = serviceDate.next().getAsDate().getTime() / 1000;
+        long startTime = serviceDate.getAsDate(graph.getTimeZone()).getTime() / 1000;
+        long endTime = serviceDate.next().getAsDate(graph.getTimeZone()).getTime() / 1000;
         RoutingRequest options = makeTraverseOptions(startTime, routerId);
         
         List<T2<TransitScheduleStopTime, TransitTrip>> stopTimesWithTrips = getStopTimesForStop(routerId, builder, startTime, endTime, stopId);
