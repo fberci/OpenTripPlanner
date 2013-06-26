@@ -143,7 +143,7 @@ public class AlertsUpdateHandler {
             if(agencyId != null && routeId == null && tripId == null && stopId == null) {
                 patch.setAgencyId(agencyId);
             }
-            patch.setCancelled(alert.getEffect() == GtfsRealtime.Alert.Effect.NO_SERVICE);
+            patch.setCancelled(false); //alert.getEffect() == GtfsRealtime.Alert.Effect.NO_SERVICE); - handle with TripUpdates
             patch.setTimePeriods(periods);
             patch.setDisplayTimePeriods(displayPeriods);
             patch.setAlert(alertText);
