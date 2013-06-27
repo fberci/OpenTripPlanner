@@ -14,10 +14,12 @@
 package org.opentripplanner.api.ws.transit;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
-import lombok.Getter;
-import lombok.Setter;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.onebusaway.gtfs.model.Agency;
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.onebusaway.gtfs.model.Route;
@@ -284,9 +286,15 @@ public class TransitResponseBuilder {
     
     public TransitStop getStop(Stop stop) {
         
-        List<String> routeIds = new LinkedList<String>();
+        List<Route> routes = new ArrayList<Route>();
         for(AgencyAndId routeId : _transitIndexSerivce.getRoutesForStop(stop.getId())) {
             Route route = _transitIndexSerivce.getAllRoutes().get(routeId);
+            routes.add(route);
+        }
+        Collections.sort(routes, ROUTE_COMPARATOR);
+        
+        List<String> routeIds = new LinkedList<String>();
+        for(Route route : routes) {
             routeIds.add(route.getId().toString());
             addToReferences(route);
         }
@@ -391,5 +399,68 @@ public class TransitResponseBuilder {
         
         TransitAlert transitAlert = getAlert(alert);
         _references.addAlert(transitAlert);
+    }
+
+    public final static RouteComparator ROUTE_COMPARATOR = new RouteComparator();
+    public final static class RouteComparator implements Comparator<Route> {
+
+        @Override
+        public int compare(Route a, Route b) {
+            int ret = 0;
+            
+            if(a.getType() != b.getType())
+                ret = this.compareRouteType(a.getType(), b.getType());
+            
+            if(ret != 0)
+                return ret;
+            
+            return this.compareRouteShortName(a.getShortName(), b.getShortName());
+        }
+
+        private int compareRouteType(int a, int b) {
+            // metró
+            if(a == 1) return  1;
+            if(b == 1) return -1;
+            
+            // hév
+            if(a == 2) return  1;
+            if(b == 2) return -1;
+            
+            // hajó
+            if(a == 4) return  1;
+            if(b == 4) return -1;
+            
+            // többi egyenlő ~ szám alapján rendeződnek
+            return 0;
+        }
+
+        private Pattern pattern = Pattern.compile("^(\\D*)(\\d+)");
+        
+        private int compareRouteShortName(String a, String b) {
+            
+            Matcher ma = pattern.matcher(a);
+            Matcher mb = pattern.matcher(b);
+            
+            if(ma.find() && mb.find()) {
+                int ret;
+                if(ma.group(1).length() > 0 && ma.group(1).length() > 0) {
+                    ret = ma.group(1).compareTo(mb.group(1));
+                    if(ret != 0)
+                        return ret;
+                }
+                
+                if(ma.group(1).length() > 0) return  1;
+                if(mb.group(1).length() > 0) return -1;
+                
+                int na = Integer.parseInt(ma.group(2));
+                int nb = Integer.parseInt(mb.group(2));
+            
+                ret = na - nb;
+                if(ret != 0)
+                    return ret;
+            }
+            
+            return a.compareTo(b);
+        }
     }
 }
