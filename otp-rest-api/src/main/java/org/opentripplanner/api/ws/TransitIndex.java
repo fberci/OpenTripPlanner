@@ -811,7 +811,9 @@ public class TransitIndex {
         if (c1 == null || c2 == null) {
             for (Vertex gv : graph.getVertices()) {
                 if (gv instanceof org.opentripplanner.routing.vertextype.TransitStop) {
-                    stops.add(((org.opentripplanner.routing.vertextype.TransitStop) gv).getStop());
+                    Stop stop = ((org.opentripplanner.routing.vertextype.TransitStop) gv).getStop();
+                    if(stop.getLocationType() == 0)
+                        stops.add(stop);
                 }
             }
         } else {
@@ -822,7 +824,9 @@ public class TransitIndex {
                 AgencyAndId stopId = transitStop.getStopId();
                 if (agency != null && !agency.equals(stopId.getAgencyId()))
                     continue;
-               stops.add(transitStop.getStop());
+                Stop stop = transitStop.getStop();
+                if(stop.getLocationType() == 0)
+                    stops.add(stop);
             }
         }
 
