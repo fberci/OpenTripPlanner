@@ -15,12 +15,10 @@ package org.opentripplanner.updater.vehicle_location;
 
 import com.google.protobuf.ExtensionRegistry;
 import com.google.transit.realtime.GtfsRealtime;
-import com.vividsolutions.jts.geom.Coordinate;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -28,12 +26,10 @@ import java.util.TimeZone;
 import lombok.Setter;
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.onebusaway.gtfs.model.calendar.ServiceDate;
-import org.opentripplanner.routing.services.GraphService;
 import org.opentripplanner.updater.stoptime.GtfsRealtimeAbstractUpdateStreamer;
 import org.opentripplanner.util.HttpUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
 
 public class GtfsRealtimeVehicleLocationUpdateProvider implements VehicleLocationUpdateProvider {
@@ -63,6 +59,12 @@ public class GtfsRealtimeVehicleLocationUpdateProvider implements VehicleLocatio
         if (feed == null)
             return null;
         
+        GtfsRealtime.FeedHeader header = feed.getHeader();
+        if(header.hasIncrementality() && header.getIncrementality() == GtfsRealtime.FeedHeader.Incrementality.DIFFERENTIAL) {
+            LOG.error("DIFFERENTIAL GTFS-rt updates are not supported.");
+            return null;
+        }
+        
         List<VehicleLocation> ret = new LinkedList<VehicleLocation>();
         for (GtfsRealtime.FeedEntity entity : feed.getEntityList()) {
             if(!entity.hasVehicle()) {
@@ -85,6 +87,11 @@ public class GtfsRealtimeVehicleLocationUpdateProvider implements VehicleLocatio
                         continue;
                     }
                 }
+            }
+            
+            AgencyAndId routeId = null;
+            if(descriptor.hasRouteId()) {
+                routeId = new AgencyAndId(defaultAgencyId, descriptor.getRouteId());
             }
             
             Integer stopSequence = null;
@@ -133,7 +140,7 @@ public class GtfsRealtimeVehicleLocationUpdateProvider implements VehicleLocatio
                 }
             }
             
-            VehicleLocation vehicleLocation = new VehicleLocation(timestamp, vehicleId, lat, lon, tripId, licensePlate, bearing, status, stopId, stopSequence, serviceDate);
+            VehicleLocation vehicleLocation = new VehicleLocation(timestamp, vehicleId, routeId, lat, lon, tripId, licensePlate, bearing, status, stopId, stopSequence, serviceDate);
             ret.add(vehicleLocation);
         }
         

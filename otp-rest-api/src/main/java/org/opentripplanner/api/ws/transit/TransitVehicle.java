@@ -10,6 +10,7 @@ public class TransitVehicle {
     @Getter @Setter private long timestamp;
     @Getter @Setter private String id;
     @Getter @Setter private String stopId;
+    @Getter @Setter private String routeId;
     @Getter @Setter private Float bearing;
     @Getter @Setter private Float latitude;
     @Getter @Setter private Float longitude;

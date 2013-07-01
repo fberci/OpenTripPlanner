@@ -90,10 +90,10 @@ public class VehicleLocationServiceImpl implements VehicleLocationService {
             
             remove(vehicle.getVehicleId());
             
-            if(!existingLocation.getCoordinate().equals(vehicle.getCoordinate()))
+            /*if(!existingLocation.getCoordinate().equals(vehicle.getCoordinate()))
                 vehicle.setBearing(new Float(DirectionUtils.getAzimuth(existingLocation.getCoordinate(), vehicle.getCoordinate())));
             else
-                vehicle.setBearing(existingLocation.getBearing());
+                vehicle.setBearing(existingLocation.getBearing());*/
         }
         
         Graph graph = graphService.getGraph();
@@ -122,7 +122,8 @@ public class VehicleLocationServiceImpl implements VehicleLocationService {
         VehicleLocation vehicle = _vehicleLocations.get(vehicleId);
         
         Graph graph = graphService.getGraph();
-        TransitIndexService transitIndexService = graph.getService(TransitIndexService.class);        AgencyAndId routeId = null;
+        TransitIndexService transitIndexService = graph.getService(TransitIndexService.class);
+        AgencyAndId routeId = null;
         if(vehicle.getTripId() != null)
             routeId = transitIndexService.getPatternForTrip(vehicle.getTripId()).getExemplar().getRoute().getId();
         
@@ -136,5 +137,36 @@ public class VehicleLocationServiceImpl implements VehicleLocationService {
         }
         
         return vehicle;
+    }
+
+    @Override
+    public void refresh(Collection<VehicleLocation> updatedLocations) {
+        Graph graph = graphService.getGraph();
+        TransitIndexService transitIndexService = graph.getService(TransitIndexService.class);
+        
+        Quadtree quadtree = new Quadtree();
+        Map<AgencyAndId, VehicleLocation> vehicleLocations = new HashMap<AgencyAndId, VehicleLocation>();
+        Map<AgencyAndId, VehicleLocation> vehicleLocationsByTrip = new HashMap<AgencyAndId, VehicleLocation>();
+        Map<AgencyAndId, List<VehicleLocation>> vehicleLocationsByRoute = new HashMap<AgencyAndId, List<VehicleLocation>>();
+        
+        for(VehicleLocation vehicle : updatedLocations) {
+            AgencyAndId routeId = null;
+            if(vehicle.getTripId() != null)
+                routeId = transitIndexService.getPatternForTrip(vehicle.getTripId()).getExemplar().getRoute().getId();
+
+            quadtree.insert(new Envelope(vehicle.getCoordinate()), vehicle);
+            vehicleLocations.put(vehicle.getVehicleId(), vehicle);
+            if(vehicle.getTripId() != null)
+                vehicleLocationsByTrip.put(vehicle.getTripId(), vehicle);
+            if(routeId != null)
+                MapUtils.addToMapList(vehicleLocationsByRoute, routeId, vehicle);
+        }
+        
+        synchronized(this) {
+            _quadtree = quadtree;
+            _vehicleLocations = vehicleLocations;
+            _vehicleLocationsByTrip = vehicleLocationsByTrip;
+            _vehicleLocationsByRoute = vehicleLocationsByRoute;
+        }
     }
 }

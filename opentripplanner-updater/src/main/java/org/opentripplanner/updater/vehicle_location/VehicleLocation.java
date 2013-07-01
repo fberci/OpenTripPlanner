@@ -23,11 +23,12 @@ import org.onebusaway.gtfs.model.calendar.ServiceDate;
  */
 public class VehicleLocation {
     
-    public VehicleLocation(long timestamp, AgencyAndId vehicleId, Float lat, Float lon, AgencyAndId tripId, String licensePlate, Float bearing, Status status, ServiceDate serviceDate) {
+    public VehicleLocation(long timestamp, AgencyAndId vehicleId, AgencyAndId routeId, Float lat, Float lon, AgencyAndId tripId, String licensePlate, Float bearing, Status status, ServiceDate serviceDate) {
         this.timestamp = timestamp;
         this.vehicleId = vehicleId;
         this.latitude = lat;
         this.longitude = lon;
+        this.routeId = routeId;
         this.tripId = tripId;
         this.bearing = bearing;
         this.status = status;
@@ -35,11 +36,12 @@ public class VehicleLocation {
         this.serviceDate = serviceDate;
     }
 
-    public VehicleLocation(long timestamp, AgencyAndId vehicleId, Float lat, Float lon, AgencyAndId tripId, String licensePlate, Float bearing, Status status, AgencyAndId stopId, Integer stopSequence, ServiceDate serviceDate) {
+    public VehicleLocation(long timestamp, AgencyAndId vehicleId, AgencyAndId routeId, Float lat, Float lon, AgencyAndId tripId, String licensePlate, Float bearing, Status status, AgencyAndId stopId, Integer stopSequence, ServiceDate serviceDate) {
         this.timestamp = timestamp;
         this.vehicleId = vehicleId;
         this.latitude = lat;
         this.longitude = lon;
+        this.routeId = routeId;
         this.tripId = tripId;
         this.bearing = bearing;
         this.status = status;
@@ -71,6 +73,9 @@ public class VehicleLocation {
     private Float bearing;
     
     @Getter
+    private AgencyAndId routeId;
+    
+    @Getter
     private AgencyAndId tripId;
     
     @Getter
@@ -99,4 +104,9 @@ public class VehicleLocation {
         STOPPED_AT,
         IN_TRANSIT_TO
     };
+
+    @Override
+    public String toString() {
+        return "VehicleLocation{" + "timestamp=" + timestamp + ", vehicleId=" + vehicleId + ", latitude=" + latitude + ", longitude=" + longitude + ", bearing=" + bearing + ", routeId=" + routeId + ", tripId=" + tripId + ", licensePlate=" + licensePlate + ", status=" + status + ", stopId=" + stopId + ", stopSequence=" + stopSequence + ", serviceDate=" + serviceDate + '}';
+    }
 }

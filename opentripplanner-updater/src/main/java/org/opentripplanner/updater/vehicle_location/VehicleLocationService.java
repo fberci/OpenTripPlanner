@@ -28,4 +28,6 @@ public interface VehicleLocationService {
     
     public boolean add(VehicleLocation vehicle);
     public VehicleLocation remove(AgencyAndId vehicleId);
+
+    public void refresh(Collection<VehicleLocation> updatedLocations);
 }

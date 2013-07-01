@@ -13,6 +13,7 @@
 
 package org.opentripplanner.updater.vehicle_location;
 
+import java.util.LinkedList;
 import java.util.List;
 import lombok.Setter;
 import org.opentripplanner.routing.graph.Graph;
@@ -36,6 +37,8 @@ public class VehicleLocationUpdater implements Runnable {
     @Override
     public void run() {
         List<VehicleLocation> updatedLocations = _provider.getVehicleLocationUpdates();
+        if(updatedLocations == null)
+            return;
         
         Graph graph = graphService.getGraph();
         TransitIndexService transitIndexService = graph.getService(TransitIndexService.class);
@@ -47,13 +50,24 @@ public class VehicleLocationUpdater implements Runnable {
             graph.putService(VehicleLocationService.class, vehicleLocationService);
         }
         
+        List<VehicleLocation> validLocations = new LinkedList<VehicleLocation>();
         for(VehicleLocation location : updatedLocations) {
             if(location.getTripId() != null && transitIndexService.getPatternForTrip(location.getTripId()) == null) {
-                LOG.warn("Location update references unknown trip: " + location);
+                LOG.warn("Location update references an unknown trip: " + location);
+                continue;
+            }
+            if(location.getStopId() != null && !transitIndexService.getAllStops().containsKey(location.getStopId())) {
+                LOG.warn("Location update references an unknown stop: " + location);
+                continue;
+            }
+            if(location.getRouteId() != null && !transitIndexService.getAllRoutes().containsKey(location.getRouteId())) {
+                LOG.warn("Location update references an unknown route: " + location);
                 continue;
             }
             
-            vehicleLocationService.add(location);
+            validLocations.add(location);
         }
+        
+        vehicleLocationService.refresh(validLocations);
     }
 }

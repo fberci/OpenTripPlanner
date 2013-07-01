@@ -210,8 +210,26 @@ public class TransitResponseBuilder {
         transitVehicle.setTimestamp(vehicle.getTimestamp());
         transitVehicle.setLicensePlate(vehicle.getLicensePlate());
         transitVehicle.setServiceDate(vehicle.getServiceDate().getAsString());
+        
+        if(vehicle.getRouteId() != null) {
+            Route route = _transitIndexSerivce.getAllRoutes().get(vehicle.getRouteId());
+            if(route != null) {
+                transitVehicle.setRouteId(route.getId().toString());
+                addToReferences(route);
+            }
+        }
+        
+        if(vehicle.getStopId() != null) {
+            Stop stop = _transitIndexSerivce.getAllStops().get(vehicle.getStopId());
+            if(stop != null) {
+                transitVehicle.setStopId(stop.getId().toString());
+                addToReferences(stop);
+            }
+        }
+        
         if(vehicle.getTripId() != null)
             transitVehicle.setTripId(vehicle.getTripId().toString());
+        
         return transitVehicle;
     }
     
