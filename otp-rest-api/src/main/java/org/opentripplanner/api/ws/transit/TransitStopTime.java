@@ -15,11 +15,13 @@ package org.opentripplanner.api.ws.transit;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.opentripplanner.routing.trippattern.TripTimes;
 
 public class TransitStopTime {
     @Getter @Setter private String stopId;
     @Getter @Setter private Long arrivalTime;
     @Getter @Setter private Long departureTime;
+    @Getter @Setter private TripTimes.State state;
     @Getter @Setter private Long predictedArrivalTime;
     @Getter @Setter private Long predictedDepartureTime;
 }

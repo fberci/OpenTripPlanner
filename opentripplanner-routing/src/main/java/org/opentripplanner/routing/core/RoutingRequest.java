@@ -243,6 +243,10 @@ public class RoutingRequest implements Cloneable, Serializable {
      */
     public int useUnpreferredRoutesPenalty = 300;
 
+    /* Should canceled trips not be taken into account. */
+    @Getter @Setter
+    public boolean ignoreCanceledStopTimes = false;
+    
     /**
      * A global minimum transfer time (in seconds) that specifies the minimum amount of time that must pass between exiting one transit vehicle and
      * boarding another. This time is in addition to time it might take to walk between transit stops. This time should also be overridden by specific

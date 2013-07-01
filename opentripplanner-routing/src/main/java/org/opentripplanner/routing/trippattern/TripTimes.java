@@ -352,7 +352,7 @@ public abstract class TripTimes {
             }
         }
         
-        if(!getState(stopIndex).isUseable())
+        if(!options.isIgnoreCanceledStopTimes() && !getState(stopIndex).isUseable())
             return false;
 
         if(boarding && !canBoard(stopIndex))

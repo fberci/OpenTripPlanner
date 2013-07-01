@@ -454,6 +454,7 @@ public class TransitIndex {
         Graph graph = getGraph(routerId);
         Collection<Vertex> vertices = graph.getVertices();
         Iterator<Vertex> it = vertices.iterator();
+        options.setIgnoreCanceledStopTimes(true);
         options.setFromString(it.next().getLabel());
         options.setToString(it.next().getLabel());
         options.setRoutingContext(graph);
@@ -1017,14 +1018,16 @@ public class TransitIndex {
         Graph graph = getGraph(routerId);
         long time = serviceDate.getAsDate(graph.getTimeZone()).getTime() / 1000;
         int tripIndex = pattern.getTripIndex(tripId);
+            
+        TripTimes tripTimes = timetable.getTripTimes(tripIndex);
+        TripTimes scheduledTripTimes = tripTimes.getScheduledTripTimes();
         
         int numStops = pattern.getStops().size();
         for(int i = 0; i < numStops; ++i) {
+            
             TransitStopTime stopTime = new TransitStopTime();
             stopTime.setStopId(pattern.getStops().get(i).getId().toString());
-
-            TripTimes tripTimes = timetable.getTripTimes(tripIndex);
-            TripTimes scheduledTripTimes = tripTimes.getScheduledTripTimes();
+            stopTime.setState(tripTimes.getState(i));
             
             if(tripTimes.canBoard(i) && i + 1 < numStops) {
                 if(!tripTimes.isScheduled())
@@ -1160,8 +1163,9 @@ public class TransitIndex {
             transitTrip.setWheelchairAccessible(tripTimes.isWheelchairAccessible());
             
             TransitScheduleStopTime stopTime = new TransitScheduleStopTime();
-            stopTime.setTripId(transitTrip.getId());
             stopTime.setStopId(stopId);
+            stopTime.setTripId(transitTrip.getId());
+            stopTime.setState(tripTimes.getState(stopIndex));
             stopTime.setServiceDate(result.getServiceDay().getServiceDate().getAsString());
             
             Set<Alert> alerts = result.getBackAlerts();
