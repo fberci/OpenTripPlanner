@@ -48,6 +48,7 @@ import org.opentripplanner.routing.trippattern.Update;
 
 import com.google.transit.realtime.GtfsRealtime;
 import com.vividsolutions.jts.geom.Coordinate;
+import org.opentripplanner.routing.edgetype.PatternHop;
 
 public class GtfsRealtimeAbstractUpdateStreamerTest {
     private GtfsRealtimeAbstractUpdateStreamer streamer = null;
@@ -581,6 +582,8 @@ public class GtfsRealtimeAbstractUpdateStreamerTest {
             public void addCalendarDates(Collection<ServiceCalendarDate> allDates) {}
             @Override
             public void add(Result result) {}
+            @Override
+            public List<PatternHop> getPatternHopsForTrip(AgencyAndId tripId) { return null; }
        });
     }
 }

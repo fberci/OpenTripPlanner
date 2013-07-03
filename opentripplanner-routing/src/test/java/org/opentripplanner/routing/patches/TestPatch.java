@@ -205,6 +205,10 @@ public class TestPatch extends TestCase {
                 return null;
             }
 
+            public List<PatternHop> getPatternHopsForTrip(AgencyAndId tripId) {
+                return null;
+            }
+
             @Override
             public void add(Result result) {
                 // TODO Auto-generated method stub
