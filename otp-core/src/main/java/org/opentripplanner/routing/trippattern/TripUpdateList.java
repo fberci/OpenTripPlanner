@@ -158,9 +158,9 @@ public class TripUpdateList extends AbstractUpdate {
         Update prev_u = null;
         for (Update u : updates) {
             if (prev_u != null) {
-                if (u.stopSeq <= prev_u.stopSeq)
+                if (u.stopSeq != null && prev_u.stopSeq != null && u.stopSeq <= prev_u.stopSeq)
                     increasing = false;
-                if (u.stopSeq - prev_u.stopSeq != 1)
+                if (u.stopSeq != null && prev_u.stopSeq != null && u.stopSeq - prev_u.stopSeq != 1)
                     sequential = false;
                 if (prev_u.status != Update.Status.CANCEL && u.status != Update.Status.CANCEL
                                 && u.arrive < prev_u.depart)
