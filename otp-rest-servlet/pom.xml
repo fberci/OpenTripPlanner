@@ -76,6 +76,12 @@
           <artifactId>jersey-client</artifactId>
           <scope>test</scope> <!-- what is this used for? -->
         </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.1.2</version>
+            <type>jar</type>
+        </dependency>
     </dependencies>
 
     <build>
