@@ -48,6 +48,8 @@ public interface TransitIndexService {
     public TableTripPattern getTripPatternForTrip(AgencyAndId tripId);
     
     public List<AgencyAndId> getRoutesForStop(AgencyAndId stop);
+    
+    public TraverseMode getModeForStop(AgencyAndId stop);
 
     public Collection<String> getDirectionsForRoute(AgencyAndId route);
     

@@ -203,6 +203,11 @@ public class TestPatch extends TestCase {
             public Map<AgencyAndId, Route> getAllRoutes() {
                 return null;
             }
+
+            @Override
+            public TraverseMode getModeForStop(AgencyAndId stop) {
+                return null;
+            }
         };
         graph.putService(TransitIndexService.class, index);
     }
