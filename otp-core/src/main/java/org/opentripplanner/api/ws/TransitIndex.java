@@ -20,7 +20,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -37,7 +36,6 @@ import org.onebusaway.gtfs.model.Route;
 import org.onebusaway.gtfs.model.ServiceCalendar;
 import org.onebusaway.gtfs.model.ServiceCalendarDate;
 import org.onebusaway.gtfs.model.Stop;
-import org.onebusaway.gtfs.model.Trip;
 import org.opentripplanner.api.model.error.TransitError;
 import org.opentripplanner.api.model.transit.AgencyList;
 import org.opentripplanner.api.model.transit.CalendarData;
@@ -56,12 +54,10 @@ import org.opentripplanner.common.geometry.GeometryUtils;
 import org.opentripplanner.common.geometry.SphericalDistanceLibrary;
 import org.opentripplanner.common.model.P2;
 import org.opentripplanner.routing.core.RoutingRequest;
-import org.opentripplanner.routing.core.ServiceDay;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.StateEditor;
 import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.edgetype.PatternHop;
-import org.opentripplanner.routing.edgetype.TableTripPattern;
 import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.graph.Vertex;
@@ -75,8 +71,6 @@ import org.opentripplanner.routing.transit_index.adapters.ServiceCalendarDateTyp
 import org.opentripplanner.routing.transit_index.adapters.ServiceCalendarType;
 import org.opentripplanner.routing.transit_index.adapters.StopType;
 import org.opentripplanner.routing.transit_index.adapters.TripType;
-import org.opentripplanner.routing.trippattern.TripTimes;
-import org.opentripplanner.routing.vertextype.TransitStop;
 import org.opentripplanner.routing.vertextype.TransitStopArrive;
 import org.opentripplanner.routing.vertextype.TransitStopDepart;
 import org.slf4j.Logger;
@@ -85,8 +79,14 @@ import org.slf4j.LoggerFactory;
 import com.sun.jersey.api.core.InjectParam;
 import com.sun.jersey.api.spring.Autowire;
 import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.LineString;
+import java.util.Set;
+import org.onebusaway.gtfs.model.Trip;
+import org.opentripplanner.api.ws.oba_rest_api.beans.TransitResponse;
+import org.opentripplanner.api.ws.oba_rest_api.beans.TransitResponseBuilder;
+import org.opentripplanner.routing.core.ServiceDay;
+import org.opentripplanner.routing.edgetype.TableTripPattern;
+import org.opentripplanner.routing.trippattern.TripTimes;
 
 // NOTE - /ws/transit is the full path -- see web.xml
 
@@ -102,9 +102,9 @@ public class TransitIndex {
 
     @Setter @InjectParam 
     private GraphService graphService;
-
+    
     private static final long MAX_STOP_TIME_QUERY_INTERVAL = 86400 * 2;
-
+    
     /**
      * Return a list of all agency ids in the graph
      */
@@ -189,8 +189,8 @@ public class TransitIndex {
     /**
      * Return a list of route ids
      */
-    @GET
-    @Path("/routes")
+    //@GET
+    //@Path("/routes")
     @Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, MediaType.TEXT_XML })
     public Object getRoutes(@QueryParam("agency") String agency,
             @QueryParam("extended") Boolean extended, @QueryParam("routerId") String routerId)
@@ -279,7 +279,7 @@ public class TransitIndex {
         }
 
         StreetVertexIndexService streetVertexIndexService = graph.streetIndex;
-        List<TransitStop> stops = streetVertexIndexService.getNearbyTransitStops(new Coordinate(
+        List<org.opentripplanner.routing.vertextype.TransitStop> stops = streetVertexIndexService.getNearbyTransitStops(new Coordinate(
                 lon, lat), searchRadius);
         TransitIndexService transitIndexService = graph.getService(TransitIndexService.class);
         if (transitIndexService == null) {
@@ -288,7 +288,7 @@ public class TransitIndex {
         }
 
         StopList response = new StopList();
-        for (TransitStop transitStop : stops) {
+        for (org.opentripplanner.routing.vertextype.TransitStop transitStop : stops) {
             AgencyAndId stopId = transitStop.getStopId();
             if (agency != null && !agency.equals(stopId.getAgencyId()))
                 continue;
@@ -468,7 +468,7 @@ public class TransitIndex {
     @GET
     @Path("/variantForTrip")
     @Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, MediaType.TEXT_XML })
-    public Object getVariantForTrip(@QueryParam("tripAgency") String tripAgency,
+    public Object getVariantForTrip(@QueryParam("tripAgency") String tripAgency, 
             @QueryParam("tripId") String tripId, @QueryParam("routerId") String routerId)
             throws JSONException {
 
@@ -664,8 +664,7 @@ public class TransitIndex {
         TransitIndexService transitIndexService = getGraph(routerId).getService(
                 TransitIndexService.class);
         if (transitIndexService == null) {
-            return new TransitError(
-                    "No transit index found.  Add TransitIndexBuilder to your graph builder configuration and rebuild your graph.");
+            return TransitResponseBuilder.getFailResponse(TransitResponse.Status.ERROR_TRANSIT_INDEX_SERVICE);
         }
 
         ModeList modes = new ModeList();
@@ -677,7 +676,11 @@ public class TransitIndex {
     }
 
     private Graph getGraph(String routerId) {
-        return graphService.getGraph(routerId);
+        try {
+            return graphService.getGraph(routerId);
+        } catch(Exception e) {
+            return null;
+        }
     }
 
     public Object getCalendarServiceDataForAgency(@QueryParam("agency") String agency,
@@ -695,61 +698,6 @@ public class TransitIndex {
         data.calendarDates = transitIndexService.getCalendarDatesByAgency(agency);
 
         return data;
-    }
-
-    /**
-     * Return a list of all stops that are inside a rectangle given by lat lon positions.
-     */
-    @GET
-    @Path("/stopsInRectangle")
-    @Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, MediaType.TEXT_XML })
-    public Object stopsInRectangle(@QueryParam("agency") String agency,
-            @QueryParam("leftUpLat") Double leftUpLat, @QueryParam("leftUpLon") Double leftUpLon,
-            @QueryParam("rightDownLat") Double rightDownLat,
-            @QueryParam("rightDownLon") Double rightDownLon, @QueryParam("extended") Boolean extended,
-            @QueryParam("routerId") String routerId) throws JSONException {
-
-        Graph graph = getGraph(routerId);
-        StopList response = new StopList();
-
-        StreetVertexIndexService streetVertexIndexService = graph.streetIndex;
-        if (leftUpLat == null || leftUpLon == null || rightDownLat == null || rightDownLon == null) {
-            double METERS_PER_DEGREE_LAT = 111111;
-            double distance = 2000;
-            for (Vertex gv : graph.getVertices()) {
-                if (gv instanceof TransitStop) {
-                    Coordinate c = gv.getCoordinate();
-                    Envelope env = new Envelope(c);
-                    double meters_per_degree_lon_here = METERS_PER_DEGREE_LAT
-                            * Math.cos(Math.toRadians(c.y));
-                    env.expandBy(distance / meters_per_degree_lon_here, distance
-                            / METERS_PER_DEGREE_LAT);
-                    StopType stop = new StopType(((TransitStop) gv).getStop(), extended);
-                    response.stops.add(stop);
-                }
-            }
-        } else {
-            Coordinate cOne = new Coordinate(leftUpLon, leftUpLat);
-            Coordinate cTwo = new Coordinate(rightDownLon, rightDownLat);
-            List<TransitStop> stops = streetVertexIndexService.getNearbyTransitStops(cOne, cTwo);
-            TransitIndexService transitIndexService = graph.getService(TransitIndexService.class);
-            if (transitIndexService == null) {
-                return new TransitError(
-                        "No transit index found.  Add TransitIndexBuilder to your graph builder configuration and rebuild your graph.");
-            }
-
-            for (TransitStop transitStop : stops) {
-                AgencyAndId stopId = transitStop.getStopId();
-                if (agency != null && !agency.equals(stopId.getAgencyId()))
-                    continue;
-                StopType stop = new StopType(transitStop.getStop(), extended);
-                if (extended != null && extended.equals(true))
-                    stop.routes = transitIndexService.getRoutesForStop(stopId);
-                response.stops.add(stop);
-            }
-        }
-
-        return response;
     }
 
     /**
@@ -972,5 +920,4 @@ public class TransitIndex {
                 agencyId));
         return serviceDays;
     }
-    
 }

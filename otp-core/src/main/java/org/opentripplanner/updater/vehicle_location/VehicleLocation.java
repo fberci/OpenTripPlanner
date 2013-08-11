@@ -23,6 +23,12 @@ import org.onebusaway.gtfs.model.calendar.ServiceDate;
  */
 public class VehicleLocation {
     
+    public VehicleLocation(AgencyAndId routeId, Float lat, Float lon,
+            AgencyAndId tripId, Float bearing, Status status, AgencyAndId stopId, ServiceDate serviceDate) {
+        this(0, null, routeId, lat, lon, tripId, null, null, bearing, status,
+                stopId, null, serviceDate, null, false);
+    }
+    
     public VehicleLocation(long timestamp, AgencyAndId vehicleId, AgencyAndId routeId, Float lat, Float lon,
             AgencyAndId tripId, String licensePlate, String label, Float bearing, Status status,
             ServiceDate serviceDate, CongestionLevel congestionLevel, boolean deviated) {
