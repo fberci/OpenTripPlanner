@@ -33,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.sun.jersey.api.core.InjectParam;
+import lombok.Setter;
 
 /**
  * This class defines all the JAX-RS query parameters for a path search as fields, allowing them to 
@@ -270,10 +271,10 @@ public abstract class RoutingResource {
      * Alternatively, we could eliminate the separate RoutingRequest objects and just resolve
      * vertices and timezones here right away, but just ignore them in semantic equality checks.
      */
-    @InjectParam
+    @Setter @InjectParam
     protected GraphService graphService;
 
-    @InjectParam
+    @Setter @InjectParam
     protected RoutingRequest prototypeRoutingRequest;
 
 
