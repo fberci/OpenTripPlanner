@@ -28,8 +28,6 @@ import org.onebusaway.gtfs.model.Route;
 import org.onebusaway.gtfs.model.ServiceCalendar;
 import org.onebusaway.gtfs.model.ServiceCalendarDate;
 import org.onebusaway.gtfs.model.Stop;
-import org.onebusaway.gtfs.model.Trip;
-import org.onebusaway.gtfs.model.calendar.ServiceDate;
 import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.edgetype.FrequencyBoard;
@@ -250,6 +248,34 @@ public class TransitIndexServiceImpl implements TransitIndexService, Serializabl
             }
         }
         return new ArrayList<AgencyAndId>(out);
+    }
+
+    @Override
+    public TraverseMode getModeForStop(AgencyAndId stop) {
+        TraverseMode mode = null;
+        
+        Edge edge = preBoardEdges.get(stop);
+        if (edge != null) {
+            for (Edge e: edge.getToVertex().getOutgoing()) {
+                if (e instanceof TransitBoardAlight) {
+                    TransitBoardAlight board = (TransitBoardAlight) e;
+                    if(mode == null || mode.equals(TraverseMode.BUS))
+                        mode = GtfsLibrary.getTraverseMode(board.getPattern().getExemplar().getRoute());
+                }
+            }
+        }
+        
+        edge = preAlightEdges.get(stop);
+        if (edge != null) {
+            for (Edge e: edge.getFromVertex().getIncoming()) {
+                if (e instanceof TransitBoardAlight) {
+                    TransitBoardAlight alight = (TransitBoardAlight) e;
+                    if(mode == null || mode.equals(TraverseMode.BUS))
+                        mode = GtfsLibrary.getTraverseMode(alight.getPattern().getExemplar().getRoute());
+                }
+            }
+        }
+        return mode;
     }
 
     public void setCenter(Coordinate coord) {
