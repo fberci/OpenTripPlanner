@@ -596,7 +596,7 @@ public class TransitIndexBuilder implements GraphBuilderWithGtfsDao {
         }
     }
 
-    private void nameVariants(HashMap<AgencyAndId, List<RouteVariant>> variantsByRoute) {
+    protected void nameVariants(HashMap<AgencyAndId, List<RouteVariant>> variantsByRoute) {
         for (List<RouteVariant> variants : variantsByRoute.values()) {
             Route route = variants.get(0).getRoute();
             String routeName = GtfsLibrary.getRouteName(route);
@@ -615,31 +615,30 @@ public class TransitIndexBuilder implements GraphBuilderWithGtfsDao {
             HashMap<String, List<RouteVariant>> vias = new HashMap<String, List<RouteVariant>>();
             for (RouteVariant variant : variants) {
                 List<Stop> stops = variant.getStops();
-                MapUtils.addToMapList(starts, getName(stops.get(0)), variant);
-                MapUtils.addToMapList(ends, getName(stops.get(stops.size() - 1)), variant);
+                MapUtils.addToMapList(starts, getStopName(stops.get(0)), variant);
+                MapUtils.addToMapList(ends, getStopName(stops.get(stops.size() - 1)), variant);
                 for (Stop stop : stops) {
-                    MapUtils.addToMapList(vias, getName(stop), variant);
+                    MapUtils.addToMapList(vias, getStopName(stop), variant);
                 }
             }
 
             // do simple naming for unique start/end/via
             for (RouteVariant variant : variants) {
                 List<Stop> stops = variant.getStops();
-                String firstStop = getName(stops.get(0));
-                if (starts.get(firstStop).size() == 1) {
-                    // this is the only route with this start
-                    String name = routeName + " from " + firstStop;
+                String lastStop = getStopName(stops.get(stops.size() - 1));
+                if (ends.get(lastStop).size() == 1) {
+                    String name = getNameForVariantWithTo(routeName, lastStop);
                     variant.setName(name);
                 } else {
-                    String lastStop = getName(stops.get(stops.size() - 1));
-                    if (ends.get(lastStop).size() == 1) {
-                        String name = routeName + " to " + lastStop;
+                    String firstStop = getStopName(stops.get(0));
+                    if (starts.get(firstStop).size() == 1) {
+                        String name = getNameForVariantWithFrom(routeName, firstStop);
                         variant.setName(name);
                     } else {
                         for (Stop stop : stops) {
-                            String viaStop = getName(stop);
+                            String viaStop = getStopName(stop);
                             if (vias.get(viaStop).size() == 1) {
-                                String name = routeName + " via " + viaStop;
+                                String name = getNameForVariantWithVia(routeName, viaStop);
                                 variant.setName(name);
                                 break;
                             }
@@ -685,25 +684,25 @@ public class TransitIndexBuilder implements GraphBuilderWithGtfsDao {
                 if (variant.getName() != null)
                     continue;
                 List<Stop> stops = variant.getStops();
-                String firstStop = getName(stops.get(0));
+                String firstStop = getStopName(stops.get(0));
                 HashSet<RouteVariant> remainingVariants = new HashSet<RouteVariant>(
                         starts.get(firstStop));
 
-                String lastStop = getName(stops.get(stops.size() - 1));
+                String lastStop = getStopName(stops.get(stops.size() - 1));
                 // take the intersection
                 remainingVariants.retainAll(ends.get(lastStop));
                 if (remainingVariants.size() == 1) {
-                    String name = routeName + " from " + firstStop + " to " + lastStop;
+                    String name = getNameForVariantWithFromTo(routeName, firstStop, lastStop);
                     variant.setName(name);
                     continue;
                 }
                 // this did not yield a unique name; try start / via / end for
                 // each via
                 for (Stop stop : stops) {
-                    if (getName(stop).equals(firstStop) || getName(stop).equals(lastStop)) {
+                    if (getStopName(stop).equals(firstStop) || getStopName(stop).equals(lastStop)) {
                         continue;
                     }
-                    List<RouteVariant> via = vias.get(getName(stop));
+                    List<RouteVariant> via = vias.get(getStopName(stop));
                     boolean found = false;
                     boolean bad = false;
                     for (RouteVariant viaVariant : via) {
@@ -717,8 +716,7 @@ public class TransitIndexBuilder implements GraphBuilderWithGtfsDao {
                         }
                     }
                     if (found && !bad) {
-                        String name = routeName + " from " + firstStop + " to " + lastStop
-                                + " via " + getName(stop);
+                        String name = getNameForVariantWithExpressAndVia(routeName, firstStop, lastStop, getStopName(stop));
                         variant.setName(name);
                         break;
                     }
@@ -729,23 +727,57 @@ public class TransitIndexBuilder implements GraphBuilderWithGtfsDao {
                         // there are exactly two remaining variants sharing this start/end
                         // we know that this one must be a subset of the other, because it
                         // has no unique via. So, it is the express
-
-                        String name = routeName + " from " + firstStop + " to " + lastStop
-                                + " express";
+                        String name = getNameForVariantWithExpress(routeName, firstStop, lastStop);
                         variant.setName(name);
                     } else {
                         // the final fallback
-                        variant.setName(routeName + " like " + variant.getTrips().get(0).getId());
+                        String name = getNameForVariantFallback(routeName, variant);
+                        variant.setName(name);
                     }
                 }
             }
 
         }
-
     }
 
-    private String getName(Stop stop) {
+    protected String getStopName(Stop stop) {
         return stop.getName() + " (" + stop.getId() + ")";
+    }
+
+    protected String getNameForVariantWithExpress(String routeName, String firstStop, String lastStop) {
+        String name = routeName + " from " + firstStop + " to " + lastStop + " express";
+        return name;
+    }
+
+    protected String getNameForVariantWithExpressAndVia(String routeName, String firstStop, String lastStop, String viaStop) {
+        String name = routeName + " from " + firstStop + " to " + lastStop + " via " + viaStop;
+        return name;
+    }
+
+    protected String getNameForVariantWithFromTo(String routeName, String firstStop, String lastStop) {
+        String name = routeName + " from " + firstStop + " to " + lastStop;
+        return name;
+    }
+
+    protected String getNameForVariantWithVia(String routeName, String viaStop) {
+        String name = routeName + " via " + viaStop;
+        return name;
+    }
+
+    protected String getNameForVariantFallback(String routeName, RouteVariant variant) {
+        String name = routeName + " like " + variant.getTrips().get(0).getId();
+        return name;
+    }
+
+    protected String getNameForVariantWithTo(String routeName, String lastStop) {
+        String name = routeName + " to " + lastStop;
+        return name;
+    }
+
+    protected String getNameForVariantWithFrom(String routeName, String firstStop) {
+        // this is the only route with this start
+        String name = routeName + " from " + firstStop;
+        return name;
     }
 
     private RouteVariant addTripToVariant(Trip trip) {
