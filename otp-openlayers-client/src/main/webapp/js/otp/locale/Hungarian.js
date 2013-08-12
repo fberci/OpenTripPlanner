@@ -198,6 +198,7 @@ otp.locale.Hungarian = {
         SUBWAY:         "METRÓ",
         RAIL:           "VASÚT",
         BUS:            "BUSZ",
+        TROLLEYBUS:     "TROLI",
         FERRY:          "KOMP",
         CABLE_CAR:      "LIBEGŐ",
         GONDOLA:        "GONDOLA",
