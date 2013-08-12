@@ -79,23 +79,31 @@ public class AlertsUpdateHandler {
         alertText.alertDescriptionText = deBuffer(alert.getDescriptionText());
         alertText.alertHeaderText = deBuffer(alert.getHeaderText());
         alertText.alertUrl = deBuffer(alert.getUrl());
+        alertText.alertId = new AgencyAndId(defaultAgencyId, id);
         ArrayList<TimePeriod> periods        = new ArrayList<TimePeriod>();
         ArrayList<TimePeriod> displayPeriods = new ArrayList<TimePeriod>();
         if(alert.getActivePeriodCount() > 0) {
             long bestStartTime = Long.MAX_VALUE;
+            long bestEndTime = 0;
             for (TimeRange activePeriod : alert.getActivePeriodList()) {
                 final long start = activePeriod.hasStart() ? activePeriod.getStart() - earlyStart : 0;
                 final long realStart = activePeriod.hasStart() ? activePeriod.getStart() : 0;
+                final long end = activePeriod.hasEnd() ? activePeriod.getEnd() : Long.MAX_VALUE;
                 if (realStart > 0 && realStart < bestStartTime) {
                     bestStartTime = realStart;
                 }
-                final long end = activePeriod.hasEnd() ? activePeriod.getEnd() : Long.MAX_VALUE;
+                if ((end < Long.MAX_VALUE) && (end > bestEndTime)) {
+                    bestEndTime = end;
+                }
                 periods.add(new TimePeriod(realStart, end));
                 if(earlyStart > 0 && start != realStart)
                     displayPeriods.add(new TimePeriod(start, realStart));
             }
             if (bestStartTime != Long.MAX_VALUE) {
                 alertText.effectiveStartDate = new Date(bestStartTime * 1000);
+            }
+            if (bestEndTime != 0) {
+                alertText.effectiveEndDate = new Date(bestEndTime * 1000);
             }
         } else {
             // Per the GTFS-rt spec, if an alert has no TimeRanges, than it should always be shown.
@@ -118,7 +126,7 @@ public class AlertsUpdateHandler {
                 stopId = informed.getStopId();
             }
 
-            String agencyId = informed.getAgencyId();
+            String agencyId;
             if (informed.hasAgencyId()) {
                 agencyId = informed.getAgencyId().intern();
             } else {
@@ -132,15 +140,23 @@ public class AlertsUpdateHandler {
 
             AlertPatch patch = new AlertPatch();
             if (routeId != null) {
+                if(alertText.routeIds == null)
+                    alertText.routeIds = new LinkedList<AgencyAndId>();
+                if(!alertText.routeIds.contains(new AgencyAndId(agencyId, routeId)))
+                    alertText.routeIds.add(new AgencyAndId(agencyId, routeId));
                 patch.setRoute(new AgencyAndId(agencyId, routeId));
             }
             if (tripId != null) {
                 patch.setTrip(new AgencyAndId(agencyId, tripId));
             }
             if (stopId != null) {
+                if(alertText.stopIds == null)
+                    alertText.stopIds = new LinkedList<AgencyAndId>();
+                if(!alertText.stopIds.contains(new AgencyAndId(agencyId, stopId)))
+                    alertText.stopIds.add(new AgencyAndId(agencyId, stopId));
                 patch.setStop(new AgencyAndId(agencyId, stopId));
             }
-            if(agencyId != null && routeId == null && tripId == null && stopId == null) {
+            if(routeId == null && tripId == null && stopId == null) {
                 patch.setAgencyId(agencyId);
             }
             patch.setCancelled(false); //alert.getEffect() == GtfsRealtime.Alert.Effect.NO_SERVICE); - handle with TripUpdates

@@ -16,9 +16,11 @@ package org.opentripplanner.routing.patch;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
+import org.onebusaway.gtfs.model.AgencyAndId;
 
 @XmlType
 public class Alert implements Serializable {
@@ -34,10 +36,19 @@ public class Alert implements Serializable {
 
     @XmlElement
     public TranslatedString alertUrl;
+    
+    public List<AgencyAndId> stopIds;
+    
+    public List<AgencyAndId> routeIds;
 
+    public AgencyAndId alertId;
+    
     //null means unknown
     @XmlElement
     public Date effectiveStartDate;
+    
+    @XmlElement
+    public Date effectiveEndDate;
 
     public static HashSet<Alert> newSimpleAlertSet(String text) {
         Alert note = createSimpleAlerts(text);
