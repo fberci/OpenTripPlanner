@@ -98,6 +98,26 @@ public class GtfsLibrary {
 
     public static TraverseMode getTraverseMode(Route route) {
         int routeType = route.getType();
+        switch (routeType) {
+        case 0:
+            return TraverseMode.TRAM;
+        case 1:
+            return TraverseMode.SUBWAY;
+        case 2:
+            return TraverseMode.RAIL;
+        case 3:
+            return TraverseMode.BUS;
+        case 4:
+            return TraverseMode.FERRY;
+        case 5:
+            return TraverseMode.CABLE_CAR;
+        case 6:
+            return TraverseMode.GONDOLA;
+        case 7:
+            return TraverseMode.FUNICULAR;
+        case 800:
+            return TraverseMode.TROLLEYBUS;
+        }
         if (routeType >= 100 && routeType < 200){ // Railway Service
             return TraverseMode.RAIL;
         }else if (routeType >= 200 && routeType < 300){ //Coach Service
@@ -125,26 +145,7 @@ public class GtfsLibrary {
         }else if (routeType >= 1600 && routeType < 1700){ //Self drive
             return TraverseMode.CAR;
         }
-        switch (routeType) {
-        case 0:
-            return TraverseMode.TRAM;
-        case 1:
-            return TraverseMode.SUBWAY;
-        case 2:
-            return TraverseMode.RAIL;
-        case 3:
-            return TraverseMode.BUS;
-        case 4:
-            return TraverseMode.FERRY;
-        case 5:
-            return TraverseMode.CABLE_CAR;
-        case 6:
-            return TraverseMode.GONDOLA;
-        case 7:
-            return TraverseMode.FUNICULAR;
-        default:
-            throw new IllegalArgumentException("unknown gtfs route type " + routeType);
-        }
+        throw new IllegalArgumentException("unknown gtfs route type " + routeType);
     }
 
     private static class GtfsContextImpl implements GtfsContext {
