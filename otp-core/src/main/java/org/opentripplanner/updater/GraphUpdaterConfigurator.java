@@ -22,9 +22,8 @@ import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
 import org.opentripplanner.routing.graph.Graph;
-import org.opentripplanner.updater.GraphUpdater;
-import org.opentripplanner.updater.GraphUpdaterManager;
 import org.opentripplanner.updater.alerts.GtfsRealtimeAlertsUpdater;
+import org.opentripplanner.updater.vehicle_location.GtfsRealtimeVehicleLocationUpdater;
 import org.opentripplanner.updater.bike_rental.BikeRentalUpdater;
 import org.opentripplanner.updater.example.ExampleGraphUpdater;
 import org.opentripplanner.updater.example.ExamplePollingGraphUpdater;
@@ -121,6 +120,9 @@ public class GraphUpdaterConfigurator {
                         }
                         else if (type.equals("real-time-alerts")) {
                             updater = new GtfsRealtimeAlertsUpdater();
+                        }
+                        else if (type.equals("vehicle-locations")) {
+                            updater = new GtfsRealtimeVehicleLocationUpdater();
                         }
                         else if (type.equals("example-updater")) {
                             updater = new ExampleGraphUpdater();
