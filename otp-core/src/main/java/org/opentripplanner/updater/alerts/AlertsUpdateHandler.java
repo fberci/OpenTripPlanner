@@ -33,6 +33,9 @@ import com.google.transit.realtime.GtfsRealtime.FeedEntity;
 import com.google.transit.realtime.GtfsRealtime.FeedMessage;
 import com.google.transit.realtime.GtfsRealtime.TimeRange;
 import com.google.transit.realtime.GtfsRealtime.TranslatedString.Translation;
+import java.util.LinkedList;
+import lombok.Getter;
+import lombok.Setter;
 
 /**  
  * This presently only includes GTFS-Realtime Service Alert feeds; 
@@ -47,9 +50,11 @@ public class AlertsUpdateHandler {
 
     private Set<String> patchIds = new HashSet<String>();
 
+    @Setter
     private PatchService patchService;
 
     /** How long before the posted start of an event it should be displayed to users */
+    @Setter @Getter
     private long earlyStart;
 
     public AlertsUpdateHandler() {
@@ -178,17 +183,4 @@ public class AlertsUpdateHandler {
         if(defaultAgencyId != null)
             this.defaultAgencyId = defaultAgencyId.intern();
     }
-
-    public void setPatchService(PatchService patchService) {
-        this.patchService = patchService;
-    }
-
-    public long getEarlyStart() {
-        return earlyStart;
-    }
-
-    public void setEarlyStart(long earlyStart) {
-        this.earlyStart = earlyStart;
-    }
-
 }
