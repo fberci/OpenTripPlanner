@@ -123,7 +123,7 @@ public class TimetableSnapshotSourceTest {
         int tripIndex2 = pattern.getTripIndex(tripId2);
         
         Update u = new Update(tripId, stopId, 0, 0, Update.Status.PREDICTION, 0, today);
-        TripUpdateList tripUpdateList = TripUpdateList.forUpdatedTrip(tripId, 0, today, Collections.singletonList(u));
+        TripUpdateList tripUpdateList = TripUpdateList.forUpdatedTrip(tripId, 0, today, Collections.singletonList(u), null);
         updater.applyTripUpdateLists(Arrays.asList(tripUpdateList));
         
         TimetableResolver resolver = updater.getTimetableSnapshot();

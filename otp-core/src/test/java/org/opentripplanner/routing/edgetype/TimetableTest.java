@@ -109,7 +109,7 @@ public class TimetableTest {
         
         // update trip with bad data
         tripUpdateList = TripUpdateList.forUpdatedTrip(trip_1_1_id, 0, new ServiceDate(), Collections.<Update> singletonList(
-                        new Update(trip_1_1_id, stop_a_id, 0, 1200, 1200, Status.PREDICTION, 0, new ServiceDate())));
+                        new Update(trip_1_1_id, stop_a_id, 0, 1200, 1200, Status.PREDICTION, 0, new ServiceDate())), null);
         assertFalse(timetable.update(tripUpdateList));
         
         //---
@@ -130,7 +130,7 @@ public class TimetableTest {
         updates.add(new Update(trip_1_1_id, stop_a_id, 0,  0*60 + 120,  0*60 + 120, Status.PREDICTION, 0, new ServiceDate()));
         updates.add(new Update(trip_1_1_id, stop_b_id, 1, 10*60 + 120, 10*60 + 120, Status.PREDICTION, 0, new ServiceDate()));
         updates.add(new Update(trip_1_1_id, stop_c_id, 2, 20*60 + 120, 20*60 + 120, Status.PREDICTION, 0, new ServiceDate()));
-        tripUpdateList = TripUpdateList.forUpdatedTrip(trip_1_1_id, 0, new ServiceDate(), updates);
+        tripUpdateList = TripUpdateList.forUpdatedTrip(trip_1_1_id, 0, new ServiceDate(), updates, null);
         assertEquals(timetable.getArrivalTime(1, trip_1_1_index), 20*60);
         assertTrue(timetable.update(tripUpdateList));
         assertEquals(timetable.getArrivalTime(1, trip_1_1_index), 20*60 + 120);

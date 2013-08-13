@@ -13,6 +13,8 @@
 
 package org.opentripplanner.routing.trippattern;
 
+import org.opentripplanner.routing.edgetype.TableTripPattern;
+
 /**
  * An UpdatedTripTimes applies updated arrival and departure times to a subset of a trip's stops,
  * reading through to the scheduled TripTimes for subsequent stops, and reporting that the vehicle
@@ -26,9 +28,14 @@ public class UpdatedTripTimes extends DelegatingTripTimes {
     
     private int[] departures;
     
+    private boolean wheelchairAccessible;
+    
     // maybe push pattern and offset into block
     public UpdatedTripTimes(ScheduledTripTimes sched, TripUpdateList tripUpdateList, int offset) {
         super(sched);
+        this.wheelchairAccessible = tripUpdateList.getWheelchairAccessible() == null
+                                  ? sched.isWheelchairAccessible()
+                                  : tripUpdateList.getWheelchairAccessible() == TableTripPattern.FLAG_WHEELCHAIR_ACCESSIBLE;
         this.offset = offset;
         int nUpdates = tripUpdateList.getUpdates().size();
         this.arrivals = new int[nUpdates];
@@ -92,6 +99,10 @@ public class UpdatedTripTimes extends DelegatingTripTimes {
         }
         arrivals = null;
         return true;
+    }
+    
+    @Override public boolean isWheelchairAccessible() {
+        return wheelchairAccessible;
     }
     
     public String toString() {

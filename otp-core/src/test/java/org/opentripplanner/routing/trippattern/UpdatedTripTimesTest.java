@@ -85,7 +85,7 @@ public class UpdatedTripTimesTest {
         updates.add(new Update(tripId, stop_c, 2, 0, 0, Update.Status.CANCEL , 0, new ServiceDate()));
         updates.add(new Update(tripId, stop_d, 3, 0, 0, Update.Status.CANCEL , 0, new ServiceDate()));
         
-        tripUpdateList = TripUpdateList.forUpdatedTrip(tripId, 0, new ServiceDate(), updates);
+        tripUpdateList = TripUpdateList.forUpdatedTrip(tripId, 0, new ServiceDate(), updates, null);
         
         UpdatedTripTimes updateTriptimesA = new UpdatedTripTimes(originalTripTimesA, tripUpdateList, 0);
 
@@ -115,7 +115,7 @@ public class UpdatedTripTimesTest {
         List<Update> updates = new LinkedList<Update>();
         updates.add(new Update(tripId, stop_d, 3, 190, 190, Update.Status.PREDICTION , 0, new ServiceDate()));
         
-        tripUpdateList = TripUpdateList.forUpdatedTrip(tripId, 0, new ServiceDate(), updates);
+        tripUpdateList = TripUpdateList.forUpdatedTrip(tripId, 0, new ServiceDate(), updates, null);
         
         UpdatedTripTimes updateTriptimesA = new UpdatedTripTimes(originalTripTimesA, tripUpdateList, 3);
 
@@ -135,7 +135,7 @@ public class UpdatedTripTimesTest {
         List<Update> updates = new LinkedList<Update>();
         updates.add(new Update(tripId, stop_a, 0, 0, 0, Update.Status.PASSED, 0, new ServiceDate()));
         
-        tripUpdateList = TripUpdateList.forUpdatedTrip(tripId, 0, new ServiceDate(), updates);
+        tripUpdateList = TripUpdateList.forUpdatedTrip(tripId, 0, new ServiceDate(), updates, null);
         
         UpdatedTripTimes updateTriptimesA = new UpdatedTripTimes(originalTripTimesA, tripUpdateList, 0);
 

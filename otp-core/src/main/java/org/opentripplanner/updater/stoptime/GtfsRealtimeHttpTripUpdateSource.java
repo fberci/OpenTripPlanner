@@ -13,6 +13,7 @@
 
 package org.opentripplanner.updater.stoptime;
 
+import com.google.protobuf.ExtensionRegistry;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -26,10 +27,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.transit.realtime.GtfsRealtime;
+import com.google.transit.realtime.GtfsRealtimeBplanner;
 
 public class GtfsRealtimeHttpTripUpdateSource implements TripUpdateSource, PreferencesConfigurable {
     
     private static final Logger LOG = LoggerFactory.getLogger(GtfsRealtimeHttpTripUpdateSource.class);
+
+    protected ExtensionRegistry extensionRegistry = ExtensionRegistry.newInstance();
+    {
+        extensionRegistry.add(GtfsRealtimeBplanner.deviated);
+        extensionRegistry.add(GtfsRealtimeBplanner.wheelchairAccessible);
+    }
 
     /**
      * Default agency id that is used for the trip id's in the TripUpdateLists
@@ -62,7 +70,7 @@ public class GtfsRealtimeHttpTripUpdateSource implements TripUpdateSource, Prefe
         try {
             is = httpUtils.getData(url, lastTimestamp);
             if (is != null) {
-                feed = GtfsRealtime.FeedMessage.PARSER.parseFrom(is);
+                feed = GtfsRealtime.FeedMessage.PARSER.parseFrom(is, extensionRegistry);
 
                 GtfsRealtime.FeedHeader header = feed.getHeader();
                 long feedTimestamp = header.getTimestamp();

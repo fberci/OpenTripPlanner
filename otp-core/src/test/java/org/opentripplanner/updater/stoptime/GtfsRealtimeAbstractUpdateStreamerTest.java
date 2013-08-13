@@ -26,11 +26,17 @@ import org.junit.Test;
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.onebusaway.gtfs.model.calendar.ServiceDate;
 import org.opentripplanner.routing.edgetype.TableTripPattern;
+import org.opentripplanner.routing.services.TransitIndexService;
+import org.opentripplanner.routing.transit_index.RouteVariant;
+import org.opentripplanner.routing.trippattern.TripTimes;
 import org.opentripplanner.routing.trippattern.Update;
 
 import com.google.transit.realtime.GtfsRealtime;
 import com.google.transit.realtime.GtfsRealtimeBplanner;
 import org.opentripplanner.routing.trippattern.TripUpdateList;
+import com.vividsolutions.jts.geom.Coordinate;
+import org.opentripplanner.routing.edgetype.PatternHop;
+import org.opentripplanner.routing.graph.Graph;
 
 public class GtfsRealtimeAbstractUpdateStreamerTest extends TripUpdateList {
     private GtfsRealtime.FeedMessage.Builder feedMessage = null;
@@ -46,7 +52,7 @@ public class GtfsRealtimeAbstractUpdateStreamerTest extends TripUpdateList {
     private long timestamp = 1;
     
     public GtfsRealtimeAbstractUpdateStreamerTest() {
-        super(null, 0, null, null, null, null);
+        super(null, 0, null, null, null, null, null);
     }
     
     @Test
@@ -236,45 +242,6 @@ public class GtfsRealtimeAbstractUpdateStreamerTest extends TripUpdateList {
     }
     
     @Test
-    public void testGetUpdateForAddedTrip() {
-        TripUpdateList tripUpdateList = null;
-        GtfsRealtime.TripUpdate.Builder rtTripUpdate;
-        
-        // no route id
-        rtTripUpdate = createTripUpdate(tripId.getId(), startDate);
-        tripUpdateList = getUpdateForAddedTrip(tripId, rtTripUpdate.build(), timestamp, serviceDate, timeZone);
-        addStopTimeUpdate(rtTripUpdate, stopId.getId(), today, 0, null);
-        addStopTimeUpdate(rtTripUpdate, stopId.getId(), today, 1, null);
-        assertNull(tripUpdateList);
-
-        rtTripUpdate = createTripUpdate(tripId.getId(), startDate, routeId);
-        
-        // no stop times
-        tripUpdateList = getUpdateForAddedTrip(tripId, rtTripUpdate.build(), timestamp, serviceDate, timeZone);
-        assertNull(tripUpdateList);
-
-        // single stop time
-        addStopTimeUpdate(rtTripUpdate, stopId.getId(), today, 0, null);
-        tripUpdateList = getUpdateForAddedTrip(tripId, rtTripUpdate.build(), timestamp, serviceDate, timeZone);
-        assertNull(tripUpdateList);
-        
-        // second stop time
-        addStopTimeUpdate(rtTripUpdate, stopId.getId(), today, 1, null);
-        tripUpdateList = getUpdateForAddedTrip(tripId, rtTripUpdate.build(), timestamp, serviceDate, timeZone);
-        assertNotNull(tripUpdateList);
-        assertEquals(TripUpdateList.Status.ADDED, tripUpdateList.getStatus());
-
-        // wheelchair accessibility
-        GtfsRealtime.VehicleDescriptor.Builder vehicle = GtfsRealtime.VehicleDescriptor.newBuilder();
-        vehicle.setExtension(GtfsRealtimeBplanner.wheelchairAccessible, TableTripPattern.FLAG_WHEELCHAIR_ACCESSIBLE);
-        rtTripUpdate.setVehicle(vehicle);
-
-        assertEquals(new Integer(0), tripUpdateList.getWheelchairAccessible()); // default
-        tripUpdateList = getUpdateForAddedTrip(tripId, rtTripUpdate.build(), timestamp, serviceDate, timeZone);
-        assertTrue(tripUpdateList.getWheelchairAccessible() == TableTripPattern.FLAG_WHEELCHAIR_ACCESSIBLE);
-    }
-    
-    @Test
     public void testGetUpdateForScheduledTrip() {
         TripUpdateList tripUpdateList = null;
         GtfsRealtime.TripUpdate.Builder rtTripUpdate = createTripUpdate(tripId.getId(), startDate);
@@ -292,7 +259,7 @@ public class GtfsRealtimeAbstractUpdateStreamerTest extends TripUpdateList {
 
         // wheelchair accessibility
         GtfsRealtime.VehicleDescriptor.Builder vehicle = GtfsRealtime.VehicleDescriptor.newBuilder();
-        vehicle.setExtension(GtfsRealtime.wheelchairAccessible, TableTripPattern.FLAG_WHEELCHAIR_ACCESSIBLE);
+        vehicle.setExtension(GtfsRealtimeBplanner.wheelchairAccessible, TableTripPattern.FLAG_WHEELCHAIR_ACCESSIBLE);
         rtTripUpdate.setVehicle(vehicle);
 
         tripUpdateList = getUpdateForScheduledTrip(tripId, rtTripUpdate.build(), timestamp, serviceDate, timeZone);
