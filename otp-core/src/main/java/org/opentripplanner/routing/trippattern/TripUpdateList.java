@@ -34,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.transit.realtime.GtfsRealtime;
+import com.google.transit.realtime.GtfsRealtimeBplanner;
 
 /**
  * A TripUpdateList is an ordered list of Updates which all refer to the same trip on the same day.
@@ -49,17 +50,24 @@ public class TripUpdateList extends AbstractUpdate {
     /** The trip to add, for ADDED updates. */
     @Getter
     private final Trip trip;
+    
+    /** Whether this trip is wheelchair accessible. If null, than the value from the scheduled
+     * trip is used.
+     */
+    @Getter
+    private final Integer wheelchairAccessible;
 
     private final List<Update> updates;
 
     @Getter
     private final Status status;
 
-    protected TripUpdateList(AgencyAndId tripId, long timestamp, ServiceDate serviceDate, Status status, List<Update> updates, Trip trip) {
+    protected TripUpdateList(AgencyAndId tripId, long timestamp, ServiceDate serviceDate, Status status, List<Update> updates, Trip trip, Integer wheelchairAccessible) {
         super(tripId, timestamp, serviceDate);
         this.status = status;
         this.updates = updates;
         this.trip = trip;
+        this.wheelchairAccessible = wheelchairAccessible;
     }
 
     public List<Update> getUpdates() {
@@ -86,11 +94,11 @@ public class TripUpdateList extends AbstractUpdate {
     }
     
     public static TripUpdateList forCanceledTrip(AgencyAndId tripId, long timestamp, ServiceDate serviceDate) {
-        return new TripUpdateList(tripId, timestamp, serviceDate, Status.CANCELED, Collections.<Update> emptyList(), null);
+        return new TripUpdateList(tripId, timestamp, serviceDate, Status.CANCELED, Collections.<Update> emptyList(), null, null);
     }
     
     public static TripUpdateList forRemovedTrip(AgencyAndId tripId, long timestamp, ServiceDate serviceDate) {
-        return new TripUpdateList(tripId, timestamp, serviceDate, Status.REMOVED, Collections.<Update> emptyList(), null);
+        return new TripUpdateList(tripId, timestamp, serviceDate, Status.REMOVED, Collections.<Update> emptyList(), null, null);
     }
     
     public static TripUpdateList forAddedTrip(Trip trip, long timestamp, ServiceDate serviceDate,  List<Update> stopTimes) {
@@ -99,14 +107,14 @@ public class TripUpdateList extends AbstractUpdate {
         if(stopTimes == null || stopTimes.size() < 2)
             throw new IllegalArgumentException("At least two stop times need to be supplied.");
 
-        return new TripUpdateList(trip.getId(), timestamp, serviceDate, Status.ADDED, stopTimes, trip);
+        return new TripUpdateList(trip.getId(), timestamp, serviceDate, Status.ADDED, stopTimes, trip, trip.getWheelchairAccessible());
     }
     
-    public static TripUpdateList forUpdatedTrip(AgencyAndId tripId, long timestamp, ServiceDate serviceDate, List<Update> updates) {
+    public static TripUpdateList forUpdatedTrip(AgencyAndId tripId, long timestamp, ServiceDate serviceDate, List<Update> updates, Integer wheelchairAccessible) {
         if(updates == null || updates.isEmpty())
             throw new IllegalArgumentException("At least one update needs to be supplied.");
 
-        return new TripUpdateList(tripId, timestamp, serviceDate, Status.MODIFIED, updates, null);
+        return new TripUpdateList(tripId, timestamp, serviceDate, Status.MODIFIED, updates, null, wheelchairAccessible);
     }
 
     /**
@@ -124,7 +132,7 @@ public class TripUpdateList extends AbstractUpdate {
         for (Update u : mixedUpdates) { // create a new block when the trip or timestamp changes
             Update l = blockUpdates.get(0);
             if (!l.tripId.equals(u.tripId) || l.timestamp != u.timestamp || l.serviceDate != u.serviceDate) {
-                TripUpdateList tripUpdateList = TripUpdateList.forUpdatedTrip(l.tripId, l.timestamp, l.serviceDate, blockUpdates);
+                TripUpdateList tripUpdateList = TripUpdateList.forUpdatedTrip(l.tripId, l.timestamp, l.serviceDate, blockUpdates, null);
                 ret.add(tripUpdateList);
                 blockUpdates = new LinkedList<Update>();
             }
@@ -132,7 +140,7 @@ public class TripUpdateList extends AbstractUpdate {
         }
 
         Update l = blockUpdates.get(0);
-        TripUpdateList tripUpdateList = TripUpdateList.forUpdatedTrip(l.tripId, l.timestamp, l.serviceDate, blockUpdates);
+        TripUpdateList tripUpdateList = TripUpdateList.forUpdatedTrip(l.tripId, l.timestamp, l.serviceDate, blockUpdates, null);
         ret.add(tripUpdateList);
 
         return ret;
@@ -479,8 +487,16 @@ public class TripUpdateList extends AbstractUpdate {
         if(updates.isEmpty()) {
             return null;
         }
+        
+        Integer wheelchairAccessible = null;
+        if(tripUpdate.hasVehicle()) {
+            GtfsRealtime.VehicleDescriptor vehicleDescriptor = tripUpdate.getVehicle();
+            if(vehicleDescriptor.hasExtension(GtfsRealtimeBplanner.wheelchairAccessible)) {
+                wheelchairAccessible = vehicleDescriptor.getExtension(GtfsRealtimeBplanner.wheelchairAccessible);
+            }
+        }
 
-        return TripUpdateList.forUpdatedTrip(tripId, timestamp, serviceDate, updates);
+        return TripUpdateList.forUpdatedTrip(tripId, timestamp, serviceDate, updates, wheelchairAccessible);
     }
 
     protected static Update getStopTimeUpdateForTrip(AgencyAndId tripId, long timestamp,
