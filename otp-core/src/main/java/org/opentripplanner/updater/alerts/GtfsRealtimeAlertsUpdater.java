@@ -69,8 +69,12 @@ public class GtfsRealtimeAlertsUpdater extends PollingGraphUpdater {
     @Override
     protected void configurePolling(Graph graph, Preferences preferences) throws Exception {
         // TODO: add options to choose different patch services
-        PatchService patchService = new PatchServiceImpl(graph);
-        this.patchService = patchService;
+        patchService = graph.getService(PatchService.class);
+        if(patchService == null) {
+            patchService = new PatchServiceImpl(graph);
+            graph.putService(PatchService.class, patchService);
+        }
+        
         String url = preferences.get("url", null);
         if (url == null)
             throw new IllegalArgumentException("Missing mandatory 'url' parameter");
@@ -133,7 +137,7 @@ public class GtfsRealtimeAlertsUpdater extends PollingGraphUpdater {
     }
 
     public String toString() {
-        return "GtfsRealtimeUpdater(" + url + ")";
+        return "GtfsRealtimeAlertsUpdater(" + url + ")";
     }
 
 }
