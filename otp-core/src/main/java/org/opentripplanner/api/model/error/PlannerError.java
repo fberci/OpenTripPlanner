@@ -17,6 +17,8 @@ package org.opentripplanner.api.model.error;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import lombok.Getter;
+import lombok.Setter;
 
 import org.opentripplanner.api.common.Message;
 import org.opentripplanner.api.ws.LocationNotAccessible;
@@ -43,8 +45,12 @@ public class PlannerError {
         messages.put(GraphNotFoundException.class,    Message.GRAPH_UNAVAILABLE);
     }
     
+    @Getter @Setter
     private int    id;
+    @Getter @Setter
     private String msg;
+    @Getter
+    private Message message;
     private List<String> missing = null;
     private boolean noPath = false;
 
@@ -55,7 +61,7 @@ public class PlannerError {
 
     public PlannerError(Exception e) {
         this();
-        Message message = messages.get(e.getClass());
+        message = messages.get(e.getClass());
         if (message == null) {
             LOG.error("exception planning trip: ", e);
             message = Message.SYSTEM_ERROR;
@@ -83,25 +89,9 @@ public class PlannerError {
         this.msg = msg;
     }
 
-    public String getMsg() {
-        return msg;
-    }
-
-    public void setMsg(String msg) {
-        this.msg = msg;
-    }
-
     public void setMsg(Message msg) {
         this.msg = msg.get();
         this.id  = msg.getId();
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
     }
 
     /**
