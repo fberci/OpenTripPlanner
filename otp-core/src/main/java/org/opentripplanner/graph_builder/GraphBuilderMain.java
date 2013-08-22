@@ -46,7 +46,7 @@ public class GraphBuilderMain {
         long startTime = System.currentTimeMillis();
 
         List<String> paths = new ArrayList<String>();
-        paths.add("classpath:org/opentripplanner/graph_builder/application-context.xml");
+        paths.add("classpath:org/opentripplanner/application-context.xml");
         for (String arg : args)
             paths.add(arg);
 
