@@ -39,6 +39,8 @@ public class GtfsRealtimeHttpTripUpdateSource implements TripUpdateSource, Prefe
     private String url;
     
     private Graph graph;
+    
+    private long lastTimestamp = Long.MIN_VALUE;
 
     @Override
     public void configure(Graph graph, Preferences preferences) throws Exception {
@@ -58,7 +60,14 @@ public class GtfsRealtimeHttpTripUpdateSource implements TripUpdateSource, Prefe
             InputStream is = HttpUtils.getData(url);
             if (is != null) {
                 feed = GtfsRealtime.FeedMessage.PARSER.parseFrom(is);
-                updates = TripUpdateList.decodeFromGtfsRealtime(feed, agencyId, graph.getTimeZone());
+
+                GtfsRealtime.FeedHeader header = feed.getHeader();
+                long feedTimestamp = header.getTimestamp();
+        
+                if(lastTimestamp < feedTimestamp) {
+                    updates = TripUpdateList.decodeFromGtfsRealtime(feed, agencyId, graph.getTimeZone());
+                    lastTimestamp = feedTimestamp;
+                }
             }
         } catch (IOException e) {
             LOG.warn("Failed to parse gtfs-rt feed from " + url + ":", e);
