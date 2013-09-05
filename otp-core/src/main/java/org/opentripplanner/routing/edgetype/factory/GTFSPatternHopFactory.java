@@ -561,7 +561,11 @@ public class GTFSPatternHopFactory {
             createGeometry(graph, trip, stopTimes, hops);
             tripPattern = patternAndHops.getFirst();
             patterns.put(stopPattern, tripPattern);
-        } 
+        }
+        // BKK: tripShortName ~= referencia útvonal, ezért azt tároljuk el
+        if(null != trip.getTripShortName()) {
+            tripPattern.exemplar = trip;
+        }
         tripPattern.addTrip(trip, stopTimes);
         return tripPattern;
     }

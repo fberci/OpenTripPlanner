@@ -44,6 +44,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.LineString;
+import lombok.Getter;
 
 /**
  * This represents a particular stop pattern on a particular route. For example, the N train has at least four different variants: express (over the
@@ -87,6 +88,9 @@ public class RouteVariant implements Serializable {
     private String name; // "N via Whitehall"
 
     private TraverseMode mode;
+    
+    @Getter
+    private String headsign;
 
     private ArrayList<TripsModelInfo> trips;
 
@@ -282,8 +286,13 @@ public class RouteVariant implements Serializable {
     }
 
     public void addTrip(Trip trip, int number) {
-        this.trips.add(new TripsModelInfo(trip.getTripHeadsign(), number, trip.getServiceId()
-                .getId(), trip.getId()));
+        // BKK: tripShortName ~= referencia útvonal, ezért azt tároljuk el
+        boolean reference = null != trip.getTripShortName();
+        this.trips.add(new TripsModelInfo(trip.getTripHeadsign(), number, trip.getServiceId().getId(),
+                                          trip.getId().getId(), trip.getId().getAgencyId(), reference));
+        if(reference || headsign == null)
+            headsign = trip.getTripHeadsign();
+        
         if (direction == null) {
             direction = trip.getDirectionId();
         } else {

@@ -67,7 +67,7 @@ public class TableTripPattern implements TripPattern, Serializable {
 //    public final int patternIndex;
     
     /** An arbitrary trip that uses this pattern. Maybe we should just store route, etc. directly. */
-    public final Trip exemplar;
+    public Trip exemplar;
 
     /** 
      * This timetable holds the 'official' stop times from GTFS. If realtime stoptime updates are 

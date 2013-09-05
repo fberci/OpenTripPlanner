@@ -493,7 +493,7 @@ public class TransitIndexBuilder implements GraphBuilderWithGtfsDao {
                             addModeFromTrip(trip2);
                             variantsByTrip.put(trip2.getId(), variant);
                         }
-                      variant.addTrip(trip, pattern.getTrips().size());
+                      variant.addTrip(pattern.getExemplar(), pattern.getTrips().size());
                     } else {
                       variant.addTrip(trip, 1);
                     }
