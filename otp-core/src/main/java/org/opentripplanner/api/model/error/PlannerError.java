@@ -131,4 +131,8 @@ public class PlannerError {
     public boolean getNoPath() {
         return noPath;
     }
+    
+    public static boolean isPlanningError(Class<?> clazz) {
+        return messages.containsKey(clazz);
+    }
 }
