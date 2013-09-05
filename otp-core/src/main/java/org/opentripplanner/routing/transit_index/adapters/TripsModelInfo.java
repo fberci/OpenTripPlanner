@@ -21,44 +21,40 @@ import javax.xml.bind.annotation.XmlRootElement;
 import org.onebusaway.gtfs.model.AgencyAndId;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 @XmlRootElement(name = "trip")
+@AllArgsConstructor
 public class TripsModelInfo implements Serializable {
 
     private static final long serialVersionUID = -4853941297409355512L;
-
-    public TripsModelInfo(String headsign, Integer number, String calendarId, AgencyAndId tripId) {
-        this.headsign = headsign;
-        this.numberOfTrips = number;
-        this.calendarId = calendarId;
-        this.id = tripId.getId();
-        this.agency = tripId.getAgencyId();
-    }
-
-    public TripsModelInfo() {
-    }
-
-    public String getId() {
-        return id;
-    }
-
+    
+    @Getter
     @XmlAttribute
     @JsonSerialize
     String headsign;
 
+    @Getter
     @XmlAttribute
     @JsonSerialize
     Integer numberOfTrips;
 
+    @Getter
     @XmlAttribute
     @JsonSerialize
     String calendarId;
 
+    @Getter
     @XmlAttribute
     @JsonSerialize
     String id;
 
+    @Getter
     @XmlAttribute
     @JsonSerialize
     String agency;
+
+    @Getter
+    boolean reference;
 }
