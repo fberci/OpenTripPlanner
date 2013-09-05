@@ -86,6 +86,9 @@ public class Graph implements Serializable {
     private final MavenVersion mavenVersion = MavenVersion.VERSION;
 
     private static final Logger LOG = LoggerFactory.getLogger(Graph.class);
+    
+    @Setter @Getter
+    private String routerId;
 
     // transit feed validity information in seconds since epoch
     @Getter
