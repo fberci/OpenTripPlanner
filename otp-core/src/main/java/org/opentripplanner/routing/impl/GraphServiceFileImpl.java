@@ -177,6 +177,9 @@ public class GraphServiceFileImpl implements GraphService {
             ex.printStackTrace();
             return null;
         }
+        
+        graph.setRouterId(routerId);
+        
         // Decorate the graph. Even if a config file is not present
         // one could be bundled inside.
         try {
@@ -232,6 +235,7 @@ public class GraphServiceFileImpl implements GraphService {
                     evictGraph(routerId);
                 graphs.put(routerId, graph);
             }
+            graph.setRouterId(routerId);
             levels.put(routerId, loadLevel);
             return true;
         }
@@ -242,6 +246,7 @@ public class GraphServiceFileImpl implements GraphService {
     @Override
     public boolean registerGraph(String routerId, Graph graph) {
         Graph existing = graphs.put(routerId, graph);
+        graph.setRouterId(routerId);
         return existing == null;
      }
 
