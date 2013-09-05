@@ -23,6 +23,8 @@ import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
 import com.sun.jersey.spi.spring.container.servlet.SpringServlet;
+import org.geotools.referencing.factory.DeferredAuthorityFactory;
+import org.geotools.util.WeakCollectionCleaner;
 import org.opentripplanner.routing.services.GraphService;
 
 public class ApiServlet extends SpringServlet {
@@ -42,6 +44,10 @@ public class ApiServlet extends SpringServlet {
     @Override
     public void destroy() {
         graphService.evictAll();
+        
+        // Stop threads created by geotools
+        WeakCollectionCleaner.DEFAULT.exit();
+        DeferredAuthorityFactory.exit();
     }
     
     public ApiServlet() {
