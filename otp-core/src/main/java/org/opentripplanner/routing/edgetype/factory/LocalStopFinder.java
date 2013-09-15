@@ -316,25 +316,25 @@ public class LocalStopFinder {
     private HashSet<TripPattern> getNearbyPatterns(Stop stop) {
         // get all transit stops within about the LOCAL_STOP_SEARCH_RADIUS
         Coordinate c = new Coordinate(stop.getLon(), stop.getLat());
-        List<Vertex> localTransitStops = indexService.getLocalTransitStops(c, LOCAL_STOP_SEARCH_RADIUS);
+        List<TransitStop> localTransitStops = indexService.getLocalTransitStops(c, LOCAL_STOP_SEARCH_RADIUS);
 
         HashSet<TripPattern> neighborhood = new HashSet<TripPattern>();
-        for (Vertex v : localTransitStops) {
-            if (v instanceof TransitStop) {
-                if (((TransitStop) v).isEntrance()) {
-                    // enter to get to actual stop
-                    for (Edge e : v.getOutgoing()) {
-                        v = e.getToVertex();
-                        break;
-                    }
+        for (TransitStop transitStop : localTransitStops) {
+            if (transitStop.isEntrance()) {
+                // enter to get to actual stop
+                for (Edge e : transitStop.getOutgoing()) {
+                    Vertex toVertex = e.getToVertex();
+                    if(toVertex instanceof TransitStop && ((TransitStop) toVertex).isEntrance())
+                        transitStop = (TransitStop) toVertex;
+                    break;
                 }
-                for (Edge e : v.getOutgoing()) {
-                    for (Edge e2 : e.getToVertex().getOutgoing()) {
-                        if (e2 instanceof TransitBoardAlight && ((TransitBoardAlight) e2).isBoarding()) {
-                            neighborhood.add(((TransitBoardAlight) e2).getPattern());
-                        } else if (e2 instanceof FrequencyBoard) {
-                            neighborhood.add(((FrequencyBoard) e2).getPattern());
-                        }
+            }
+            for (Edge e : transitStop.getOutgoing()) {
+                for (Edge e2 : e.getToVertex().getOutgoing()) {
+                    if (e2 instanceof TransitBoardAlight && ((TransitBoardAlight) e2).isBoarding()) {
+                        neighborhood.add(((TransitBoardAlight) e2).getPattern());
+                    } else if (e2 instanceof FrequencyBoard) {
+                        neighborhood.add(((FrequencyBoard) e2).getPattern());
                     }
                 }
             }
