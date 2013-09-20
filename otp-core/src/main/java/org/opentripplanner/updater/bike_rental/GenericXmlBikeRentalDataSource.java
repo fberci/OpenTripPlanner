@@ -65,22 +65,27 @@ public abstract class GenericXmlBikeRentalDataSource implements BikeRentalDataSo
 
     @Override
     public boolean update() {
+        HttpUtils httpUtils = new HttpUtils();
         try {
-            InputStream data = HttpUtils.getData(url);
+            InputStream data = httpUtils.getData(url);
             if (data == null) {
                 log.warn("Failed to get data from url " + url);
                 return false;
             }
             parseXML(data);
         } catch (IOException e) {
+            httpUtils.cleanup();
             log.warn("Error reading bike rental feed from " + url, e);
             return false;
         } catch (ParserConfigurationException e) {
+            httpUtils.cleanup();
             throw new RuntimeException(e);
         } catch (SAXException e) {
+            httpUtils.cleanup();
             log.warn("Error parsing bike rental feed from " + url + "(bad XML of some sort)", e);
             return false;
         }
+        httpUtils.cleanup();
         return true;
     }
 

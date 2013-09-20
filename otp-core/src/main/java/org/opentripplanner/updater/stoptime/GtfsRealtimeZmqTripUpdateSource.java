@@ -53,15 +53,20 @@ public class GtfsRealtimeZmqTripUpdateSource implements TripUpdateSource, Prefer
     }
 
     @Override
-    public List<TripUpdateList> getUpdates() {
+    public List<TripUpdateList> getUpdates() throws Exception {
         FeedMessage feed = null;
         List<TripUpdateList> updates = null;
+        InputStream is = null;
         try {
-            InputStream is = new FileInputStream(file);
+            is = new FileInputStream(file);
             feed = GtfsRealtime.FeedMessage.PARSER.parseFrom(is);
             updates = TripUpdateList.decodeFromGtfsRealtime(feed, agencyId, graph.getTimeZone());
         } catch (IOException e) {
             LOG.warn("Failed to parse gtfs-rt feed at " + file + ":", e);
+        } finally {
+            if(is != null) {
+                is.close();
+            }
         }
         return updates;
     }

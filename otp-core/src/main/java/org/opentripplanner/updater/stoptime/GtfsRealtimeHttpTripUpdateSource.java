@@ -53,11 +53,14 @@ public class GtfsRealtimeHttpTripUpdateSource implements TripUpdateSource, Prefe
     }
 
     @Override
-    public List<TripUpdateList> getUpdates() {
+    public List<TripUpdateList> getUpdates() throws Exception {
         GtfsRealtime.FeedMessage feed = null;
         List<TripUpdateList> updates = null;
+        
+        HttpUtils httpUtils = new HttpUtils();
+        InputStream is = null;
         try {
-            InputStream is = HttpUtils.getData(url, lastTimestamp);
+            is = httpUtils.getData(url, lastTimestamp);
             if (is != null) {
                 feed = GtfsRealtime.FeedMessage.PARSER.parseFrom(is);
 
@@ -71,7 +74,12 @@ public class GtfsRealtimeHttpTripUpdateSource implements TripUpdateSource, Prefe
             }
         } catch (Exception e) {
             LOG.warn("Failed to parse gtfs-rt feed from " + url + ":", e);
+        } finally {
+            if(is != null) {
+                is.close();
+            }
         }
+        httpUtils.cleanup();
         return updates;
     }
 

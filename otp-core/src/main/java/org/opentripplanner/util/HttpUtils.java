@@ -26,57 +26,81 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.cookie.DateUtils;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
+import org.apache.http.util.EntityUtils;
 
 public class HttpUtils {
     
     private static final String HEADER_IFMODSINCE = "If-Modified-Since";
     private static final int TIMEOUT_CONNECTION = 5000;
     private static final int TIMEOUT_SOCKET = 5000;
+    
+    private HttpClient httpClient = getClient();
 
-    public static InputStream getData(String url) throws ClientProtocolException, IOException {
+    public InputStream getData(String url) throws ClientProtocolException, IOException {
         return getData(url, -1);
     }
 
-    public static InputStream getData(String url, long timestamp) throws ClientProtocolException, IOException {
-        HttpGet httpget = new HttpGet(url);
-        if(timestamp >= 0)
-            httpget.addHeader(HEADER_IFMODSINCE, DateUtils.formatDate(new Date(timestamp * 1000)));
+    public InputStream getData(String url, long timestamp) throws IOException {
+        HttpGet httpGet = null;
+        HttpResponse httpResponse = null;
         
-        HttpClient httpclient = getClient();
-        HttpResponse response = httpclient.execute(httpget);
-        if(response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_MODIFIED)
-            return null;
-        
-        if(response.getStatusLine().getStatusCode() != HttpStatus.SC_OK)
-            return null;
+        try {
+            httpGet = new HttpGet(url);
+            if(timestamp >= 0)
+                httpGet.addHeader(HEADER_IFMODSINCE, DateUtils.formatDate(new Date(timestamp * 1000)));
 
-        HttpEntity entity = response.getEntity();
-        if (entity == null) {
-            return null;
+            httpResponse = httpClient.execute(httpGet);
+        
+            if(httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
+                cleanup(null, httpGet, httpResponse);
+                return null;
+            }
+
+            if(httpResponse.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+                cleanup(null, httpGet, httpResponse);
+                return null;
+            }
+
+            HttpEntity entity = httpResponse.getEntity();
+            if (entity == null) {
+                httpGet.abort();
+                return null;
+            }
+            
+            cleanup(null, null, null);
+            
+            InputStream instream = entity.getContent();
+            return instream;
+        } catch (IOException e) {
+            cleanup(null, httpGet, httpResponse);
+            throw e;
         }
-        InputStream instream = entity.getContent();
-        return instream;
     }
 
-    public static void testUrl(String url) throws ClientProtocolException, IOException {
+    public static void testUrl(String url) throws IOException {
         HttpHead head = new HttpHead(url);
         HttpClient httpclient = getClient();
         HttpResponse response = httpclient.execute(head);
 
         StatusLine status = response.getStatusLine();
         if (status.getStatusCode() == 404) {
+            cleanup(httpclient, head, response);
             throw new FileNotFoundException();
         }
 
         if (status.getStatusCode() != 200) {
+            cleanup(httpclient, head, response);
             throw new RuntimeException("Could not get URL: " + status.getStatusCode() + ": "
                     + status.getReasonPhrase());
         }
+        
+        cleanup(httpclient, head, response);
     }
     
     private static HttpClient getClient() {
@@ -87,5 +111,21 @@ public class HttpUtils {
         DefaultHttpClient httpclient = new DefaultHttpClient();
         httpclient.setParams(httpParams);
         return httpclient;
+    }
+    
+    private static void cleanup(HttpClient httpClient, HttpRequestBase httpRequest, HttpResponse httpResponse) throws IOException {
+        if(httpResponse != null) {
+            EntityUtils.consume(httpResponse.getEntity());
+        }
+        if(httpRequest != null) {
+            httpRequest.abort();
+        }
+        if(httpClient != null) {
+            httpClient.getConnectionManager().shutdown();
+        }
+    }
+    
+    public void cleanup() {
+        httpClient.getConnectionManager().shutdown();
     }
 }
