@@ -53,8 +53,9 @@ public abstract class GenericJSONBikeRentalDataSource implements BikeRentalDataS
 
     @Override
     public boolean update() {
+        HttpUtils httpUtils = new HttpUtils();
         try {
-            InputStream data = HttpUtils.getData(url);
+            InputStream data = httpUtils.getData(url);
             if (data == null) {
                 log.warn("Failed to get data from url " + url);
                 return false;
@@ -62,15 +63,19 @@ public abstract class GenericJSONBikeRentalDataSource implements BikeRentalDataS
             parseJSON(data);
             data.close();
         } catch (IllegalArgumentException e) {
+            httpUtils.cleanup();
             log.warn("Error parsing bike rental feed from " + url, e);
             return false;
         } catch (JsonProcessingException e) {
+            httpUtils.cleanup();
             log.warn("Error parsing bike rental feed from " + url + "(bad JSON of some sort)", e);
             return false;
         } catch (IOException e) {
+            httpUtils.cleanup();
             log.warn("Error reading bike rental feed from " + url, e);
             return false;
         }
+        httpUtils.cleanup();
         return true;
     }
 

@@ -24,6 +24,6 @@ public interface TripUpdateSource {
      * @return a TripUpdateList potentially containing updates for several different trips,
      *         or null if an exception occurred while processing the message
      */
-    public List<TripUpdateList> getUpdates();
+    public List<TripUpdateList> getUpdates() throws Exception;
 
 }

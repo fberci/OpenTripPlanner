@@ -58,6 +58,8 @@ public class GtfsRealtimeAlertsUpdater extends PollingGraphUpdater {
     private long earlyStart;
 
     private AlertsUpdateHandler updateHandler = null;
+    
+    private HttpUtils httpUtils;
 
     @Override
     public void setGraphUpdaterManager(GraphUpdaterManager updaterManager) {
@@ -87,12 +89,14 @@ public class GtfsRealtimeAlertsUpdater extends PollingGraphUpdater {
         updateHandler.setEarlyStart(earlyStart);
         updateHandler.setDefaultAgencyId(defaultAgencyId);
         updateHandler.setPatchService(patchService);
+        httpUtils = new HttpUtils();
     }
 
     @Override
     protected void runPolling() throws Exception {
+        InputStream data = null;
         try {
-            InputStream data = HttpUtils.getData(url, lastTimestamp);
+            data = httpUtils.getData(url, lastTimestamp);
             if (data == null) {
                 return;
             }
@@ -116,11 +120,16 @@ public class GtfsRealtimeAlertsUpdater extends PollingGraphUpdater {
             lastTimestamp = feedTimestamp;
         } catch (Exception e) {
             LOG.error("Eror reading gtfs-realtime feed from " + url, e);
+        } finally {
+            if(data != null) {
+                data.close();
+            }
         }
     }
 
     @Override
     public void teardown() {
+        httpUtils.cleanup();
     }
 
     public String toString() {
