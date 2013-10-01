@@ -16,8 +16,10 @@ package org.opentripplanner.routing.edgetype;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import lombok.Getter;
 
@@ -65,6 +67,7 @@ public class Timetable implements Serializable {
      * additional TripTimes objects for unscheduled trips.
      */
     private final ArrayList<TripTimes> tripTimes;
+    private final Map<AgencyAndId, Integer> tripIndices;
     
     /**
      * The ServiceDate for which this (updated) timetables is valid. If null, then it is valid for all dates.
@@ -90,6 +93,7 @@ public class Timetable implements Serializable {
     /** Construct an empty Timetable. */
     public Timetable(TableTripPattern pattern) {
         tripTimes = new ArrayList<TripTimes>();
+        tripIndices = new HashMap<AgencyAndId, Integer>();
         this.pattern = pattern;
         this.serviceDate = null;
     }
@@ -100,6 +104,7 @@ public class Timetable implements Serializable {
      */
     private Timetable (Timetable tt, ServiceDate serviceDate) {
         tripTimes = new ArrayList<TripTimes>(tt.tripTimes);
+        tripIndices = new HashMap<AgencyAndId, Integer>(tt.tripIndices);
         this.serviceDate = serviceDate;
         this.pattern = tt.pattern;
     }
@@ -326,15 +331,9 @@ public class Timetable implements Serializable {
 
     /** @return the index of TripTimes for this Trip(Id) in this particular Timetable */
     public int getTripIndex(AgencyAndId tripId) {
-        int ret = 0;
-        for (TripTimes tt : tripTimes) {
-            // could replace linear search with indexing in stoptime updater, but not necessary
-            // at this point since the updater thread is far from pegged.
-            if (tt.getTrip().getId().equals(tripId)) 
-                return ret;
-            ret += 1;
-        }
-        return -1;
+        Integer index = tripIndices.get(tripId);
+        if(index == null) return -1;
+        return index;
     }
     
     /** 
@@ -432,6 +431,7 @@ public class Timetable implements Serializable {
             ScheduledTripTimes firstTripTime = (ScheduledTripTimes) tripTimes.get(0);
             tripTime.compactStopSequence(firstTripTime);
         }
+        tripIndices.put(trip.getId(), tripTimes.size());
         tripTimes.add(tripTime);
         // TODO eliminate delegation / encapsulation fail
         pattern.trips.add(trip);
