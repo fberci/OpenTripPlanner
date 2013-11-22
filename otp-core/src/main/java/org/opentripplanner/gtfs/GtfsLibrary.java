@@ -14,9 +14,6 @@
 package org.opentripplanner.gtfs;
 
 
-import java.io.File;
-import java.io.IOException;
-
 import org.onebusaway.gtfs.impl.GtfsRelationalDaoImpl;
 import org.onebusaway.gtfs.impl.calendar.CalendarServiceDataFactoryImpl;
 import org.onebusaway.gtfs.impl.calendar.CalendarServiceImpl;
@@ -27,6 +24,9 @@ import org.onebusaway.gtfs.serialization.GtfsReader;
 import org.onebusaway.gtfs.services.GtfsRelationalDao;
 import org.onebusaway.gtfs.services.calendar.CalendarService;
 import org.opentripplanner.routing.core.TraverseMode;
+
+import java.io.File;
+import java.io.IOException;
 
 public class GtfsLibrary {
 
@@ -97,7 +97,10 @@ public class GtfsLibrary {
     }
 
     public static TraverseMode getTraverseMode(Route route) {
-        int routeType = route.getType();
+	    return getTraverseMode(route.getType());
+    }
+
+    public static TraverseMode getTraverseMode(int routeType) {
         switch (routeType) {
         case 0:
             return TraverseMode.TRAM;

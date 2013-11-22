@@ -83,6 +83,12 @@
           <artifactId>jcl-over-slf4j</artifactId>
         </dependency>
 
+        <dependency>
+          <groupId>com.brsanthu</groupId>
+          <artifactId>google-analytics-java</artifactId>
+          <version>1.0.2</version>
+        </dependency>
+
         <!-- JAVA STANDARD LIBRARY EXTENSIONS -->
         <dependency>
           <groupId>com.google.guava</groupId>
