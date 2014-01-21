@@ -13,11 +13,7 @@
 
 package org.opentripplanner.updater.stoptime;
 
-import java.util.Collection;
-import java.util.List;
-
 import lombok.Setter;
-
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.onebusaway.gtfs.model.calendar.ServiceDate;
 import org.opentripplanner.routing.edgetype.TableTripPattern;
@@ -27,6 +23,8 @@ import org.opentripplanner.routing.services.TransitIndexService;
 import org.opentripplanner.routing.trippattern.TripUpdateList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Collection;
 
 /**
  * This class should be used to create snapshots of lookup tables of realtime data. This is
@@ -72,6 +70,8 @@ public class TimetableSnapshotSource {
         if (transitIndexService == null)
             throw new RuntimeException(
                     "Real-time update need a TransitIndexService. Please setup one during graph building.");
+
+	    snapshot = buffer.commit(true);
     }
     
     /**
@@ -81,7 +81,16 @@ public class TimetableSnapshotSource {
      *         release its reference to the snapshot to release resources.
      */
     public TimetableResolver getTimetableSnapshot() {
-        return getTimetableSnapshot(false);
+	    return snapshot;
+/*	    long time = System.currentTimeMillis();
+	    try {
+			return getTimetableSnapshot(false);
+	    } finally {
+		    long diff = System.currentTimeMillis() - time;
+		    if(diff > 5) {
+			    LOG.warn("Waited " + diff + "ms for snapshot.");
+		    }
+	    }*/
     }
     
     protected synchronized TimetableResolver getTimetableSnapshot(boolean force) {
@@ -90,6 +99,8 @@ public class TimetableSnapshotSource {
             if (force || buffer.isDirty()) {
                 LOG.debug("Committing {}", buffer.toString());
                 snapshot = buffer.commit(force);
+	            long diff = System.currentTimeMillis() - now;
+	            LOG.warn("Committed changes in " + diff + "ms");
             } else {
                 LOG.debug("Buffer was unchanged, keeping old snapshot.");
             }
@@ -152,7 +163,7 @@ public class TimetableSnapshotSource {
             getTimetableSnapshot(modified);
         }
         else {
-            getTimetableSnapshot(); 
+            getTimetableSnapshot(false);
         }
 
     }
