@@ -1,5 +1,10 @@
 package org.opentripplanner.standalone;
 
+import com.beust.jcommander.IParameterValidator;
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.ParameterException;
+import org.opentripplanner.routing.impl.GraphServiceFileImpl;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -8,12 +13,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.opentripplanner.routing.impl.GraphServiceFileImpl;
-
-import com.beust.jcommander.IParameterValidator;
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.ParameterException;
 
 /**
  * This is a JCommander-annotated class that holds parameters for OTP stand-alone mode.
@@ -124,7 +123,7 @@ public class CommandLineParameters {
             description = "run a server")
     boolean server = false;
     
-    @Parameter( names = { "-t", "--static"}, 
+    @Parameter( names = { "-t", "--static"}, validateWith = ReadableDirectory.class,
     description = "path to static content")
     String staticDirectory;
 
@@ -140,8 +139,7 @@ public class CommandLineParameters {
     public void infer () {
         server |= ( inMemory || port != null );
         if (graphDirectory  == null) graphDirectory  = DEFAULT_GRAPH_DIRECTORY;
-        if (routerIds == null) routerIds = Arrays.asList(DEFAULT_ROUTER_ID);
-        if (staticDirectory == null) staticDirectory = DEFAULT_STATIC_DIRECTORY;        
+        if (routerIds == null) routerIds = Arrays.asList(DEFAULT_ROUTER_ID);      
         if (cacheDirectory == null)  cacheDirectory  = DEFAULT_CACHE_DIRECTORY;        
         if (server && port == null) {
             port = DEFAULT_PORT;

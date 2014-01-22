@@ -1,13 +1,12 @@
 package org.opentripplanner.standalone;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.BindException;
-
+import com.google.common.io.Files;
+import com.google.common.io.InputSupplier;
+import com.sun.jersey.api.container.ContainerFactory;
+import com.sun.jersey.api.core.PackagesResourceConfig;
+import com.sun.jersey.api.core.ResourceConfig;
+import com.sun.jersey.core.spi.component.ioc.IoCComponentProviderFactory;
 import net.lingala.zip4j.core.ZipFile;
-import net.lingala.zip4j.exception.ZipException;
-
 import org.glassfish.grizzly.http.server.HttpHandler;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.grizzly.http.server.NetworkListener;
@@ -17,12 +16,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
-import com.google.common.io.Files;
-import com.google.common.io.InputSupplier;
-import com.sun.jersey.api.container.ContainerFactory;
-import com.sun.jersey.api.core.PackagesResourceConfig;
-import com.sun.jersey.api.core.ResourceConfig;
-import com.sun.jersey.core.spi.component.ioc.IoCComponentProviderFactory;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.BindException;
 
 public class GrizzlyServer {
 
@@ -76,7 +73,7 @@ public class GrizzlyServer {
      * command-line Maven build that left a WAR in /target/classes. Therefore we check for the
      * existence of source directories that would be seen from Eclipse, and serve those as fallbacks.
      */
-    public HttpHandler makeClientStaticHandler () {
+    public HttpHandler makeClientWarHandler () {
         File clientDir = Files.createTempDir();
         /* Eclipse does not seem to be copying this file. Maven is. */
         File clientWar = new File(clientDir, CLIENT_WAR_FILENAME);
@@ -100,6 +97,17 @@ public class GrizzlyServer {
         return new StaticHttpHandler(clientDir.toString());
     }
     
+    public HttpHandler makeClientStaticDirectoryHandler () {
+        return new StaticHttpHandler(params.staticDirectory);
+    }
+
+    public HttpHandler makeClientStaticHandler () {
+        if(params.staticDirectory != null)
+            return makeClientStaticDirectoryHandler();
+        else
+            return makeClientWarHandler();
+    }
+
     public void run() {
         
         /* Rather than use Jersey's GrizzlyServerFactory we will construct one manually, so we can
@@ -132,6 +140,8 @@ public class GrizzlyServer {
               from ./ we can reach e.g. target/classes/data-sources.xml */
         HttpHandler staticHandler = makeClientStaticHandler();
         httpServer.getServerConfiguration().addHttpHandler(staticHandler, "/");
+
+        for (NetworkListener l : httpServer.getListeners()) { l.getFileCache().setEnabled(false); }
         
         /* RELINQUISH CONTROL TO THE SERVER THREAD */
         try {
