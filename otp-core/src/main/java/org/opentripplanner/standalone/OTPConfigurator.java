@@ -120,6 +120,13 @@ public class OTPConfigurator {
             cpf.bind(GeometryIndex.class);
             cpf.bind(SampleFactory.class);
         }
+
+        RoutingRequest prototypeRoutingRequest = new RoutingRequest();
+        prototypeRoutingRequest.setMaxTransfers(4);
+        prototypeRoutingRequest.setTransferSlack(20);
+        prototypeRoutingRequest.setBoardSlack(10);
+        prototypeRoutingRequest.setAlightSlack(10);
+        cpf.bind(RoutingRequest.class, prototypeRoutingRequest);
         
         // Perform field injection on bound instances and call post-construct methods
         cpf.doneBinding();   
