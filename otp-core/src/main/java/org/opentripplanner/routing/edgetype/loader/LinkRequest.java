@@ -122,7 +122,7 @@ public class LinkRequest {
         /* is there a bundle of edges nearby to use or split? */
         GenericLocation location = new GenericLocation(coordinate);
         TraversalRequirements reqs = new TraversalRequirements(options);
-        CandidateEdgeBundle edges = linker.index.getClosestEdges(location, reqs, null, nearbyRouteEdges, true);
+        CandidateEdgeBundle edges = linker.index.getClosestEdges(location, reqs, null, nearbyRouteEdges, false);
         if (edges == null || edges.size() < 1) {
             // no edges were found nearby, or a bidirectional/loop bundle of edges was not identified
             LOG.debug("found too few edges: {} {}", v.getName(), v.getCoordinate());
@@ -345,7 +345,7 @@ public class LinkRequest {
 
     public void connectVertexToStreets(TransitStop v, boolean wheelchairAccessible) {
         List<Edge> nearbyEdges = null;
-        if (linker.edgesForRoute != null && linker.transitIndex != null) {
+        if (false && linker.edgesForRoute != null && linker.transitIndex != null) {
             nearbyEdges = new ArrayList<Edge>();
             for (AgencyAndId route : linker.transitIndex.getRoutesForStop(v.getStopId())) {
                 List<Edge> edges = linker.edgesForRoute.get(route);

@@ -227,7 +227,7 @@ public class CandidateEdge {
         double myScore = 0;
         // why is this being scaled by 1/360th of the radius of the earth?
         myScore = distance * SphericalDistanceLibrary.RADIUS_OF_EARTH_IN_M / 360.0;
-        myScore /= preference;
+        /*myScore /= preference;
         if ((edge.getStreetClass() & platform) != 0) {
             // this a hack, but there's not really a better way to do it
             myScore /= PLATFORM_PREFERENCE;
@@ -250,7 +250,7 @@ public class CandidateEdge {
             // If you are moving along the edge, score is not penalized.
             // If you are moving against the edge, score is penalized by 1.
             myScore += (directionDifference / MAX_DIRECTION_DIFFERENCE);
-        }
+        }*/
 
         // break ties by choosing shorter edges; this should cause split streets
         // to be preferred
