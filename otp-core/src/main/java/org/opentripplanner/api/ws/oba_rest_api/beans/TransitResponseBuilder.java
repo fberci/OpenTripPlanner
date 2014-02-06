@@ -26,6 +26,7 @@ import org.onebusaway.gtfs.model.calendar.ServiceDate;
 import org.opentripplanner.api.ws.Response;
 import org.opentripplanner.api.ws.oba_rest_api.OneBusAwayApiCacheService;
 import org.opentripplanner.gtfs.GtfsLibrary;
+import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.edgetype.TableTripPattern;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.patch.Alert;
@@ -333,7 +334,11 @@ public class TransitResponseBuilder {
 
 
 	    if(vehicle.getVehicleRouteType() != null) {
+		    try {
 		    transitVehicle.setVehicleRouteType(GtfsLibrary.getTraverseMode(vehicle.getVehicleRouteType()));
+		    } catch(Exception e) {
+			    transitVehicle.setVehicleRouteType(TraverseMode.BUS);
+		    }
 	    }
         
         if(vehicle.getRouteId() != null) {
