@@ -134,11 +134,13 @@ public class GrizzlyServer {
               https://java.net/jira/browse/GRIZZLY-1481?focusedCommentId=360385&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#action_360385 */
         HttpHandler handler = ContainerFactory.createContainer(HttpHandler.class, rc, iocFactory);
         httpServer.getServerConfiguration().addHttpHandler(handler, "/otp-rest-servlet/");
+	    HttpHandler handler2 = ContainerFactory.createContainer(HttpHandler.class, rc, iocFactory);
+	    httpServer.getServerConfiguration().addHttpHandler(handler2, "/bkk-utvonaltervezo-api/");
         /* 2. A static content server for the client JS apps etc.
               This is a filesystem path, not classpath. Files are relative to the project dir, so
               from ./ we can reach e.g. target/classes/data-sources.xml */
         HttpHandler staticHandler = makeClientStaticHandler();
-        httpServer.getServerConfiguration().addHttpHandler(staticHandler, "/");
+        httpServer.getServerConfiguration().addHttpHandler(staticHandler, "/bkk-gui/");
 
         for (NetworkListener l : httpServer.getListeners()) { l.getFileCache().setEnabled(false); }
         
