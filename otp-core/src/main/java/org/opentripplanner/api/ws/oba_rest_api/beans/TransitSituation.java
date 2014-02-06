@@ -13,13 +13,13 @@
 
 package org.opentripplanner.api.ws.oba_rest_api.beans;
 
-import java.util.Collection;
-import java.util.List;
 import lombok.Data;
-import org.opentripplanner.routing.patch.TranslatedString;
+
+import java.util.Collection;
 
 @Data
 public class TransitSituation {
+	// XML: todo
     private String id;
     private Long creationTime;
     private String reasons;

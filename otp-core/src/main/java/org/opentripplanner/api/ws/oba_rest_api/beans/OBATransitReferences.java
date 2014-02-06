@@ -13,14 +13,35 @@
 
 package org.opentripplanner.api.ws.oba_rest_api.beans;
 
-import java.util.Collection;
 import lombok.Data;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
+import java.util.Collection;
+
 @Data
-public class OBATransitReferences implements TransitReferences {
+@XmlAccessorType(XmlAccessType.FIELD)
+public class OBATransitReferences extends TransitReferences {
+
+	@XmlElementWrapper(name = "agencies")
+	@XmlElement(name = "agency")
     private final Collection<TransitAgency> agencies;
+
+	@XmlElementWrapper(name = "routes")
+	@XmlElement(name = "route")
     private final Collection<TransitRoute> routes;
+
+	@XmlElementWrapper(name = "stops")
+	@XmlElement(name = "stop")
     private final Collection<TransitStop> stops;
+
+	@XmlElementWrapper(name = "trips")
+	@XmlElement(name = "trip")
     private final Collection<TransitTrip> trips;
+
+	@XmlElementWrapper(name = "situations")
+	@XmlElement(name = "situation")
     private final Collection<TransitSituation> situations;
 }

@@ -17,15 +17,18 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Data;
 
+import javax.xml.bind.annotation.XmlTransient;
 import java.util.Collection;
 
 @Data
 @JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
 @JsonIgnoreProperties({"headsign", "stopId", "sequence"})
 public class TransitScheduleStopTime extends TransitStopTime {
+	@XmlTransient
 	private int sequence;
-    private String tripId;
+	@XmlTransient
     private String headsign;
+	private String tripId;
     private String serviceDate;
     private Boolean wheelchairAccessible;
     private Collection<String> groupIds;

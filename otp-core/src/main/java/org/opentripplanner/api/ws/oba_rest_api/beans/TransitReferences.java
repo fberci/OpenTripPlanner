@@ -13,5 +13,5 @@
 
 package org.opentripplanner.api.ws.oba_rest_api.beans;
 
-public interface TransitReferences {
+public abstract class TransitReferences {
 }

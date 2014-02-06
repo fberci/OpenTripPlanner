@@ -15,13 +15,11 @@ package org.opentripplanner.api.ws.oba_rest_api.beans;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
 @AllArgsConstructor
-@XmlAccessorType(XmlAccessType.FIELD)
 public class TransitCoordinatePoint {
     private float lat;
     private float lon;

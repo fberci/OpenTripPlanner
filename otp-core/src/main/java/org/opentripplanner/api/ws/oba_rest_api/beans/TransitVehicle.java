@@ -6,7 +6,11 @@ import lombok.Data;
 import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.updater.vehicle_location.VehicleLocation;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+
 @Data
+@XmlAccessorType(XmlAccessType.FIELD)
 public class TransitVehicle {
     private String vehicleId;
     private String stopId;

@@ -16,12 +16,23 @@ package org.opentripplanner.api.ws.oba_rest_api.beans;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlSeeAlso;
 import java.util.List;
 
 @Data
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlSeeAlso({
+		TransitAgencyWithCoverage.class, TransitRoute.class, TransitStop.class, TransitTripDetails.class, TransitVehicle.class
+})
+@NoArgsConstructor
 public class TransitListEntryWithReferences<B> {
     @JsonProperty("class")
+    @XmlAttribute(name = "class")
     private String klass;
     private List<B> list;
     boolean outOfRange = false;

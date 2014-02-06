@@ -131,7 +131,7 @@ import java.util.*;
 
 @Slf4j
 @Autowire
-@Produces({ MediaType.APPLICATION_JSON }) //, MediaType.APPLICATION_XML, MediaType.TEXT_XML })
+@Produces({ MediaType.APPLICATION_XML, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
 public abstract class OneBusAwayApiMethod<T> {
     private static final Logger LOG = LoggerFactory.getLogger(OneBusAwayApiMethod.class);
 
@@ -143,7 +143,7 @@ public abstract class OneBusAwayApiMethod<T> {
     /**
      * The accepted content type extensions.
      */
-    public final static String API_CONTENT_TYPE = "{contentType:(?:|\\.xml|\\.json)}";
+    public final static String API_CONTENT_TYPE = ""; //"{contentType:(?:|\\.xml|\\.json)}";
 
     public static final int NEARBY_STOP_RADIUS = 100;
 

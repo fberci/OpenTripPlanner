@@ -13,12 +13,13 @@
 
 package org.opentripplanner.api.ws.oba_rest_api.beans;
 
-import java.util.HashMap;
-import java.util.Map;
 import lombok.Data;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Data
-public class OTPTransitReferences implements TransitReferences {
+public class OTPTransitReferences extends TransitReferences {
     
     private Map<String, TransitAgency> agencies = new HashMap<String, TransitAgency>();
     private Map<String, TransitRoute> routes = new HashMap<String, TransitRoute>();

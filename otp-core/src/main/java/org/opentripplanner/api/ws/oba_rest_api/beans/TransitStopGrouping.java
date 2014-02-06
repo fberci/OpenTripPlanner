@@ -13,10 +13,13 @@
 
 package org.opentripplanner.api.ws.oba_rest_api.beans;
 
-import java.util.Collection;
 import lombok.Data;
 
+import javax.xml.bind.annotation.XmlRootElement;
+import java.util.Collection;
+
 @Data
+@XmlRootElement(name = "stopGrouping")
 public class TransitStopGrouping {
     private String type;
     private boolean ordered;

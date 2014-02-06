@@ -15,7 +15,10 @@ package org.opentripplanner.api.ws.oba_rest_api.beans;
 
 import lombok.Data;
 
+import javax.xml.bind.annotation.XmlRootElement;
+
 @Data
+@XmlRootElement(name = "arrivalAndDeparture")
 public class TransitArrivalAndDeparture {
     private String routeId;
     private String tripId;

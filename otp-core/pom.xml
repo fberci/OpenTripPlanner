@@ -347,6 +347,16 @@
           <artifactId>commons-math3</artifactId>
           <version>3.0</version>
         </dependency>
+        <dependency>
+            <groupId>org.codehaus.enunciate</groupId>
+            <artifactId>enunciate-core-annotations</artifactId>
+            <version>1.28</version>
+        </dependency>
+        <dependency>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-xc</artifactId>
+            <version>1.9.3</version>
+        </dependency>
 
     </dependencies>
     
@@ -362,7 +372,7 @@
           <!-- Generate REST API documentation from Jersey-annotated classes -->
           <groupId>org.codehaus.enunciate</groupId>
           <artifactId>maven-enunciate-plugin</artifactId>
-          <version>1.25</version>
+          <version>1.28</version>
           <executions>
             <execution>
               <phase>site</phase> <!-- default binding for docs goal is process-sources phase -->

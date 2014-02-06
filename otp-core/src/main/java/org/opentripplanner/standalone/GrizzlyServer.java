@@ -3,7 +3,6 @@ package org.opentripplanner.standalone;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import com.sun.jersey.api.container.ContainerFactory;
-import com.sun.jersey.api.core.PackagesResourceConfig;
 import com.sun.jersey.api.core.ResourceConfig;
 import com.sun.jersey.core.spi.component.ioc.IoCComponentProviderFactory;
 import net.lingala.zip4j.core.ZipFile;
@@ -120,7 +119,7 @@ public class GrizzlyServer {
                 .setCorePoolSize(1).setMaxPoolSize(Runtime.getRuntime().availableProcessors());
         networkListener.getTransport().setWorkerThreadPoolConfig(threadPoolConfig);
         httpServer.addListener(networkListener);
-        ResourceConfig rc = new PackagesResourceConfig("org.opentripplanner");
+        ResourceConfig rc = new UriExtensionsConfig("org.opentripplanner");
         /* DelegatingFilterProxy.class.getName() does not seem to work out of the box.
            Register a custom authentication filter, a filter that removes the /ws/ from OTP
            REST API calls, and a filter that wraps JSON in method calls as needed. */

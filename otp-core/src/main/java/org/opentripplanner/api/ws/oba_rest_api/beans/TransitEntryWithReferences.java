@@ -16,10 +16,24 @@ package org.opentripplanner.api.ws.oba_rest_api.beans;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlSeeAlso;
 
 @Data
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlSeeAlso({
+		TransitAgency.class, TransitAlert.class, TransitSearch.class, TransitArrivalAndDeparture.class, TransitStopWithArrivalsAndDepartures.class,
+		TransitArrivalsAndDepartures.class, TransitMetadata.class, TransitRoute.class, TransitSchedule.class, TransitPolyline.class, TransitStop.class,
+		TransitStopsForRoute.class, TransitTripDetails.class, TransitTripDetailsOTP.class, TransitTrip.class
+})
+@NoArgsConstructor
 public class TransitEntryWithReferences<B> {
     @JsonProperty("class")
+    @XmlAttribute(name = "class")
     private String klass;
     private B entry;
     

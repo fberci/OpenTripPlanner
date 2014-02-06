@@ -15,7 +15,10 @@ package org.opentripplanner.api.ws.oba_rest_api.beans;
 
 import lombok.Data;
 
+import javax.xml.bind.annotation.XmlRootElement;
+
 @Data
+@XmlRootElement(name = "encodedPolyline")
 public class TransitPolyline {
     private String levels = "";
     private String points;

@@ -14,17 +14,23 @@
 package org.opentripplanner.api.ws.oba_rest_api.beans;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.apache.http.HttpStatus;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlSeeAlso;
+import javax.xml.bind.annotation.XmlTransient;
 
+@NoArgsConstructor
 @XmlRootElement(name="response")
 @XmlAccessorType(XmlAccessType.FIELD)
+@XmlSeeAlso({TransitEntryWithReferences.class, TransitListEntryWithReferences.class})
 public class TransitResponse<T> {
 
     @Getter private int version;
+	@XmlTransient
     @Getter private Status status;
     @Getter private int code;
     @Getter private String text;
