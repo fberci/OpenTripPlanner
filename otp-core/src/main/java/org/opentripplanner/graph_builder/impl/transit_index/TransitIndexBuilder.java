@@ -14,17 +14,8 @@
 package org.opentripplanner.graph_builder.impl.transit_index;
 
 import com.vividsolutions.jts.algorithm.Angle;
-import static org.opentripplanner.common.IterableLibrary.filter;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Geometry;
 import org.onebusaway.gtfs.model.Agency;
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.onebusaway.gtfs.model.Route;
@@ -35,21 +26,13 @@ import org.onebusaway.gtfs.model.StopTime;
 import org.onebusaway.gtfs.model.Trip;
 import org.onebusaway.gtfs.services.GtfsRelationalDao;
 import org.opentripplanner.common.IterableLibrary;
+import org.opentripplanner.common.geometry.DirectionUtils;
 import org.opentripplanner.common.geometry.DistanceLibrary;
 import org.opentripplanner.common.geometry.SphericalDistanceLibrary;
 import org.opentripplanner.graph_builder.services.GraphBuilderWithGtfsDao;
 import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.routing.core.TraverseMode;
-import org.opentripplanner.routing.edgetype.FrequencyAlight;
-import org.opentripplanner.routing.edgetype.FrequencyBasedTripPattern;
-import org.opentripplanner.routing.edgetype.FrequencyBoard;
-import org.opentripplanner.routing.edgetype.PatternDwell;
-import org.opentripplanner.routing.edgetype.PatternHop;
-import org.opentripplanner.routing.edgetype.PatternInterlineDwell;
-import org.opentripplanner.routing.edgetype.PreAlightEdge;
-import org.opentripplanner.routing.edgetype.PreBoardEdge;
-import org.opentripplanner.routing.edgetype.TableTripPattern;
-import org.opentripplanner.routing.edgetype.TransitBoardAlight;
+import org.opentripplanner.routing.edgetype.*;
 import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.services.TransitIndexService;
@@ -63,10 +46,17 @@ import org.opentripplanner.util.MapUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Geometry;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
-import org.opentripplanner.common.geometry.DirectionUtils;
+import java.util.List;
+import java.util.Map;
+
+import static org.opentripplanner.common.IterableLibrary.filter;
 
 /**
  * Process GTFS to build transit index for use in patching
@@ -240,15 +230,15 @@ public class TransitIndexBuilder implements GraphBuilderWithGtfsDao {
         if(segment.hopOut != null) {
             Geometry geometry = segment.hopOut.getGeometry();
             Coordinate[] coordinates = geometry.getCoordinates();
-            if(coordinates.length >= 2)
-                ret.add(DirectionUtils.getAzimuth(coordinates[0], coordinates[1]));
+            if(coordinates.length >= 4)
+                ret.add(DirectionUtils.getAzimuth(coordinates[1], coordinates[2])); // BKK <
         }
         /*if(segment.hopIn != null) {
             Geometry geometry = segment.hopIn.getGeometry();
             Coordinate[] coordinates = geometry.getCoordinates();
             int length = coordinates.length;
             if(length >= 2)
-                ret.add(DirectionUtils.getAzimuth(coordinates[length - 2], coordinates[length - 1]));
+                ret.add(DirectionUtils.getAzimuth(coordinates[length - 3], coordinates[length - 2])); // BKK <
         }*/
         
         return ret;
