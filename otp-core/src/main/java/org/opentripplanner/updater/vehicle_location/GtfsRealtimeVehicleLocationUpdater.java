@@ -60,6 +60,7 @@ public class GtfsRealtimeVehicleLocationUpdater extends PollingGraphUpdater {
 	    extensionRegistry.add(GtfsRealtimeBplanner.driverName);
 	    extensionRegistry.add(GtfsRealtimeBplanner.phoneNumber);
 	    extensionRegistry.add(GtfsRealtimeBplanner.blockId);
+	    extensionRegistry.add(GtfsRealtimeBplanner.stopDistancePercent);
     }
     
     private Graph graph;
