@@ -597,6 +597,7 @@ public class TransitResponseBuilder {
         transitStop.setLon(stop.getLon());
         transitStop.setDirection(stop.getDirection() == null ? "" : stop.getDirection());
         transitStop.setLocationType(stop.getLocationType());
+	    transitStop.setRouteIds(routeIds);
 	    if(_internalRequest && _dialect == Dialect.OTP) {
 		    transitStop.setDescription(stop.getDesc());
 	    }
@@ -612,8 +613,10 @@ public class TransitResponseBuilder {
 	    if(_dialect == Dialect.MOBILE) {
 		    transitStop.setAlertIds(Lists.newArrayList(alertIds));
 	    }
-        transitStop.setRouteIds(routeIds);
-        
+	    if(_dialect == Dialect.MOBILE || _dialect == Dialect.OTP) {
+		    transitStop.setStopColorType(getStopColorTypeForStop(transitStop, routes));
+	    }
+
         if(_dialect == Dialect.OBA) {
             if(stop.getDirection() != null) {
                 transitStop.setDirection(getAngleAsDirection(Double.parseDouble(stop.getDirection())));
@@ -623,8 +626,99 @@ public class TransitResponseBuilder {
         _cacheService.<Stop, TransitStop>put(CACHE_STOP, stop, transitStop);
         return transitStop;
     }
-    
-    private static final String CACHE_STRING = "translatedStrings";
+
+	private String getStopColorTypeForStop(TransitStop transitStop, Collection<Route> routes) {
+		boolean hasTram = false,
+				hasBus = false,
+				hasTrolleyBus = false,
+				hasFerry = false,
+				hasNightBus = false,
+				hasM1 = false, hasM2 = false, hasM3 = false, hasM4 = false,
+				hasH5 = false, hasH6 = false, hasH7 = false, hasH8 = false, hasH9 = false;
+
+		for(Route route : routes) {
+			if(route.getId().getId().startsWith("VP")
+				|| route.getId().getId().startsWith("TP")
+				|| route.getId().getId().startsWith("HP"))
+			{ // A villamospótló senkit se érdekel?
+				continue;
+			}
+			else if(route.getId().getId().startsWith("9")) {
+				hasNightBus = true;
+			}
+			else if(GtfsLibrary.getTraverseMode(route) == TraverseMode.TRAM) {
+				hasTram = true;
+			}
+			else if(GtfsLibrary.getTraverseMode(route) == TraverseMode.TROLLEYBUS) {
+				hasTrolleyBus = true;
+			}
+			else if(GtfsLibrary.getTraverseMode(route) == TraverseMode.FERRY) {
+				hasFerry = true;
+			}
+			else if(GtfsLibrary.getTraverseMode(route) == TraverseMode.BUS) {
+				if(route.getId().getId().startsWith("9")) {
+					hasNightBus = true;
+				} else {
+					hasBus = true;
+				}
+			}
+			else if("M1".equals(route.getShortName())) {
+				hasM1 = true;
+			}
+			else if("M2".equals(route.getShortName())) {
+				hasM2 = true;
+			}
+			else if("M3".equals(route.getShortName())) {
+				hasM3 = true;
+			}
+			else if("M4".equals(route.getShortName())) {
+				hasM4 = true;
+			}
+			else if("H5".equals(route.getShortName())) {
+				hasH5 = true;
+			}
+			else if("H6".equals(route.getShortName())) {
+				hasH6 = true;
+			}
+			else if("H7".equals(route.getShortName())) {
+				hasH7 = true;
+			}
+			else if("H8".equals(route.getShortName())) {
+				hasH8 = true;
+			}
+			else if("H9".equals(route.getShortName())) {
+				hasH9 = true;
+			}
+		}
+
+		String ret = null;
+
+		if(hasM1) ret = append(ret, "M1");
+		if(hasM2) ret = append(ret, "M2");
+		if(hasM3) ret = append(ret, "M3");
+		if(hasM4) ret = append(ret, "M4");
+		if(hasH5) ret = append(ret, "H5");
+		if(hasH6) ret = append(ret, "H6");
+		if(hasH7) ret = append(ret, "H7");
+		if(hasH8) ret = append(ret, "H8");
+		if(hasH9) ret = append(ret, "H9");
+		if(hasFerry) ret = append(ret, "FERRY");
+		if(hasTram) ret = append(ret, "TRAM");
+		if(hasTrolleyBus) ret = append(ret, "TROLLEYBUS");
+		if(hasBus) ret = append(ret, "BUS");
+
+		if(hasNightBus && ret == null) ret = "NIGHTBUS";
+
+		if(ret == null) return "BUS";
+
+		return ret;
+	}
+
+	private String append(String a, String b) {
+		return a == null ? b : a + "-" + b;
+	}
+
+	private static final String CACHE_STRING = "translatedStrings";
     public TransitNaturalLanguageString getTranslatedString(TranslatedString translatedString) {
         if(translatedString == null) {
             return null;

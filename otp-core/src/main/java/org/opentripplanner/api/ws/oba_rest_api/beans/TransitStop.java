@@ -37,5 +37,7 @@ public class TransitStop {
     private Boolean wheelchairBoarding;
     private Collection<String> routeIds;
 	@JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
+	private String stopColorType;
+	@JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
 	private Collection<String> alertIds;
 }
