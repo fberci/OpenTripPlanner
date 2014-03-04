@@ -636,6 +636,9 @@ public class TransitResponseBuilder {
 				hasM1 = false, hasM2 = false, hasM3 = false, hasM4 = false,
 				hasH5 = false, hasH6 = false, hasH7 = false, hasH8 = false, hasH9 = false;
 
+		if(transitStop.getLocationType() == 2)
+			return "ENTRANCE";
+
 		for(Route route : routes) {
 			if(route.getId().getId().startsWith("VP")
 				|| route.getId().getId().startsWith("TP")
@@ -709,7 +712,7 @@ public class TransitResponseBuilder {
 
 		if(hasNightBus && ret == null) ret = "NIGHTBUS";
 
-		if(ret == null) return "BUS";
+		if(ret == null) return "OTHER";
 
 		return ret;
 	}
