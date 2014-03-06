@@ -176,9 +176,13 @@ public class TransitResponseBuilder {
         List<TransitStop> transitStops = new ArrayList<TransitStop>(stops.size());
         for(Stop stop : stops) {
             TransitStop transitStop = getStop(stop, alertIds.get(stop.getId().toString()));
-            if (transitStop != null) {
-                transitStops.add(transitStop);
+
+            // Stops having no departures should be ignored from stopsForLocation on mobile platform
+            if(_dialect == Dialect.MOBILE && transitStop.getRouteIds().isEmpty()) {
+                continue; 
             }
+            
+            transitStops.add(transitStop);
         }
         return getOkResponse(list(transitStops));
     }
@@ -579,11 +583,6 @@ public class TransitResponseBuilder {
             addToReferences(route);
             routes.add(route);
         }
-
-        // Stops having no departures should be ignored on mobile platform
-        if(_dialect == Dialect.MOBILE && routes.isEmpty()) {
-            return null; 
-        }        
 
         if(_cacheService.<Stop, TransitStop>containsKey(CACHE_STOP, stop)) {
             return _cacheService.<Stop, TransitStop>get(CACHE_STOP, stop);
