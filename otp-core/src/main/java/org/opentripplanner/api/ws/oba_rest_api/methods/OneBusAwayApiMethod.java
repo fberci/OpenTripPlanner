@@ -592,7 +592,10 @@ public abstract class OneBusAwayApiMethod<T> {
             TripTimes scheduledTripTimes = tripTimes.getScheduledTripTimes();
             
             if(i + 1 < numStops) {
-                stopTime.setStopHeadsign(tripTimes.getHeadsign(i));
+                // Exclude stopheadsign from mobile API
+                if(dialect.getDialect() != TransitResponseBuilder.Dialect.MOBILE) {
+                    stopTime.setStopHeadsign(tripTimes.getHeadsign(i));
+                }
             
                 if(!tripTimes.isScheduled())
                     stopTime.setPredictedDepartureTime(time + tripTimes.getDepartureTime(i));
