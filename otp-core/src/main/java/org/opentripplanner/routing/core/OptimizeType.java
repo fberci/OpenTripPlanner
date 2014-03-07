@@ -16,6 +16,7 @@ package org.opentripplanner.routing.core;
 public enum OptimizeType {
     QUICK, /* the fastest trip */
     SAFE,
+	WALK,
     FLAT, /* needs a rewrite */
     GREENWAYS,
     TRIANGLE, /* not yet supported */

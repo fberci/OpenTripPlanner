@@ -22,6 +22,7 @@ import org.opentripplanner.api.ws.oba_rest_api.OneBusAwayApiCacheService;
 import org.opentripplanner.api.ws.oba_rest_api.beans.TransitEntryWithReferences;
 import org.opentripplanner.api.ws.oba_rest_api.beans.TransitResponse;
 import org.opentripplanner.api.ws.oba_rest_api.beans.TransitResponseBuilder;
+import org.opentripplanner.routing.core.OptimizeType;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.edgetype.TableTripPattern;
 import org.opentripplanner.routing.graph.Graph;
@@ -109,7 +110,20 @@ public class PlanTripMethod extends RoutingResource {
             cacheService = new OneBusAwayApiCacheService();
             graph.putService(OneBusAwayApiCacheService.class, cacheService);
         }
-        
+
+	    if(!optimize.isEmpty() && optimize.get(0) == OptimizeType.WALK) {
+		    optimize.set(0, OptimizeType.QUICK);
+		    if(walkReluctance.isEmpty()) {
+			    walkReluctance.add(6.0);
+		    }
+	    }
+	    else if(!optimize.isEmpty() && optimize.get(0) == OptimizeType.TRANSFERS) {
+		    optimize.set(0, OptimizeType.QUICK);
+		    if(transferPenalty.get(0) < 0) {
+				transferPenalty.set(0, 900);
+		    }
+	    }
+
         try {
             TransitResponseBuilder builder = new TransitResponseBuilder(graph, references.getReferences(), dialect.getDialect(), internalRequest);
             Response plan = getItineraries();
