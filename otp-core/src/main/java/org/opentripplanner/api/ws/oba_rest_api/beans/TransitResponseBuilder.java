@@ -886,7 +886,7 @@ public class TransitResponseBuilder {
     }
     
     private TransitReferences getDialectReferences() {
-        if(_dialect == Dialect.OTP) {
+        if(_dialect != Dialect.OBA) {
             return _references;
         }
         
