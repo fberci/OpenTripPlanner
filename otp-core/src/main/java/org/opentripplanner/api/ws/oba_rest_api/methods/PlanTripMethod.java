@@ -156,11 +156,11 @@ public class PlanTripMethod extends RoutingResource {
                             builder.addToReferences(route);
                         }
                         if(leg.from.stopId != null) {
-                            Stop stop = transitIndexService.getAllStops().get(leg.from.stopId);
+                            Stop stop = transitIndexService.getAllStops().get(AgencyAndId.convertFromString(leg.from.stopId));
                             builder.addToReferences(stop);
                         }
                         if(leg.to.stopId != null) {
-                            Stop stop = transitIndexService.getAllStops().get(leg.to.stopId);
+                            Stop stop = transitIndexService.getAllStops().get(AgencyAndId.convertFromString(leg.to.stopId));
                             builder.addToReferences(stop);
                         }
                         if(leg.alerts != null) {
@@ -171,7 +171,7 @@ public class PlanTripMethod extends RoutingResource {
                         }
                         if(leg.stop != null) {
                             for(Place place : leg.stop) {
-                                Stop stop = transitIndexService.getAllStops().get(place.stopId);
+                                Stop stop = transitIndexService.getAllStops().get(AgencyAndId.convertFromString(place.stopId));
                                 builder.addToReferences(stop);
                             }
                         }

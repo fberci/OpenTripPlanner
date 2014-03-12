@@ -13,14 +13,12 @@
 
 package org.opentripplanner.api.model; 
 
-import java.util.Calendar;
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement; 
-
-import org.onebusaway.gtfs.model.AgencyAndId;
-import org.opentripplanner.util.Constants; 
-
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import org.opentripplanner.util.Constants;
+
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import java.util.Calendar;
 
 /** 
 * A Place is where a journey starts or ends, or a transit stop along the way.
@@ -35,7 +33,7 @@ public class Place {
     /** 
      * The ID of the stop. This is often something that users don't care about.
      */
-    public AgencyAndId stopId = null;
+    public String stopId = null;
 
     /** 
      * The "code" of the stop. Depending on the transit agency, this is often

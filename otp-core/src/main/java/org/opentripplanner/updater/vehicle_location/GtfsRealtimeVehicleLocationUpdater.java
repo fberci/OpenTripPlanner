@@ -146,7 +146,7 @@ public class GtfsRealtimeVehicleLocationUpdater extends PollingGraphUpdater {
 
             vehicleLocationService.refresh(validLocations);
         } catch (Exception e) {
-            LOG.error("Eror reading gtfs-realtime feed from " + url, e);
+            LOG.error("Error reading gtfs-realtime feed from " + url, e);
         }
     }
     

@@ -14,25 +14,8 @@
 /* this is in api.common so it can set package-private fields */
 package org.opentripplanner.api.ws;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.reset;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
+import com.vividsolutions.jts.geom.LineString;
 import junit.framework.TestCase;
-
 import org.codehaus.jettison.json.JSONException;
 import org.onebusaway.gtfs.model.Agency;
 import org.onebusaway.gtfs.model.AgencyAndId;
@@ -111,7 +94,20 @@ import org.opentripplanner.routing.vertextype.StreetVertex;
 import org.opentripplanner.routing.vertextype.TransitStationStop;
 import org.opentripplanner.util.TestUtils;
 
-import com.vividsolutions.jts.geom.LineString;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.*;
 
 class SimpleGraphServiceImpl implements GraphService {
 
@@ -614,9 +610,9 @@ public class TestRequest extends TestCase {
         Itinerary itinerary = response.getPlan().itinerary.get(0);
         Leg leg = itinerary.legs.get(1);
         // Without bannedStops this leg would stop at the stop with id 2107
-        assertFalse(leg.to.stopId.getId().equals("2107"));
+        assertFalse(leg.to.stopId.equals("TriMet_2107"));
         // Instead a stop is now expected with id 2109
-        assertTrue(leg.to.stopId.getId().equals("2109"));
+        assertTrue(leg.to.stopId.equals("TriMet_2109"));
     }
     
     @SuppressWarnings("deprecation")

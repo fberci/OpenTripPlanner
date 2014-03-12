@@ -13,21 +13,20 @@
 
 package org.opentripplanner.api.model;
 
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
-import java.util.TimeZone;
-
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementWrapper;
-
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.patch.Alert;
 import org.opentripplanner.util.model.EncodedPolylineBean;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+import java.util.TimeZone;
 
  /**
  * One leg of a trip -- that is, a temporally continuous piece of the journey that takes place on a
@@ -218,13 +217,15 @@ public class Leg {
      * Deprecated field formerly used for notes -- will be removed.  See
      * alerts
      */
-    @XmlElement
-    @JsonSerialize
+    @JsonIgnore
     public List<Note> notes;
 
-    @XmlElement
-    @JsonSerialize
+    @JsonIgnore
     public List<Alert> alerts;
+
+	@XmlElement
+	@JsonSerialize
+	public List<String> alertIds = new ArrayList<String>();
 
     @XmlAttribute
     @JsonSerialize
@@ -288,6 +289,9 @@ public class Leg {
         }
         if (!alerts.contains(alert)) {
             alerts.add(alert);
+	        if(alert.alertId != null) {
+				alertIds.add(alert.alertId.toString());
+	        }
         }
     }
 

@@ -625,7 +625,7 @@ public class PlanGenerator {
 
         if (firstVertex instanceof TransitVertex) {
             firstStop = ((TransitVertex) firstVertex).getStop();
-            leg.from.stopId = firstStop.getId();
+            leg.from.stopId = firstStop.getId().toString();
 
             if (firstEdge instanceof OnboardEdge) {
                 leg.from.stopCode = firstStop.getCode();
@@ -638,7 +638,7 @@ public class PlanGenerator {
 
         if (lastVertex instanceof TransitVertex) {
             lastStop = ((TransitVertex) lastVertex).getStop();
-            leg.to.stopId = lastStop.getId();
+            leg.to.stopId = lastStop.getId().toString();
 
             if (lastEdge instanceof OnboardEdge) {
                 leg.to.stopCode = lastStop.getCode();
@@ -674,7 +674,7 @@ public class PlanGenerator {
                 Place place = new Place(vertex.getX(), vertex.getY(), currentStop.getName(),
                         makeCalendar(states[i]), makeCalendar(states[i]));
 
-                place.stopId = currentStop.getId();
+                place.stopId = currentStop.getId().toString();
 
                 if (edges[i] instanceof OnboardEdge) {
                     place.stopCode = currentStop.getCode();

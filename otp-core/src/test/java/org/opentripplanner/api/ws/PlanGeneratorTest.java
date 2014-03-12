@@ -853,10 +853,10 @@ public class PlanGeneratorTest {
         }
         comparePlaces(places, type);
 
-        AgencyAndId[][] stopIds = new AgencyAndId[9][2];
+        String[][] stopIds = new String[9][2];
         for (int i = 0; i < stopIds.length; i++) {
             if (places[i].length > 2) {
-                stopIds[i] = new AgencyAndId[places[i].length];
+                stopIds[i] = new String[places[i].length];
             }
             for (int j = 0; j < stopIds[i].length; j++) {
                 if (places[i][j] == null) continue;
@@ -1676,7 +1676,7 @@ public class PlanGeneratorTest {
     }
 
     /** Compare the stop ids to their expected values, place by place. */
-    private void compareStopIds(AgencyAndId[][] stopIds, Type type) {
+    private void compareStopIds(String[][] stopIds, Type type) {
         assertEquals(2, stopIds[0].length);
         assertEquals(3, stopIds[1].length);
         assertEquals(2, stopIds[2].length);
@@ -1690,45 +1690,34 @@ public class PlanGeneratorTest {
         assertNull(stopIds[0][0]);
 
         if (type == Type.FORWARD || type == Type.BACKWARD) {
-            assertEquals("Train", stopIds[0][1].getAgencyId());
-            assertEquals("Depart", stopIds[0][1].getId());
+            assertEquals("Train_Depart", stopIds[0][1]);
         } else if (type == Type.ONBOARD) {
             assertNull(stopIds[0][1]);
         }
 
         if (type == Type.FORWARD || type == Type.BACKWARD) {
-            assertEquals("Train", stopIds[1][0].getAgencyId());
-            assertEquals("Depart", stopIds[1][0].getId());
+            assertEquals("Train_Depart", stopIds[1][0]);
         } else if (type == Type.ONBOARD) {
             assertNull(stopIds[1][0]);
         }
 
-        assertEquals("Train", stopIds[1][1].getAgencyId());
-        assertEquals("Dwell", stopIds[1][1].getId());
+        assertEquals("Train_Dwell", stopIds[1][1]);
 
-        assertEquals("Train", stopIds[1][2].getAgencyId());
-        assertEquals("Interline", stopIds[1][2].getId());
+        assertEquals("Train_Interline", stopIds[1][2]);
 
-        assertEquals("Train", stopIds[2][0].getAgencyId());
-        assertEquals("Interline", stopIds[2][0].getId());
+        assertEquals("Train_Interline", stopIds[2][0]);
 
-        assertEquals("Train", stopIds[2][1].getAgencyId());
-        assertEquals("Arrive", stopIds[2][1].getId());
+        assertEquals("Train_Arrive", stopIds[2][1]);
 
-        assertEquals("Train", stopIds[3][0].getAgencyId());
-        assertEquals("Arrive", stopIds[3][0].getId());
+        assertEquals("Train_Arrive", stopIds[3][0]);
 
-        assertEquals("Ferry", stopIds[3][1].getAgencyId());
-        assertEquals("Depart", stopIds[3][1].getId());
+        assertEquals("Ferry_Depart", stopIds[3][1]);
 
-        assertEquals("Ferry", stopIds[4][0].getAgencyId());
-        assertEquals("Depart", stopIds[4][0].getId());
+        assertEquals("Ferry_Depart", stopIds[4][0]);
 
-        assertEquals("Ferry", stopIds[4][1].getAgencyId());
-        assertEquals("Arrive", stopIds[4][1].getId());
+        assertEquals("Ferry_Arrive", stopIds[4][1]);
 
-        assertEquals("Ferry", stopIds[5][0].getAgencyId());
-        assertEquals("Arrive", stopIds[5][0].getId());
+        assertEquals("Ferry_Arrive", stopIds[5][0]);
 
         assertNull(stopIds[5][1]);
 
