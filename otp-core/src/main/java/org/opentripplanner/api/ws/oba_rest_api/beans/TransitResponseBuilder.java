@@ -886,9 +886,18 @@ public class TransitResponseBuilder {
     }
     
     private TransitReferences getDialectReferences() {
-        if(_dialect != Dialect.OBA) {
+        if(_dialect == Dialect.OTP) {
             return _references;
         }
+
+	    if(_dialect == Dialect.MOBILE) {
+		    return new MobileTransitReferences(
+				    _references.getAgencies().values(),
+				    _references.getRoutes().values(),
+				    _references.getStops().values(),
+				    _references.getTrips().values(),
+				    _references.getAlerts().values());
+	    }
         
         Collection<TransitSituation> situations = new ArrayList<TransitSituation>(_references.getAlerts().size());
         for(TransitAlert transitAlert : _references.getAlerts().values()) {
