@@ -1033,28 +1033,41 @@ public class TransitResponseBuilder {
         public int compare(Route a, Route b) {
             int ret = 0;
             
-            if(a.getType() != b.getType())
-                ret = this.compareRouteType(a.getType(), b.getType());
-            
+			ret = this.compareRouteType(a, b);
             if(ret != 0)
                 return ret;
             
             return this.compareRouteShortName(a.getShortName(), b.getShortName());
         }
 
-        private int compareRouteType(int a, int b) {
-            // metró
-            if(a == 1) return -1;
-            if(b == 1) return  1;
-            
-            // hév
-            if(a == 2) return -1;
-            if(b == 2) return  1;
-            
-            // hajó
-            if(a == 4) return -1;
-            if(b == 4) return  1;
-            
+        private int compareRouteType(Route rA, Route rB) {
+	        int a = rA.getType(),
+			    b = rB.getType();
+
+	        if(a != b) {
+				// metró
+				if(a == 1) return -1;
+				if(b == 1) return  1;
+
+				// hév
+				if(a == 2) return -1;
+				if(b == 2) return  1;
+
+				// hajó
+				if(a == 4) return -1;
+				if(b == 4) return  1;
+	        }
+
+			// a többi itt van szám alapján rendezve
+
+			// éjszakai
+	        if(a == 3 && b == 3) {
+		        boolean aNight = rA.getId().getId().startsWith("9"),
+		                bNight = rB.getId().getId().startsWith("9");
+		        if( aNight && !bNight) return  1;
+		        if(!aNight &&  bNight) return -1;
+	        }
+
             // többi egyenlő ~ szám alapján rendeződnek
             return 0;
         }
