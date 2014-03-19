@@ -120,7 +120,7 @@ public class GtfsRealtimeVehicleLocationUpdater extends PollingGraphUpdater {
                     location.setRouteId(null);
                 }
                 if(location.getTripId() != null) {
-                    tripPattern = transitIndexService.getTripPatternForTrip(location.getTripId());
+                    tripPattern = transitIndexService.getTripPatternForTrip(location.getTripId(), location.getServiceDate());
                     if(tripPattern == null) {
                         LOG.warn("Location update references an unknown trip (zeroed): " + location);
                         location.setTripId(null);

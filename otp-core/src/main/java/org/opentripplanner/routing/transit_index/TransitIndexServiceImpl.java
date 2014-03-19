@@ -40,6 +40,8 @@ import org.opentripplanner.routing.services.TransitIndexService;
 import org.opentripplanner.util.MapUtils;
 
 import com.vividsolutions.jts.geom.Coordinate;
+import lombok.Data;
+import org.onebusaway.gtfs.model.calendar.ServiceDate;
 
 public class TransitIndexServiceImpl implements TransitIndexService, Serializable {
     private static final long serialVersionUID = -8147894489513820239L;
@@ -54,7 +56,7 @@ public class TransitIndexServiceImpl implements TransitIndexService, Serializabl
 
     private HashMap<AgencyAndId, PreBoardEdge> preBoardEdges;
     
-    private HashMap<AgencyAndId, TableTripPattern> tableTripPatternsByTrip;
+    private HashMap<TripPatternKey, TableTripPattern> tableTripPatternsByTrip;
 
     private HashMap<AgencyAndId, HashSet<String>> directionsForRoute;
 
@@ -81,7 +83,7 @@ public class TransitIndexServiceImpl implements TransitIndexService, Serializabl
             HashMap<AgencyAndId, RouteVariant> variantsByTrip,
             HashMap<AgencyAndId, PreBoardEdge> preBoardEdges,
             HashMap<AgencyAndId, PreAlightEdge> preAlightEdges,
-            HashMap<AgencyAndId, TableTripPattern> tableTripPatternsByTrip,
+            HashMap<TripPatternKey, TableTripPattern> tableTripPatternsByTrip,
             HashMap<AgencyAndId, HashSet<String>> directionsByRoute,
             HashMap<AgencyAndId, HashSet<Stop>> stopsByRoute,
             HashMap<AgencyAndId, Route> routes,
@@ -105,7 +107,7 @@ public class TransitIndexServiceImpl implements TransitIndexService, Serializabl
             HashMap<AgencyAndId, RouteVariant> variantsByTrip,
             HashMap<AgencyAndId, PreBoardEdge> preBoardEdges,
             HashMap<AgencyAndId, PreAlightEdge> preAlightEdges,
-            HashMap<AgencyAndId, TableTripPattern> tableTripPatternsByTrip,
+            HashMap<TripPatternKey, TableTripPattern> tableTripPatternsByTrip,
             HashMap<AgencyAndId, HashSet<String>> directionsByRoute,
             HashMap<AgencyAndId, HashSet<Stop>> stopsByRoute,
             HashMap<AgencyAndId, Route> routes,
@@ -159,7 +161,16 @@ public class TransitIndexServiceImpl implements TransitIndexService, Serializabl
     
     @Override
     public TableTripPattern getTripPatternForTrip(AgencyAndId tripId) {
-        return tableTripPatternsByTrip.get(tripId);
+        return tableTripPatternsByTrip.get(new TripPatternKey(tripId, null));
+    }
+    
+    @Override
+    public TableTripPattern getTripPatternForTrip(AgencyAndId tripId, ServiceDate serviceDate) {
+        TripPatternKey key = new TripPatternKey(tripId, serviceDate);
+        if(tableTripPatternsByTrip.containsKey(key))
+            return tableTripPatternsByTrip.get(key);
+        
+        return getTripPatternForTrip(tripId);
     }
 
     @Override
@@ -299,5 +310,11 @@ public class TransitIndexServiceImpl implements TransitIndexService, Serializabl
     @Override
     public Collection<Stop> getStopsForRoute(AgencyAndId route) {
         return stopsForRoute.get(route);
+    }
+    
+    @Data
+    public static class TripPatternKey implements Serializable {
+        public final AgencyAndId tripId;
+        public final ServiceDate serviceDate;
     }
 }

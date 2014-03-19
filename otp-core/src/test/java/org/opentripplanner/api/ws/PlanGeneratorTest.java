@@ -13,26 +13,16 @@
 
 package org.opentripplanner.api.ws;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
-import java.util.SimpleTimeZone;
-import java.util.TimeZone;
-
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.LineString;
 import org.junit.Test;
 import org.onebusaway.gtfs.impl.calendar.CalendarServiceImpl;
 import org.onebusaway.gtfs.model.Agency;
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.onebusaway.gtfs.model.Route;
+import org.onebusaway.gtfs.model.ServiceCalendar;
+import org.onebusaway.gtfs.model.ServiceCalendarDate;
 import org.onebusaway.gtfs.model.Stop;
 import org.onebusaway.gtfs.model.StopTime;
 import org.onebusaway.gtfs.model.Trip;
@@ -56,37 +46,19 @@ import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.core.TraverseModeSet;
 import org.opentripplanner.routing.core.WrappedCurrency;
-import org.opentripplanner.routing.edgetype.AreaEdge;
-import org.opentripplanner.routing.edgetype.AreaEdgeList;
-import org.opentripplanner.routing.edgetype.FreeEdge;
-import org.opentripplanner.routing.edgetype.LegSwitchingEdge;
-import org.opentripplanner.routing.edgetype.OnBoardDepartPatternHop;
-import org.opentripplanner.routing.edgetype.PartialPlainStreetEdge;
-import org.opentripplanner.routing.edgetype.PatternDwell;
-import org.opentripplanner.routing.edgetype.PatternHop;
-import org.opentripplanner.routing.edgetype.PatternInterlineDwell;
-import org.opentripplanner.routing.edgetype.PlainStreetEdge;
-import org.opentripplanner.routing.edgetype.PreAlightEdge;
-import org.opentripplanner.routing.edgetype.PreBoardEdge;
-import org.opentripplanner.routing.edgetype.RentABikeOffEdge;
-import org.opentripplanner.routing.edgetype.RentABikeOnEdge;
-import org.opentripplanner.routing.edgetype.ScheduledStopPattern;
-import org.opentripplanner.routing.edgetype.SimpleTransfer;
-import org.opentripplanner.routing.edgetype.StreetBikeRentalLink;
-import org.opentripplanner.routing.edgetype.StreetTransitLink;
-import org.opentripplanner.routing.edgetype.StreetTraversalPermission;
-import org.opentripplanner.routing.edgetype.TableTripPattern;
-import org.opentripplanner.routing.edgetype.TimetableResolver;
-import org.opentripplanner.routing.edgetype.TransitBoardAlight;
+import org.opentripplanner.routing.edgetype.*;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.location.StreetLocation;
 import org.opentripplanner.routing.patch.Alert;
 import org.opentripplanner.routing.patch.AlertPatch;
+import org.opentripplanner.routing.patch.TimePeriod;
 import org.opentripplanner.routing.services.FareService;
+import org.opentripplanner.routing.services.TransitIndexService;
 import org.opentripplanner.routing.spt.GraphPath;
+import org.opentripplanner.routing.transit_index.RouteVariant;
+import org.opentripplanner.routing.trippattern.TripUpdateList;
 import org.opentripplanner.routing.trippattern.Update;
 import org.opentripplanner.routing.trippattern.Update.Status;
-import org.opentripplanner.routing.trippattern.TripUpdateList;
 import org.opentripplanner.routing.vertextype.BikeRentalStationVertex;
 import org.opentripplanner.routing.vertextype.ExitVertex;
 import org.opentripplanner.routing.vertextype.IntersectionVertex;
@@ -99,10 +71,19 @@ import org.opentripplanner.routing.vertextype.TransitStopDepart;
 import org.opentripplanner.updater.stoptime.TimetableSnapshotSource;
 import org.opentripplanner.util.model.EncodedPolylineBean;
 
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.LineString;
-import org.opentripplanner.routing.patch.TimePeriod;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SimpleTimeZone;
+import java.util.TimeZone;
+
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class PlanGeneratorTest {
     private static final double[] F_DISTANCE = {3, 9996806.8, 3539050.5, 11, 2478638.8, 4, 2, 1, 0};
@@ -1860,6 +1841,135 @@ public class PlanGeneratorTest {
         @Override
         public TimeZone getTimeZoneForAgencyId(String agencyId) {
             return timeZone;
+        }
+    }
+
+    /**
+     * This class implements the {@link TransitIndexService} interface to allow for testing.
+     * It only really implements the getAgency method. Everything else returns meaningless results.
+     */
+    private static final class TransitIndexServiceStub implements TransitIndexService {
+        final Agency train;
+        final Agency ferry;
+
+        public TransitIndexServiceStub(Agency train, Agency ferry) {
+            this.train = train;
+            this.ferry = ferry;
+        }
+
+        @Override
+        public List<RouteVariant> getVariantsForAgency(String agency) {
+            return null;
+        }
+
+        @Override
+        public List<RouteVariant> getVariantsForRoute(AgencyAndId route) {
+            return null;
+        }
+
+        @Override
+        public RouteVariant getVariantForTrip(AgencyAndId trip) {
+            return null;
+        }
+
+        @Override
+        public PreBoardEdge getPreBoardEdge(AgencyAndId stop) {
+            return null;
+        }
+
+        @Override
+        public PreAlightEdge getPreAlightEdge(AgencyAndId stop) {
+            return null;
+        }
+
+        @Override
+        public TableTripPattern getTripPatternForTrip(AgencyAndId tripId) {
+            return null;
+        }
+
+        @Override
+        public TableTripPattern getTripPatternForTrip(AgencyAndId tripId, ServiceDate serviceDate) {
+            return null;
+        }
+
+        @Override
+        public List<AgencyAndId> getRoutesForStop(AgencyAndId stop) {
+            return null;
+        }
+
+        @Override
+        public Collection<String> getDirectionsForRoute(AgencyAndId route) {
+            return null;
+        }
+
+        @Override
+        public Collection<Stop> getStopsForRoute(AgencyAndId route) {
+            return null;
+        }
+
+        @Override
+        public List<TraverseMode> getAllModes() {
+            return null;
+        }
+
+        @Override
+        public Collection<AgencyAndId> getAllRouteIds() {
+            return null;
+        }
+
+        @Override
+        public void addCalendars(Collection<ServiceCalendar> allCalendars) {
+        }
+
+	    @Override
+        public void addCalendarDates(Collection<ServiceCalendarDate> allDates) {
+        }
+
+        @Override
+        public List<String> getAllAgencies() {
+            return null;
+        }
+
+        @Override
+        public List<ServiceCalendarDate> getCalendarDatesByAgency(String agency) {
+            return null;
+        }
+
+        @Override
+        public List<ServiceCalendar> getCalendarsByAgency(String agency) {
+            return null;
+        }
+
+        @Override
+        public Agency getAgency(String id) {
+            if (train.getId().equals(id)) return train;
+            if (ferry.getId().equals(id)) return ferry;
+            return null;
+        }
+
+        @Override
+        public Coordinate getCenter() {
+            return null;
+        }
+
+        @Override
+        public int getOvernightBreak() {
+            return 0;
+        }
+
+        @Override
+        public Map<AgencyAndId, Route> getAllRoutes() {
+            return null;
+        }
+
+        @Override
+        public Map<AgencyAndId, Stop> getAllStops() {
+            return null;
+        }
+
+	    @Override
+        public TraverseMode getModeForStop(AgencyAndId stop) {
+            return null;
         }
     }
 

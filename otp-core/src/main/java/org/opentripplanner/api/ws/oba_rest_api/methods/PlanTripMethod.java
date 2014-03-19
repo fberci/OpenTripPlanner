@@ -189,7 +189,7 @@ public class PlanTripMethod extends RoutingResource {
     }
     
     private Trip getTrip(TransitIndexService transitIndexService, AgencyAndId tripId, ServiceDate serviceDate) {
-        TableTripPattern pattern = transitIndexService.getTripPatternForTrip(tripId);
+        TableTripPattern pattern = transitIndexService.getTripPatternForTrip(tripId, serviceDate);
         int tripIndex = pattern.getTripIndex(tripId);
         Trip trip = pattern.getTrip(tripIndex);
         // TODO: wheelchair accessibility

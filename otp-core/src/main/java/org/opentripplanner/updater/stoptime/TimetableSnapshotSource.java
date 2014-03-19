@@ -176,7 +176,7 @@ public class TimetableSnapshotSource {
 
     protected boolean handleCanceledTrip(TripUpdateList tripUpdateList) {
 
-        TableTripPattern pattern = getPatternForTrip(tripUpdateList.getTripId());
+        TableTripPattern pattern = getPatternForTrip(tripUpdateList.getTripId(), tripUpdateList.getServiceDate());
         if (pattern == null) {
             LOG.debug("No pattern found for tripId {}, skipping UpdateBlock.", tripUpdateList.getTripId());
             return false;
@@ -198,7 +198,7 @@ public class TimetableSnapshotSource {
             LOG.warn("TripUpdate contains no updates after filtering, skipping.");
             return false;
         }
-        TableTripPattern pattern = getPatternForTrip(tripUpdateList.getTripId());
+        TableTripPattern pattern = getPatternForTrip(tripUpdateList.getTripId(), tripUpdateList.getServiceDate());
         if (pattern == null) {
             LOG.warn("No pattern found for tripId {}, skipping TripUpdate.", tripUpdateList.getTripId());
             return false;
@@ -232,8 +232,8 @@ public class TimetableSnapshotSource {
         return buffer.purgeExpiredData(previously);
     }
 
-    protected TableTripPattern getPatternForTrip(AgencyAndId tripId) {
-        TableTripPattern pattern = transitIndexService.getTripPatternForTrip(tripId);
+    protected TableTripPattern getPatternForTrip(AgencyAndId tripId, ServiceDate serviceDate) {
+        TableTripPattern pattern = transitIndexService.getTripPatternForTrip(tripId, serviceDate);
         return pattern;
     }
 

@@ -55,7 +55,7 @@ public class TripDetailsMethod extends OneBusAwayApiMethod<TransitEntryWithRefer
         }
 
         tripId = parseAgencyAndId(tripIdString);
-        if(transitIndexService.getTripPatternForTrip(tripId) == null) {
+        if(transitIndexService.getTripPatternForTrip(tripId, serviceDate) == null) {
             return TransitResponseBuilder.getFailResponse(TransitResponse.Status.NOT_FOUND, "Unknown tripId.");
         }
         
@@ -71,7 +71,7 @@ public class TripDetailsMethod extends OneBusAwayApiMethod<TransitEntryWithRefer
             return TransitResponseBuilder.getFailResponse(TransitResponse.Status.NO_TRANSIT_TIMES, "Date is outside the dateset's validity.");
         }
         
-        TableTripPattern pattern = transitIndexService.getTripPatternForTrip(tripId);
+        TableTripPattern pattern = transitIndexService.getTripPatternForTrip(tripId, serviceDate);
         if(!serviceDay.serviceIdRunning(pattern.getServiceId()))
             return TransitResponseBuilder.getFailResponse(TransitResponse.Status.NOT_OPERATING, "Trip isn't operation on the given service date.");
         

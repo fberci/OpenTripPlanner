@@ -96,7 +96,7 @@ public class TimetableSnapshotSourceTest {
         AgencyAndId tripId = new AgencyAndId("agency", "1.1");
         AgencyAndId tripId2 = new AgencyAndId("agency", "1.2");
         ServiceDate today = new ServiceDate();
-        TableTripPattern pattern = transitIndexService.getTripPatternForTrip(tripId);
+        TableTripPattern pattern = transitIndexService.getTripPatternForTrip(tripId, today);
         int tripIndex = pattern.getTripIndex(tripId);
         int tripIndex2 = pattern.getTripIndex(tripId2);
         
@@ -118,7 +118,7 @@ public class TimetableSnapshotSourceTest {
         AgencyAndId tripId2 = new AgencyAndId("agency", "1.2");
         AgencyAndId stopId = new AgencyAndId("agency", "A");
         ServiceDate today = new ServiceDate();
-        TableTripPattern pattern = transitIndexService.getTripPatternForTrip(tripId);
+        TableTripPattern pattern = transitIndexService.getTripPatternForTrip(tripId, today);
         int tripIndex = pattern.getTripIndex(tripId);
         int tripIndex2 = pattern.getTripIndex(tripId2);
         
@@ -140,7 +140,7 @@ public class TimetableSnapshotSourceTest {
         AgencyAndId tripId = new AgencyAndId("agency", "1.1");
         ServiceDate today = new ServiceDate();
         ServiceDate previously = today.previous().previous(); // Just to be safe...
-        TableTripPattern pattern = transitIndexService.getTripPatternForTrip(tripId);
+        TableTripPattern pattern = transitIndexService.getTripPatternForTrip(tripId, today);
         
         updater.setMaxSnapshotFrequency(0);
         updater.setPurgeExpiredData(false);

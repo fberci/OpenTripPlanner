@@ -55,6 +55,7 @@ import org.opentripplanner.routing.transit_index.RouteVariant;
 import org.opentripplanner.util.TestUtils;
 
 import com.vividsolutions.jts.geom.Coordinate;
+import org.onebusaway.gtfs.model.calendar.ServiceDate;
 
 public class TestPatch extends TestCase {
     private Graph graph;
@@ -206,6 +207,11 @@ public class TestPatch extends TestCase {
 
             @Override
             public TraverseMode getModeForStop(AgencyAndId stop) {
+                return null;
+            }
+
+            @Override
+            public TableTripPattern getTripPatternForTrip(AgencyAndId tripId, ServiceDate date) {
                 return null;
             }
         };

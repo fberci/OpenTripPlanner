@@ -76,7 +76,7 @@ public class TripDetailsOTPMethod extends OneBusAwayApiMethod<TransitEntryWithRe
             }
 
             tripId = parseAgencyAndId(tripIdString);
-            if(transitIndexService.getTripPatternForTrip(tripId) == null)
+            if(transitIndexService.getTripPatternForTrip(tripId, serviceDate) == null)
                 return TransitResponseBuilder.getFailResponse(TransitResponse.Status.NOT_FOUND, "Unknown tripId.");
         }
             
@@ -96,7 +96,7 @@ public class TripDetailsOTPMethod extends OneBusAwayApiMethod<TransitEntryWithRe
         
         RouteVariant variant = transitIndexService.getVariantForTrip(tripId);
         
-        TableTripPattern pattern = transitIndexService.getTripPatternForTrip(tripId);
+        TableTripPattern pattern = transitIndexService.getTripPatternForTrip(tripId, serviceDate);
         if(!serviceDay.serviceIdRunning(pattern.getServiceId()))
             return TransitResponseBuilder.getFailResponse(TransitResponse.Status.NOT_OPERATING, "Trip isn't operation on the given service date.");
         

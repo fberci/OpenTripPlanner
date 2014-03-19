@@ -77,7 +77,7 @@ public class TransitIndexBuilder implements GraphBuilderWithGtfsDao {
 
     private HashMap<AgencyAndId, PreAlightEdge> preAlightEdges = new HashMap<AgencyAndId, PreAlightEdge>();
     
-    private HashMap<AgencyAndId, TableTripPattern> tableTripPatternsByTrip = new HashMap<AgencyAndId, TableTripPattern>();
+    private HashMap<TransitIndexServiceImpl.TripPatternKey, TableTripPattern> tableTripPatternsByTrip = new HashMap<TransitIndexServiceImpl.TripPatternKey, TableTripPattern>();
 
     private HashMap<AgencyAndId, PreBoardEdge> preBoardEdges = new HashMap<AgencyAndId, PreBoardEdge>();
 
@@ -566,7 +566,7 @@ public class TransitIndexBuilder implements GraphBuilderWithGtfsDao {
                     continue;
                 TableTripPattern pattern = tba.getPattern();
                 for (Trip trip : pattern.getTrips()) {
-                    tableTripPatternsByTrip.put(trip.getId(), pattern);
+                    tableTripPatternsByTrip.put(new TransitIndexServiceImpl.TripPatternKey(trip.getId(), null), pattern);
                 }
             }
         }

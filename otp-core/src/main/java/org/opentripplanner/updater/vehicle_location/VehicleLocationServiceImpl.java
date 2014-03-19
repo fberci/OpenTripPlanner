@@ -15,19 +15,18 @@ package org.opentripplanner.updater.vehicle_location;
 
 import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.index.quadtree.Quadtree;
+import lombok.Setter;
+import org.onebusaway.gtfs.model.AgencyAndId;
+import org.opentripplanner.routing.graph.Graph;
+import org.opentripplanner.routing.services.TransitIndexService;
+import org.opentripplanner.util.MapUtils;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import lombok.Setter;
-import org.onebusaway.gtfs.model.AgencyAndId;
-import org.opentripplanner.routing.graph.Graph;
-import org.opentripplanner.routing.services.GraphService;
-import org.opentripplanner.routing.services.TransitIndexService;
-import org.opentripplanner.util.MapUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 
 public class VehicleLocationServiceImpl implements VehicleLocationService {
     
@@ -109,7 +108,7 @@ public class VehicleLocationServiceImpl implements VehicleLocationService {
         TransitIndexService transitIndexService = graph.getService(TransitIndexService.class);
         AgencyAndId routeId = vehicle.getRouteId();
         if(vehicle.getTripId() != null)
-            routeId = transitIndexService.getTripPatternForTrip(vehicle.getTripId()).getExemplar().getRoute().getId();
+            routeId = transitIndexService.getTripPatternForTrip(vehicle.getTripId(), vehicle.getServiceDate()).getExemplar().getRoute().getId();
         
         _lastUpdateTime = System.currentTimeMillis() / 1000;
 
@@ -134,7 +133,7 @@ public class VehicleLocationServiceImpl implements VehicleLocationService {
         TransitIndexService transitIndexService = graph.getService(TransitIndexService.class);
         AgencyAndId routeId = null;
         if(vehicle.getTripId() != null)
-            routeId = transitIndexService.getTripPatternForTrip(vehicle.getTripId()).getExemplar().getRoute().getId();
+            routeId = transitIndexService.getTripPatternForTrip(vehicle.getTripId(), vehicle.getServiceDate()).getExemplar().getRoute().getId();
         
         _quadtree.remove(new Envelope(vehicle.getCoordinate()), vehicle);
         _vehicleLocations.remove(vehicleId);
@@ -162,7 +161,7 @@ public class VehicleLocationServiceImpl implements VehicleLocationService {
         for(VehicleLocation vehicle : updatedLocations) {
             AgencyAndId routeId = vehicle.getRouteId();
             if(vehicle.getTripId() != null)
-                routeId = transitIndexService.getTripPatternForTrip(vehicle.getTripId()).getExemplar().getRoute().getId();
+                routeId = transitIndexService.getTripPatternForTrip(vehicle.getTripId(), vehicle.getServiceDate()).getExemplar().getRoute().getId();
 
             quadtree.insert(new Envelope(vehicle.getCoordinate()), vehicle);
             vehicleLocations.put(vehicle.getVehicleId(), vehicle);

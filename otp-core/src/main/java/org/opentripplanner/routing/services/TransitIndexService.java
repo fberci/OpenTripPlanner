@@ -30,6 +30,7 @@ import org.opentripplanner.routing.edgetype.TableTripPattern;
 import org.opentripplanner.routing.transit_index.RouteVariant;
 
 import com.vividsolutions.jts.geom.Coordinate;
+import org.onebusaway.gtfs.model.calendar.ServiceDate;
 
 public interface TransitIndexService {
     public List<RouteVariant> getVariantsForAgency(String agency);
@@ -43,9 +44,14 @@ public interface TransitIndexService {
     public PreAlightEdge getPreAlightEdge(AgencyAndId stop);
 
     /**
-     * @return The TableTripPattern for a given trip.
+     * Returns the scheduled TableTripPattern for a trip.
      */
     public TableTripPattern getTripPatternForTrip(AgencyAndId tripId);
+    
+    /**
+     * Returns the TableTripPattern valid on the given date.
+     */
+    public TableTripPattern getTripPatternForTrip(AgencyAndId tripId, ServiceDate date);
     
     public List<AgencyAndId> getRoutesForStop(AgencyAndId stop);
     

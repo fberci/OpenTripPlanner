@@ -261,7 +261,7 @@ public abstract class OneBusAwayApiMethod<T> {
     protected TransitTripDetails getTripDetails(AgencyAndId tripId, ServiceDate serviceDate,
             boolean includeStatus, boolean includeSchedule, boolean includeTrip) {
         
-        if(transitIndexService.getTripPatternForTrip(tripId) == null) {
+        if(transitIndexService.getTripPatternForTrip(tripId, serviceDate) == null) {
             return null;
         }
         
@@ -277,7 +277,7 @@ public abstract class OneBusAwayApiMethod<T> {
             return null;
         }
         
-        TableTripPattern pattern = transitIndexService.getTripPatternForTrip(tripId);
+        TableTripPattern pattern = transitIndexService.getTripPatternForTrip(tripId, serviceDate);
         if(!serviceDay.serviceIdRunning(pattern.getServiceId()))
             return null;
         
@@ -450,7 +450,7 @@ public abstract class OneBusAwayApiMethod<T> {
 		ServiceDate serviceDate = new ServiceDate(new Date(arrivalAndDeparture.getServiceDate()));
 		AgencyAndId tripId = parseAgencyAndId(transitTrip.getId());
 		Trip trip = getTrip(tripId, serviceDate);
-		TableTripPattern pattern = transitIndexService.getTripPatternForTrip(tripId);
+		TableTripPattern pattern = transitIndexService.getTripPatternForTrip(tripId, serviceDate);
 		Timetable timetable = getTimetableResolver().resolve(pattern, serviceDate);
 		TripTimes tripTimes = timetable.getTripTimes(timetable.getTripIndex(tripId));
 		List<TransitStopTime> stopTimes = getStopTimesForTrip(tripId, serviceDate, pattern, timetable);
@@ -810,7 +810,7 @@ public abstract class OneBusAwayApiMethod<T> {
             
             if(vehicle.getTripId() != null) {
                 Trip trip = getTrip(vehicle.getTripId(), vehicle.getServiceDate());
-                TableTripPattern pattern = transitIndexService.getTripPatternForTrip(trip.getId());
+                TableTripPattern pattern = transitIndexService.getTripPatternForTrip(trip.getId(), vehicle.getServiceDate());
 
                 if(pattern != null && pattern.getTripIndex(trip.getId()) >= 0) { 
                     int tripIndex = pattern.getTripIndex(trip.getId());
@@ -935,7 +935,7 @@ public abstract class OneBusAwayApiMethod<T> {
     }
 
     protected Trip getTrip(AgencyAndId tripId, ServiceDate serviceDate) {
-        TableTripPattern pattern = transitIndexService.getTripPatternForTrip(tripId);
+        TableTripPattern pattern = transitIndexService.getTripPatternForTrip(tripId, serviceDate);
         int tripIndex = pattern.getTripIndex(tripId);
 	    return pattern.getTrip(tripIndex);
     }
