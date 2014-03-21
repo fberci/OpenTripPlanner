@@ -214,6 +214,11 @@ public class TestPatch extends TestCase {
             public TableTripPattern getTripPatternForTrip(AgencyAndId tripId, ServiceDate date) {
                 return null;
             }
+
+            @Override
+            public void add(GTFSPatternHopFactory.Result result, ServiceDate serviceDate) {
+                throw new UnsupportedOperationException("Not supported yet.");
+            }
         };
         graph.putService(TransitIndexService.class, index);
     }

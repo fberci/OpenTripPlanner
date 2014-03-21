@@ -47,6 +47,7 @@ import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.core.TraverseModeSet;
 import org.opentripplanner.routing.core.WrappedCurrency;
 import org.opentripplanner.routing.edgetype.*;
+import org.opentripplanner.routing.edgetype.factory.GTFSPatternHopFactory;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.location.StreetLocation;
 import org.opentripplanner.routing.patch.Alert;
@@ -1970,6 +1971,11 @@ public class PlanGeneratorTest {
 	    @Override
         public TraverseMode getModeForStop(AgencyAndId stop) {
             return null;
+        }
+
+        @Override
+        public void add(GTFSPatternHopFactory.Result result, ServiceDate serviceDate) {
+            throw new UnsupportedOperationException("Not supported yet.");
         }
     }
 

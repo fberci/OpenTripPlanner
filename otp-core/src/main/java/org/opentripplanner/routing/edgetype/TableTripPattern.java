@@ -26,6 +26,7 @@ import javax.xml.bind.annotation.XmlTransient;
 
 import lombok.Delegate;
 import lombok.Getter;
+import org.onebusaway.gtfs.model.AgencyAndId;
 
 import org.onebusaway.gtfs.model.Stop;
 import org.onebusaway.gtfs.model.Trip;
@@ -170,6 +171,14 @@ public class TableTripPattern implements TripPattern, Serializable {
 
     public Trip getTrip(int tripIndex) {
         return trips.get(tripIndex);
+    }
+
+    public Trip getTrip(AgencyAndId tripId) {
+        for(int i = 0; i < trips.size(); ++i) {
+            if(trips.get(i).getId().equals(tripId))
+                return trips.get(i);
+        }
+        return null;
     }
     
     @XmlTransient

@@ -46,15 +46,7 @@ import org.opentripplanner.util.MapUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.opentripplanner.common.IterableLibrary.filter;
 
@@ -81,9 +73,9 @@ public class TransitIndexBuilder implements GraphBuilderWithGtfsDao {
 
     private HashMap<AgencyAndId, PreBoardEdge> preBoardEdges = new HashMap<AgencyAndId, PreBoardEdge>();
 
-    private HashMap<AgencyAndId, HashSet<String>> directionsByRoute = new HashMap<AgencyAndId, HashSet<String>>();
+    private HashMap<AgencyAndId, Set<String>> directionsByRoute = new HashMap<AgencyAndId, Set<String>>();
 
-    private HashMap<AgencyAndId, HashSet<Stop>> stopsByRoute = new HashMap<AgencyAndId, HashSet<Stop>>();
+    private HashMap<AgencyAndId, Set<Stop>> stopsByRoute = new HashMap<AgencyAndId, Set<Stop>>();
 
     private HashMap<AgencyAndId, Stop> stops = new HashMap<AgencyAndId, Stop>();
 
@@ -779,7 +771,7 @@ public class TransitIndexBuilder implements GraphBuilderWithGtfsDao {
 
         AgencyAndId routeId = trip.getRoute().getId();
         String directionId = trip.getDirectionId();
-        HashSet<String> directions = directionsByRoute.get(routeId);
+        Set<String> directions = directionsByRoute.get(routeId);
         if (directions == null) {
             directions = new HashSet<String>();
             directionsByRoute.put(routeId, directions);
@@ -796,7 +788,7 @@ public class TransitIndexBuilder implements GraphBuilderWithGtfsDao {
         }
 
         // build the list of stops for this route
-        HashSet<Stop> stopsForRoute = stopsByRoute.get(routeId);
+        Set<Stop> stopsForRoute = stopsByRoute.get(routeId);
         if (stopsForRoute == null) {
             stopsForRoute = new HashSet<Stop>();
             stopsByRoute.put(routeId, stopsForRoute);

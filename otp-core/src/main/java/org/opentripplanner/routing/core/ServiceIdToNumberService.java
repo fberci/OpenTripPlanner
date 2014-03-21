@@ -27,7 +27,12 @@ public class ServiceIdToNumberService implements Serializable {
     public ServiceIdToNumberService(HashMap<AgencyAndId, Integer> serviceIds) {
         this.numberForServiceId = serviceIds;
     }
-
+    
+    public void addServiceId(AgencyAndId serviceId, Integer id) {
+        if(!numberForServiceId.containsKey(serviceId) && !numberForServiceId.containsValue(id)) {
+            numberForServiceId.put(serviceId, id);
+        }
+    }
 
     public int getNumber(AgencyAndId serviceId) {
         Integer number = numberForServiceId.get(serviceId);

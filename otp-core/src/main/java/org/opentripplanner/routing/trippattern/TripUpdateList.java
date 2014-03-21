@@ -13,16 +13,8 @@
 
 package org.opentripplanner.routing.trippattern;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.TimeZone;
-
+import com.google.transit.realtime.GtfsRealtime;
+import com.google.transit.realtime.GtfsRealtimeBplanner;
 import lombok.Getter;
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.onebusaway.gtfs.model.Route;
@@ -33,8 +25,13 @@ import org.opentripplanner.routing.edgetype.TableTripPattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.transit.realtime.GtfsRealtime;
-import com.google.transit.realtime.GtfsRealtimeBplanner;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.TimeZone;
 
 /**
  * A TripUpdateList is an ordered list of Updates which all refer to the same trip on the same day.
@@ -90,6 +87,8 @@ public class TripUpdateList extends AbstractUpdate {
         /** This trip should be removed from the graph. Only valid for ADDED trips. */
         REMOVED,
         /** This trip should be modified for the given serviceDate. */
+        UPDATED,
+        /** This trip should be modified for the given serviceDate. */
         MODIFIED
     }
     
@@ -111,6 +110,13 @@ public class TripUpdateList extends AbstractUpdate {
     }
     
     public static TripUpdateList forUpdatedTrip(AgencyAndId tripId, long timestamp, ServiceDate serviceDate, List<Update> updates, Integer wheelchairAccessible) {
+        if(updates == null || updates.isEmpty())
+            throw new IllegalArgumentException("At least one update needs to be supplied.");
+
+        return new TripUpdateList(tripId, timestamp, serviceDate, Status.UPDATED, updates, null, wheelchairAccessible);
+    }
+    
+    public static TripUpdateList forModifiedTrip(AgencyAndId tripId, long timestamp, ServiceDate serviceDate, List<Update> updates, Integer wheelchairAccessible) {
         if(updates == null || updates.isEmpty())
             throw new IllegalArgumentException("At least one update needs to be supplied.");
 
@@ -403,14 +409,44 @@ public class TripUpdateList extends AbstractUpdate {
     }
 
     private static TripUpdateList getUpdateForReplacementTrip(AgencyAndId tripId,
-            GtfsRealtime.TripUpdate rtTripUpdate, long timestamp, ServiceDate serviceDate, TimeZone timeZone) {
+            GtfsRealtime.TripUpdate tripUpdate, long timestamp, ServiceDate serviceDate, TimeZone timeZone) {
         
+        /*if(!validateTripDescriptor(tripUpdate.getTrip())) {
+            return null;
+        }
+
+        List<Update> updates = new LinkedList<Update>();
+        for(GtfsRealtime.TripUpdate.StopTimeUpdate stopTimeUpdate
+                : tripUpdate.getStopTimeUpdateList()) {
+
+            Update u = getStopTimeUpdateForTrip(tripId, timestamp, serviceDate, stopTimeUpdate, timeZone);
+            if(u == null) {
+                return null;
+            }
+            updates.add(u);
+        }
+
+        if(updates.size() < 2) {
+            LOG.warn("At least two stop times must be provided for a replacement trip.");
+            return null;
+        }
+
+        Integer wheelchairAccessible = null;
+        if(tripUpdate.hasVehicle()) {
+            GtfsRealtime.VehicleDescriptor vehicleDescriptor = tripUpdate.getVehicle();
+            if(vehicleDescriptor.hasExtension(GtfsRealtimeBplanner.wheelchairAccessible)) {
+                wheelchairAccessible = vehicleDescriptor.getExtension(GtfsRealtimeBplanner.wheelchairAccessible);
+            }
+        }
+
+        return TripUpdateList.forModifiedTrip(tripId, timestamp, serviceDate, updates, wheelchairAccessible);*/
+
         LOG.warn("ScheduleRelationship.REPLACEMENT trips are currently not handled.");
         return null;
     }
 
     private static TripUpdateList getUpdateForUnscheduledTrip(AgencyAndId tripId,
-            GtfsRealtime.TripUpdate rtTripUpdate, long timestamp, ServiceDate serviceDate, TimeZone timeZone) {
+            GtfsRealtime.TripUpdate tripUpdate, long timestamp, ServiceDate serviceDate, TimeZone timeZone) {
         
         LOG.warn("ScheduleRelationship.UNSCHEDULED trips are currently not handled.");
         return null;
@@ -461,6 +497,16 @@ public class TripUpdateList extends AbstractUpdate {
             LOG.warn("At least two stop times must be provided for an added trip.");
             return null;
         }
+        
+        Integer wheelchairAccessible = null;
+        if(tripUpdate.hasVehicle()) {
+            GtfsRealtime.VehicleDescriptor vehicleDescriptor = tripUpdate.getVehicle();
+            if(vehicleDescriptor.hasExtension(GtfsRealtimeBplanner.wheelchairAccessible)) {
+                wheelchairAccessible = vehicleDescriptor.getExtension(GtfsRealtimeBplanner.wheelchairAccessible);
+            }
+        }
+        
+        trip.setWheelchairAccessible(wheelchairAccessible == null ? 0 : wheelchairAccessible);
         
         return TripUpdateList.forAddedTrip(trip, timestamp, serviceDate, updates);
     }

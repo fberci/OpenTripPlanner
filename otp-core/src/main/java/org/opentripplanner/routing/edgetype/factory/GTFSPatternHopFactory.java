@@ -13,28 +13,15 @@
 
 package org.opentripplanner.routing.edgetype.factory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.CoordinateSequence;
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.LineString;
+import com.vividsolutions.jts.linearref.LinearLocation;
+import com.vividsolutions.jts.linearref.LocationIndexedLine;
 import org.apache.commons.math3.util.FastMath;
-import org.onebusaway.gtfs.model.Agency;
-import org.onebusaway.gtfs.model.AgencyAndId;
-import org.onebusaway.gtfs.model.Frequency;
-import org.onebusaway.gtfs.model.Pathway;
-import org.onebusaway.gtfs.model.Route;
-import org.onebusaway.gtfs.model.ShapePoint;
-import org.onebusaway.gtfs.model.Stop;
-import org.onebusaway.gtfs.model.StopTime;
-import org.onebusaway.gtfs.model.Transfer;
-import org.onebusaway.gtfs.model.Trip;
+import org.onebusaway.gtfs.model.*;
 import org.onebusaway.gtfs.services.GtfsRelationalDao;
 import org.onebusaway.gtfs.services.calendar.CalendarService;
 import org.opentripplanner.common.geometry.DistanceLibrary;
@@ -42,42 +29,14 @@ import org.opentripplanner.common.geometry.GeometryUtils;
 import org.opentripplanner.common.geometry.PackedCoordinateSequence;
 import org.opentripplanner.common.geometry.SphericalDistanceLibrary;
 import org.opentripplanner.common.model.T2;
-import org.opentripplanner.gbannotation.BogusShapeDistanceTraveled;
-import org.opentripplanner.gbannotation.BogusShapeGeometry;
-import org.opentripplanner.gbannotation.BogusShapeGeometryCaught;
-import org.opentripplanner.gbannotation.HopSpeedFast;
-import org.opentripplanner.gbannotation.HopSpeedSlow;
-import org.opentripplanner.gbannotation.HopZeroTime;
-import org.opentripplanner.gbannotation.NegativeDwellTime;
-import org.opentripplanner.gbannotation.NegativeHopTime;
-import org.opentripplanner.gbannotation.StopAtEntrance;
-import org.opentripplanner.gbannotation.TripDegenerate;
-import org.opentripplanner.gbannotation.TripUndefinedService;
+import org.opentripplanner.gbannotation.*;
 import org.opentripplanner.gtfs.GtfsContext;
 import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.routing.core.ServiceIdToNumberService;
 import org.opentripplanner.routing.core.StopTransfer;
 import org.opentripplanner.routing.core.TransferTable;
 import org.opentripplanner.routing.core.TraverseMode;
-import org.opentripplanner.routing.edgetype.FreeEdge;
-import org.opentripplanner.routing.edgetype.FrequencyAlight;
-import org.opentripplanner.routing.edgetype.FrequencyBasedTripPattern;
-import org.opentripplanner.routing.edgetype.FrequencyBoard;
-import org.opentripplanner.routing.edgetype.FrequencyDwell;
-import org.opentripplanner.routing.edgetype.FrequencyHop;
-import org.opentripplanner.routing.edgetype.HopEdge;
-import org.opentripplanner.routing.edgetype.StationStopEdge;
-import org.opentripplanner.routing.edgetype.PathwayEdge;
-import org.opentripplanner.routing.edgetype.PatternDwell;
-import org.opentripplanner.routing.edgetype.PatternHop;
-import org.opentripplanner.routing.edgetype.PatternInterlineDwell;
-import org.opentripplanner.routing.edgetype.PreAlightEdge;
-import org.opentripplanner.routing.edgetype.PreBoardEdge;
-import org.opentripplanner.routing.edgetype.ScheduledStopPattern;
-import org.opentripplanner.routing.edgetype.TableTripPattern;
-import org.opentripplanner.routing.edgetype.TimedTransferEdge;
-import org.opentripplanner.routing.edgetype.TransferEdge;
-import org.opentripplanner.routing.edgetype.TransitBoardAlight;
+import org.opentripplanner.routing.edgetype.*;
 import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.graph.Vertex;
@@ -86,6 +45,7 @@ import org.opentripplanner.routing.impl.OnBoardDepartServiceImpl;
 import org.opentripplanner.routing.services.FareService;
 import org.opentripplanner.routing.services.FareServiceFactory;
 import org.opentripplanner.routing.services.OnBoardDepartService;
+import org.opentripplanner.routing.services.TransitIndexService;
 import org.opentripplanner.routing.vertextype.PatternArriveVertex;
 import org.opentripplanner.routing.vertextype.PatternDepartVertex;
 import org.opentripplanner.routing.vertextype.TransitStation;
@@ -97,13 +57,7 @@ import org.opentripplanner.routing.vertextype.TransitVertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.CoordinateSequence;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.LineString;
-import com.vividsolutions.jts.linearref.LinearLocation;
-import com.vividsolutions.jts.linearref.LocationIndexedLine;
+import java.util.*;
 
 class InterliningTrip  implements Comparable<InterliningTrip> {
     public Trip trip;
@@ -304,6 +258,33 @@ class IndexedLineSegmentComparator implements Comparator<IndexedLineSegment> {
  * Generates a set of edges from GTFS.
  */
 public class GTFSPatternHopFactory {
+    public class Result {
+        private Result(Trip trip, ScheduledStopPattern stopPattern, TableTripPattern tripPattern,
+                List<PatternHop> hops, List<Edge> edges, List<Vertex> vertices) {
+            this.trip = trip;
+            this.edges = edges;
+            this.hops = hops;
+            this.vertices = vertices;
+            this.stopPattern = stopPattern;
+            this.tripPattern = tripPattern;
+        }
+        
+        public Result(Trip trip, Result result) {
+            this.trip = trip;
+            this.edges = result.edges;
+            this.hops = result.hops;
+            this.vertices = result.vertices;
+            this.stopPattern = result.stopPattern;
+            this.tripPattern = result.tripPattern;
+        }
+
+        public final Trip trip;
+        public final List<PatternHop> hops;
+        public final List<Edge> edges;
+        public final List<Vertex> vertices;
+        public final ScheduledStopPattern stopPattern;
+        public final TableTripPattern tripPattern;
+    }
 
     private static final Logger LOG = LoggerFactory.getLogger(GTFSPatternHopFactory.class);
 
@@ -330,6 +311,8 @@ public class GTFSPatternHopFactory {
     private Map<InterlineSwitchoverKey, PatternInterlineDwell> interlineDwells = new HashMap<InterlineSwitchoverKey, PatternInterlineDwell>();
 
     HashMap<ScheduledStopPattern, TableTripPattern> patterns = new HashMap<ScheduledStopPattern, TableTripPattern>();
+    
+    private Map<TableTripPattern, Result> results = new HashMap<TableTripPattern, Result>();
 
     private GtfsStopContext context = new GtfsStopContext();
 
@@ -479,7 +462,8 @@ public class GTFSPatternHopFactory {
 
             /* this trip is not frequency-based, add it to the corresponding trip pattern */
             // maybe rename ScheduledStopPattern to TripPatternKey?
-            TableTripPattern tripPattern = addPatternForTripToGraph(graph, trip, stopTimes);
+            Result result = addPatternForTripToGraph(graph, trip, stopTimes);
+            TableTripPattern tripPattern = result.tripPattern;
 
             /* record which block trips belong to so they can be linked up later */
             String blockId = trip.getBlockId();
@@ -551,23 +535,24 @@ public class GTFSPatternHopFactory {
         graph.putService(OnBoardDepartService.class, new OnBoardDepartServiceImpl());
     }
     
-    public TableTripPattern addPatternForTripToGraph(Graph graph, Trip trip, List<StopTime> stopTimes) {
+    public Result addPatternForTripToGraph(Graph graph, Trip trip, List<StopTime> stopTimes) {
         ScheduledStopPattern stopPattern = ScheduledStopPattern.fromTrip(trip, stopTimes);
         TableTripPattern tripPattern = patterns.get(stopPattern);
+        Result result = results.get(tripPattern);
         if (tripPattern == null) {
             // it's the first time we are encountering this stops+pickups+serviceId combination
-            T2<TableTripPattern, List<PatternHop>> patternAndHops = makePatternVerticesAndEdges(graph, trip, stopPattern, stopTimes);
-            List<PatternHop> hops = patternAndHops.getSecond();
-            createGeometry(graph, trip, stopTimes, hops);
-            tripPattern = patternAndHops.getFirst();
+            result = makePatternVerticesAndEdges(graph, trip, stopPattern, stopTimes);
+            tripPattern = result.tripPattern;
+            createGeometry(graph, trip, stopTimes, result.hops);
             patterns.put(stopPattern, tripPattern);
+            results.put(tripPattern, result);
         }
         // BKK: tripShortName ~= referencia útvonal, ezért azt tároljuk el
         if(null != trip.getTripShortName()) {
             tripPattern.exemplar = trip;
         }
         tripPattern.addTrip(trip, stopTimes);
-        return tripPattern;
+        return new Result(trip, result);
     }
 
     static int cg = 0;
@@ -1026,6 +1011,37 @@ public class GTFSPatternHopFactory {
             }
         }
     }
+
+    public void bootstrapContextFromTransitIndex(TransitIndexService transitIndexService, CalendarService calendarService,
+            ServiceIdToNumberService serviceIdToNumberService) {
+        for(Stop stop : transitIndexService.getAllStops().values()) {
+            PreAlightEdge preAlightEdge = transitIndexService.getPreAlightEdge(stop.getId());
+            if(preAlightEdge != null) {
+                context.stopArriveNodes.put(stop, (TransitStopArrive) preAlightEdge.getFromVertex());
+            }
+
+            PreBoardEdge preBoardEdge = transitIndexService.getPreBoardEdge(stop.getId());
+            if(preBoardEdge != null) {
+                context.stopDepartNodes.put(stop, (TransitStopDepart) preBoardEdge.getToVertex());
+            }
+        }
+
+        for(AgencyAndId serviceId : calendarService.getServiceIds()) {
+            int n = serviceIdToNumberService.getNumber(serviceId);
+            if (n < 0)
+                continue;
+            context.serviceIds.put(serviceId, n);    
+        }
+    }
+    
+    public void augmentServiceIdToNumberService(ServiceIdToNumberService serviceIdToNumberService) {
+        for(AgencyAndId serviceId : context.serviceIds.keySet()) {
+            if(serviceIdToNumberService.getNumber(serviceId) >= 0)
+                continue;
+
+            serviceIdToNumberService.addServiceId(serviceId, context.serviceIds.get(serviceId));
+        }
+    }
     
     /** Delete dwell edges that take no time, and merge their start and end vertices. */
     private void deleteUselessDwells(Graph graph) {
@@ -1129,7 +1145,7 @@ public class GTFSPatternHopFactory {
      * StopTimes are passed in instead of Stops only because they are needed for shape distances.
      * The TripPattern returned is empty; trips should be added to the TripPattern later.
      */
-    private T2<TableTripPattern, List<PatternHop>> makePatternVerticesAndEdges(Graph graph, Trip trip,
+    private Result makePatternVerticesAndEdges(Graph graph, Trip trip,
             ScheduledStopPattern stopPattern, List<StopTime> stopTimes) {
 
         TableTripPattern tripPattern = new TableTripPattern(trip, stopPattern, getServiceId(trip));
@@ -1141,6 +1157,8 @@ public class GTFSPatternHopFactory {
         TraverseMode mode = GtfsLibrary.getTraverseMode(trip.getRoute());
         
         ArrayList<PatternHop> hops = new ArrayList<PatternHop>();
+        ArrayList<Edge> edges = new ArrayList<Edge>();
+        ArrayList<Vertex> vertices = new ArrayList<Vertex>();
 
         // create journey vertices
         PatternArriveVertex psv0arrive, psv1arrive = null;
@@ -1155,14 +1173,19 @@ public class GTFSPatternHopFactory {
             if (hopIndex != 0) {
                 psv0arrive = psv1arrive;
                 PatternDwell dwell = new PatternDwell(psv0arrive, psv0depart, hopIndex, tripPattern);
+                edges.add(dwell);
                 if (st0.getArrivalTime() == st0.getDepartureTime())
                     potentiallyUselessDwells.add(dwell); // TODO: verify against old code
             }
             psv1arrive = new PatternArriveVertex(graph, tripPattern, st1);
             context.patternArriveNodes.put(new T2<Stop, Trip>(st1.getStop(), trip), psv1arrive);
+            
+            vertices.add(psv0depart);
+            vertices.add(psv1arrive);
 
             PatternHop hop = new PatternHop(psv0depart, psv1arrive, s0, s1, hopIndex);
             hops.add(hop);
+            edges.add(hop);
 
             TransitStopDepart stopDepart = context.stopDepartNodes.get(s0);
             if (stopDepart == null) {
@@ -1187,56 +1210,13 @@ public class GTFSPatternHopFactory {
                 }
             }
             stopArrive.getStopVertex().addMode(mode);
-            new TransitBoardAlight(stopDepart, psv0depart, hopIndex, mode);
-            new TransitBoardAlight(psv1arrive, stopArrive, hopIndex + 1, mode);
-        }        
+            edges.add(new TransitBoardAlight(stopDepart, psv0depart, hopIndex, mode));
+            edges.add(new TransitBoardAlight(psv1arrive, stopArrive, hopIndex + 1, mode));
+        }
         
-        return new T2<TableTripPattern, List<PatternHop>>(tripPattern, hops);
+        return new Result(trip, stopPattern, tripPattern, hops, edges, vertices);
     }
     
-    
-    // originally in makeTripPattern method (duplicate trip adding code and flags code):
-//        tripPattern.setTripFlags(0, 
-//                ((trip.getWheelchairAccessible() == 1) ? TripPattern.FLAG_WHEELCHAIR_ACCESSIBLE : 0)
-//                
-//                | 
-//                
-//                (((trip.getRoute().getBikesAllowed() == 2 && trip.getTripBikesAllowed() != 1)
-//                    || trip.getTripBikesAllowed() == 2) ? TripPattern.FLAG_BIKES_ALLOWED : 0));
-//
-//        tripPattern.addHop(i, 0, departureTime, runningTime, arrivalTime, dwellTime,
-//                st0.getStopHeadsign(), trip);
-//        StopTime st1 = null;
-//        for (int i = 0; i < lastStop; i++) {           
-//            StopTime st0 = stopTimes.get(i);
-//            Stop s0 = st0.getStop();
-//            st1 = stopTimes.get(i + 1);
-//            Stop s1 = st1.getStop();
-//
-//            int arrivalTime = st1.getArrivalTime();
-//            int departureTime = st0.getDepartureTime();
-//
-//            int dwellTime = st0.getDepartureTime() - st0.getArrivalTime();
-//            int runningTime = arrivalTime - departureTime ;
-//
-//            if (runningTime < 0) {
-//                LOG.warn(GraphBuilderAnnotation.register(graph,
-//                        Variety.NEGATIVE_HOP_TIME, st0, st1));
-//                //back out hops and give up
-//                for (Edge e: createdEdges) {
-//                    e.getFromVertex().removeOutgoing(e);
-//                    e.getToVertex().removeIncoming(e);
-//                }
-//                for (Vertex v : createdVertices) {
-//                    graph.removeVertexAndEdges(v);
-//                }
-//                return null;
-//            }
-//
-//        }
-//
-//    }
-
     private int getServiceId(Trip trip) {
         AgencyAndId gtfsId = trip.getServiceId();
         Integer id = context.serviceIds.get(gtfsId);

@@ -15,6 +15,7 @@ package org.opentripplanner.routing.edgetype;
 
 import java.util.ArrayList;
 import java.util.List;
+import lombok.Getter;
 
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.onebusaway.gtfs.model.Stop;
@@ -29,6 +30,8 @@ import org.onebusaway.gtfs.model.Trip;
  * (moved out of GTFSPatternHopFactory to be visible to the ArrayTripPattern constructor)
  */
 public class ScheduledStopPattern {
+    
+    @Getter
     final ArrayList<Stop> stops;
     final ArrayList<Integer> pickups;
     final ArrayList<Integer> dropoffs;

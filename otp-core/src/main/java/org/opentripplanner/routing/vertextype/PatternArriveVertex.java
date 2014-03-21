@@ -35,6 +35,7 @@ public class PatternArriveVertex extends PatternStopVertex {
     private static String makeLabel(Trip t, StopTime st) {
         return GtfsLibrary.convertIdToString(st.getStop().getId()) + "_" + 
                 GtfsLibrary.convertIdToString(t.getId()) + "_" + 
+                GtfsLibrary.convertIdToString(t.getServiceId()) + "_" + 
                 st.getStopSequence() + "_A";
     }
 

@@ -31,6 +31,7 @@ import org.opentripplanner.routing.transit_index.RouteVariant;
 
 import com.vividsolutions.jts.geom.Coordinate;
 import org.onebusaway.gtfs.model.calendar.ServiceDate;
+import org.opentripplanner.routing.edgetype.factory.GTFSPatternHopFactory;
 
 public interface TransitIndexService {
     public List<RouteVariant> getVariantsForAgency(String agency);
@@ -97,4 +98,8 @@ public interface TransitIndexService {
      * 
      */
     int getOvernightBreak();
+
+    /** Extend the index with a dynamically added TableTripPattern. */
+    public void add(GTFSPatternHopFactory.Result result, ServiceDate serviceDate);
+    
 }
