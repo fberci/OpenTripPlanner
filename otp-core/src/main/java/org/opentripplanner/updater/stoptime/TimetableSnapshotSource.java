@@ -274,8 +274,8 @@ public class TimetableSnapshotSource {
         }
         TableTripPattern pattern = getPatternForTrip(tripUpdateList.getTripId(), tripUpdateList.getServiceDate());
         if (pattern == null) {
-            LOG.warn("No pattern found for tripId {}, treating as ADDED.", tripUpdateList.getTripId());
-            return handleAddedTrip(tripUpdateList);
+            LOG.info("Received modified update for non-existing trip (no pattern exists): ", tripUpdateList.getTripId());
+            return false;
         }
 
         // we have a message we actually want to apply
