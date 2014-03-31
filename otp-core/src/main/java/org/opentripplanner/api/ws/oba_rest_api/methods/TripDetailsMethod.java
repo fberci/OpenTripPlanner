@@ -62,7 +62,7 @@ public class TripDetailsMethod extends OneBusAwayApiMethod<TransitEntryWithRefer
         Trip trip = getTrip(tripId, serviceDate);
         
         CalendarService calendarService = graph.getCalendarService();
-        ServiceDay serviceDay = new ServiceDay(graph, serviceDate.getAsDate(graph.getTimeZone()).getTime() / 1000, calendarService, trip.getId().getAgencyId());
+        ServiceDay serviceDay = new ServiceDay(graph, serviceDate, calendarService, trip.getId().getAgencyId());
         
         long startTime = serviceDate.getAsDate(graph.getTimeZone()).getTime() / 1000;
         long endTime = serviceDate.next().getAsDate(graph.getTimeZone()).getTime() / 1000 - 1;
