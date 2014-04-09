@@ -575,7 +575,7 @@ public class TransitResponseBuilder {
 	}
 
     protected TransitStop getStop(Stop stop, List<String> alertIds) {
-        String CACHE_STOP = "stop_" + _dialect + "_" + _internalRequest;
+        String CACHE_STOP = "stop_" + _dialect + "_" + _internalRequest + "_" + alertIds;
         
         List<Route> routes = new ArrayList<Route>();
         for(AgencyAndId routeId : getRoutesForStop(stop.getId())) {
@@ -718,12 +718,29 @@ public class TransitResponseBuilder {
 
 		if(hasNightBus && ret == null) ret = "NIGHTBUS";
 
-		if(ret == null) return "OTHER";
+		if(ret == null) {
+            Collection<Route> incomingRoutes = getAllRoutesForStop(transitStop);
+            if(incomingRoutes.isEmpty()) {
+                return "OTHER";
+            } else {
+                return getStopColorTypeForStop(transitStop, incomingRoutes);
+            }
+        }
 
 		return ret;
 	}
 
-	private String append(String a, String b) {
+    private Collection<Route> getAllRoutesForStop(TransitStop transitStop) {
+        List<Route> routes = new ArrayList<Route>();
+        for(AgencyAndId routeId : _transitIndexService.getIncomingRoutesForStop(AgencyAndId.convertFromString(transitStop.getId()))) {
+            Route route = _transitIndexService.getAllRoutes().get(routeId);
+            addToReferences(route);
+            routes.add(route);
+        }
+        return routes;
+    }
+
+    private String append(String a, String b) {
 		return a == null ? b : a + "-" + b;
 	}
 
