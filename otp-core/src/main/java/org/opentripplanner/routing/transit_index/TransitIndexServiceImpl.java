@@ -25,6 +25,7 @@ import org.onebusaway.gtfs.model.Stop;
 import org.onebusaway.gtfs.model.calendar.ServiceDate;
 import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.routing.core.TraverseMode;
+import org.opentripplanner.routing.edgetype.FrequencyAlight;
 import org.opentripplanner.routing.edgetype.FrequencyBoard;
 import org.opentripplanner.routing.edgetype.PatternDwell;
 import org.opentripplanner.routing.edgetype.PatternHop;
@@ -349,6 +350,25 @@ public class TransitIndexServiceImpl implements TransitIndexService, Serializabl
             if (e instanceof FrequencyBoard) {
                 FrequencyBoard board = (FrequencyBoard) e;
                 out.add(board.getPattern().getTrip().getRoute().getId());
+            }
+        }
+        return new ArrayList<AgencyAndId>(out);
+    }
+
+    @Override
+    public List<AgencyAndId> getIncomingRoutesForStop(AgencyAndId stop) {
+        HashSet<AgencyAndId> out = new HashSet<AgencyAndId>();
+        Edge edge = preAlightEdges.get(stop);
+        if (edge == null)
+            return new ArrayList<AgencyAndId>();
+        for (Edge e: edge.getFromVertex().getIncoming()) {
+            if (e instanceof TransitBoardAlight && !((TransitBoardAlight) e).isBoarding()) {
+                TransitBoardAlight board = (TransitBoardAlight) e;
+                out.add(board.getPattern().getExemplar().getRoute().getId());
+            }
+            if (e instanceof FrequencyAlight) {
+                FrequencyAlight alight = (FrequencyAlight) e;
+                out.add(alight.getPattern().getTrip().getRoute().getId());
             }
         }
         return new ArrayList<AgencyAndId>(out);

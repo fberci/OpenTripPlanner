@@ -13,25 +13,24 @@
 
 package org.opentripplanner.routing.services;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-
+import com.vividsolutions.jts.geom.Coordinate;
 import org.onebusaway.gtfs.model.Agency;
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.onebusaway.gtfs.model.Route;
 import org.onebusaway.gtfs.model.ServiceCalendar;
 import org.onebusaway.gtfs.model.ServiceCalendarDate;
 import org.onebusaway.gtfs.model.Stop;
+import org.onebusaway.gtfs.model.calendar.ServiceDate;
 import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.edgetype.PreAlightEdge;
 import org.opentripplanner.routing.edgetype.PreBoardEdge;
 import org.opentripplanner.routing.edgetype.TableTripPattern;
+import org.opentripplanner.routing.edgetype.factory.GTFSPatternHopFactory;
 import org.opentripplanner.routing.transit_index.RouteVariant;
 
-import com.vividsolutions.jts.geom.Coordinate;
-import org.onebusaway.gtfs.model.calendar.ServiceDate;
-import org.opentripplanner.routing.edgetype.factory.GTFSPatternHopFactory;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 public interface TransitIndexService {
     public List<RouteVariant> getVariantsForAgency(String agency);
@@ -55,7 +54,8 @@ public interface TransitIndexService {
     public TableTripPattern getTripPatternForTrip(AgencyAndId tripId, ServiceDate date);
     
     public List<AgencyAndId> getRoutesForStop(AgencyAndId stop);
-    
+    public List<AgencyAndId> getIncomingRoutesForStop(AgencyAndId stop);
+
     public TraverseMode getModeForStop(AgencyAndId stop);
 
     public Collection<String> getDirectionsForRoute(AgencyAndId route);

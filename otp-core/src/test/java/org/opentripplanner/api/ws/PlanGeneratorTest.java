@@ -1899,6 +1899,11 @@ public class PlanGeneratorTest {
         }
 
         @Override
+        public List<AgencyAndId> getIncomingRoutesForStop(AgencyAndId stop) {
+            return null;
+        }
+
+        @Override
         public Collection<String> getDirectionsForRoute(AgencyAndId route) {
             return null;
         }

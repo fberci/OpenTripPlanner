@@ -13,17 +13,8 @@
 
 package org.opentripplanner.routing.patches;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-
+import com.vividsolutions.jts.geom.Coordinate;
 import junit.framework.TestCase;
-
 import org.onebusaway.gtfs.model.Agency;
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.onebusaway.gtfs.model.Route;
@@ -31,6 +22,7 @@ import org.onebusaway.gtfs.model.ServiceCalendar;
 import org.onebusaway.gtfs.model.ServiceCalendarDate;
 import org.onebusaway.gtfs.model.Stop;
 import org.onebusaway.gtfs.model.calendar.CalendarServiceData;
+import org.onebusaway.gtfs.model.calendar.ServiceDate;
 import org.opentripplanner.ConstantsForTests;
 import org.opentripplanner.gtfs.GtfsContext;
 import org.opentripplanner.gtfs.GtfsLibrary;
@@ -54,8 +46,14 @@ import org.opentripplanner.routing.transit_index.RouteSegment;
 import org.opentripplanner.routing.transit_index.RouteVariant;
 import org.opentripplanner.util.TestUtils;
 
-import com.vividsolutions.jts.geom.Coordinate;
-import org.onebusaway.gtfs.model.calendar.ServiceDate;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 
 public class TestPatch extends TestCase {
     private Graph graph;
@@ -171,6 +169,11 @@ public class TestPatch extends TestCase {
 
             @Override
             public List<AgencyAndId> getRoutesForStop(AgencyAndId stop) {
+                return null;
+            }
+
+            @Override
+            public List<AgencyAndId> getIncomingRoutesForStop(AgencyAndId stop) {
                 return null;
             }
 

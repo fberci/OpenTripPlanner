@@ -13,6 +13,7 @@
 
 package org.opentripplanner.routing.edgetype;
 
+import lombok.Getter;
 import org.onebusaway.gtfs.model.Stop;
 import org.onebusaway.gtfs.model.Trip;
 import org.opentripplanner.routing.core.RoutingContext;
@@ -37,6 +38,7 @@ public class FrequencyAlight extends Edge {
     private static final Logger LOG = LoggerFactory.getLogger(FrequencyAlight.class);
             
     private int stopIndex;
+    @Getter
     private FrequencyBasedTripPattern pattern;
     private int modeMask;
 
