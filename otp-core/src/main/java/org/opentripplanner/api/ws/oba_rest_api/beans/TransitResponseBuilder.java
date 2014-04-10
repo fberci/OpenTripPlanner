@@ -620,7 +620,7 @@ public class TransitResponseBuilder {
 		    transitStop.setAlertIds(Lists.newArrayList(alertIds));
 	    }
 	    if(_dialect == Dialect.MOBILE || _dialect == Dialect.OTP) {
-		    transitStop.setStopColorType(getStopColorTypeForStop(transitStop, routes));
+		    transitStop.setStopColorType(getStopColorTypeForStop(transitStop, routes, false));
 	    }
 
         if(_dialect == Dialect.OBA) {
@@ -633,7 +633,7 @@ public class TransitResponseBuilder {
         return transitStop;
     }
 
-	private String getStopColorTypeForStop(TransitStop transitStop, Collection<Route> routes) {
+	private String getStopColorTypeForStop(TransitStop transitStop, Collection<Route> routes, boolean incoming) {
 		boolean hasTram = false,
 				hasBus = false,
 				hasTrolleyBus = false,
@@ -650,7 +650,7 @@ public class TransitResponseBuilder {
 				|| route.getId().getId().startsWith("TP")
 				|| route.getId().getId().startsWith("HP"))
 			{ // A villamospótló senkit se érdekel?
-				continue;
+                hasBus = true;
 			}
 			else if(route.getId().getId().startsWith("9")) {
 				hasNightBus = true;
@@ -720,10 +720,10 @@ public class TransitResponseBuilder {
 
 		if(ret == null) {
             Collection<Route> incomingRoutes = getAllRoutesForStop(transitStop);
-            if(incomingRoutes.isEmpty()) {
+            if(incomingRoutes.isEmpty() || incoming) {
                 return "OTHER";
             } else {
-                return getStopColorTypeForStop(transitStop, incomingRoutes);
+                return getStopColorTypeForStop(transitStop, incomingRoutes, incoming);
             }
         }
 
