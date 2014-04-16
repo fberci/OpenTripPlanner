@@ -115,6 +115,9 @@ public abstract class AbstractSearchMethod<T> extends OneBusAwayApiMethod<T> {
         
         List<StopIndex> matchedStops = new LinkedList<StopIndex>();
         for(Stop stop : stops) {
+            if(getRoutesForStop(stop.getId()).isEmpty()) {
+                continue;
+            }
 
             StopNameVariations variations = getStopNameVariationsForStop(stop);
             
