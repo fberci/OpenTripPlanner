@@ -22,6 +22,7 @@ import org.opentripplanner.api.ws.oba_rest_api.beans.TransitResponse;
 import javax.ws.rs.Path;
 import java.util.Calendar;
 import java.util.Date;
+import org.opentripplanner.api.ws.GraphMetadata;
 
 /**
  * Implements the <a href="http://developer.onebusaway.org/modules/onebusaway-application-modules/current/api/where/methods/current-time.html">current-time</a> OneBusAway API method. Also returns the validity of the currently
@@ -47,6 +48,12 @@ public class MetadataMethod extends OneBusAwayApiMethod<TransitEntryWithReferenc
         metadata.setReadableTime(ISO8601Utils.format(now));
         metadata.setValidityStart(responseBuilder.getServiceDateAsString(new ServiceDate(start)));
         metadata.setValidityEnd(responseBuilder.getServiceDateAsString(new ServiceDate(end)));
+        
+        GraphMetadata gm = new GraphMetadata(graph);
+        metadata.setLowerLeftLongitude(gm.getLowerLeftLongitude());
+        metadata.setUpperRightLongitude(gm.getUpperRightLongitude());
+        metadata.setLowerLeftLatitude(gm.getLowerLeftLatitude());
+        metadata.setUpperRightLatitude(gm.getUpperRightLatitude());
         
         return responseBuilder.getResponseForMetadata(metadata);
     }

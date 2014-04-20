@@ -21,4 +21,6 @@ public class TransitMetadata {
     private String readableTime;
     private String validityStart;
     private String validityEnd;
+    /** The bounding box of the graph, in decimal degrees. */
+    private double lowerLeftLatitude, lowerLeftLongitude, upperRightLatitude, upperRightLongitude;
 }
