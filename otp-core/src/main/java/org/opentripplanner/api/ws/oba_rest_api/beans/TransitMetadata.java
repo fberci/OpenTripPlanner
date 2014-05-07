@@ -23,4 +23,6 @@ public class TransitMetadata {
     private String validityEnd;
     /** The bounding box of the graph, in decimal degrees. */
     private double lowerLeftLatitude, lowerLeftLongitude, upperRightLatitude, upperRightLongitude;
+    /** The bounding polyline the graph, in encoded polyline string. */
+    private String boundingPolyLine;    
 }

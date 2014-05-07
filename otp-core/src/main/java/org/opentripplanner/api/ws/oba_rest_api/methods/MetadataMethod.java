@@ -55,6 +55,8 @@ public class MetadataMethod extends OneBusAwayApiMethod<TransitEntryWithReferenc
         metadata.setLowerLeftLatitude(gm.getLowerLeftLatitude());
         metadata.setUpperRightLatitude(gm.getUpperRightLatitude());
         
+        metadata.setBoundingPolyLine(gm.getBoundingPolyLine());
+        
         return responseBuilder.getResponseForMetadata(metadata);
     }
 }

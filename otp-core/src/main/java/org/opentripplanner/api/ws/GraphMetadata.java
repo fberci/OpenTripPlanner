@@ -40,6 +40,8 @@ public class GraphMetadata {
 
     private double centerLongitude;
 
+    private String boundingPolyLine;
+            
     public GraphMetadata() {
     	// 0-arg constructor avoids com.sun.xml.bind.v2.runtime.IllegalAnnotationsException
     }
@@ -105,6 +107,8 @@ public class GraphMetadata {
             setCenterLatitude(center.y);
             setCenterLongitude(center.x);
         }
+        
+        setBoundingPolyLine(graph.getBoundingPolyline());
     }
 
     public void setLowerLeftLatitude(double lowerLeftLatitude) {
@@ -234,5 +238,13 @@ public class GraphMetadata {
 
     public void setCenterLatitude(double centerLatitude) {
         this.centerLatitude = centerLatitude;
+    }
+
+    public String getBoundingPolyLine() {
+        return boundingPolyLine;
+    }
+
+    public void setBoundingPolyLine(String boundingPolyLine) {
+        this.boundingPolyLine = boundingPolyLine;
     }
 }

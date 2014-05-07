@@ -131,6 +131,10 @@ public class Graph implements Serializable {
     private VertexComparatorFactory vertexComparatorFactory = new MortonVertexComparatorFactory();
 
     private transient TimeZone timeZone = null;
+
+    @Getter
+    @Setter    
+    private String boundingPolyline = null;
     
     /**
      * Makes it possible to embed a default configuration inside a graph.

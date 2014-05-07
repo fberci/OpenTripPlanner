@@ -13,6 +13,14 @@
 
 package org.opentripplanner.graph_builder.impl;
 
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.LineString;
+import com.vividsolutions.jts.geom.MultiPolygon;
+import com.vividsolutions.jts.geom.Point;
+import com.vividsolutions.jts.geom.Polygon;
+import com.vividsolutions.jts.simplify.DouglasPeuckerSimplifier;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -27,6 +35,11 @@ import java.util.Map;
 import lombok.Setter;
 
 import org.onebusaway.csv_entities.EntityHandler;
+import org.onebusaway.geospatial.model.CoordinatePoint;
+import org.onebusaway.geospatial.model.XYPoint;
+import org.onebusaway.geospatial.services.PolylineEncoder;
+import org.onebusaway.geospatial.services.UTMLibrary;
+import org.onebusaway.geospatial.services.UTMProjection;
 import org.onebusaway.gtfs.impl.GtfsRelationalDaoImpl;
 import org.onebusaway.gtfs.impl.calendar.CalendarServiceDataFactoryImpl;
 import org.onebusaway.gtfs.model.Agency;
@@ -96,6 +109,9 @@ public class GtfsGraphBuilderImpl implements GraphBuilder {
     Map<Agency, GtfsBundle> agenciesSeen = new HashMap<Agency, GtfsBundle>();
 
     private boolean generateFeedIds = false;
+    
+    private static final int _boundingBufferRadiusInMeters = 3000;
+    private static final int _boundingSimplifierRadiusInMeters = 500;    
 
     /** 
      * Construct and set bundles all at once. 
@@ -239,6 +255,9 @@ public class GtfsGraphBuilderImpl implements GraphBuilder {
 
         if (gtfsBundle.getDefaultBikesAllowed())
             reader.addEntityHandler(new EntityBikeability(true));
+        
+        StopToPolygonEntityHandler boundingPolyHandler = new StopToPolygonEntityHandler(_boundingBufferRadiusInMeters);        
+        reader.addEntityHandler(boundingPolyHandler);
 
         for (Class<?> entityClass : reader.getEntityClasses()) {
             LOG.info("reading entities: " + entityClass.getName());
@@ -258,6 +277,8 @@ public class GtfsGraphBuilderImpl implements GraphBuilder {
                 }
             }
         }
+        
+        updateBoundingPolygon(boundingPolyHandler, graph);
 
         for (ShapePoint shapePoint : store.getAllEntitiesForType(ShapePoint.class)) {
             shapePoint.getShapeId().setAgencyId(reader.getDefaultAgencyId());
@@ -417,7 +438,97 @@ public class GtfsGraphBuilderImpl implements GraphBuilder {
             }
         }
     }
+    
+    private static class StopToPolygonEntityHandler implements EntityHandler {
 
+       private GeometryFactory _factory = new GeometryFactory();
+
+       private UTMProjection _projection;
+
+       private double _bufferRadiusInMeters;
+
+       private Geometry _geometry;
+
+       public StopToPolygonEntityHandler(double bufferRadiusInMeters) {
+         _bufferRadiusInMeters = bufferRadiusInMeters;
+       }
+
+       public Geometry getGeometry() {
+         return _geometry;
+       }
+
+       public UTMProjection getProjection() {
+         return _projection;
+       }
+
+       @Override
+       public void handleEntity(Object bean) {
+
+         if (!(bean instanceof Stop)) {
+             return;
+         }           
+         Stop stop = (Stop) bean;
+
+         if (_projection == null) {
+           int zone = UTMLibrary.getUTMZoneForLongitude(stop.getLon());
+           _projection = new UTMProjection(zone);
+         }
+
+         XYPoint point = _projection.forward(new CoordinatePoint(stop.getLat(),
+             stop.getLon()));
+
+         Point p = _factory.createPoint(new Coordinate(point.getX(), point.getY()));
+         Geometry geometry = p.buffer(_bufferRadiusInMeters).getEnvelope();
+
+         if (_geometry == null)
+           _geometry = geometry;
+         else
+           _geometry = _geometry.union(geometry);
+       }
+     }    
+    
+    public void updateBoundingPolygon(StopToPolygonEntityHandler handler, Graph graph) {
+        Geometry geometry = handler.getGeometry();
+        UTMProjection proj = handler.getProjection();
+        List<CoordinatePoint> coords = new ArrayList<CoordinatePoint>();
+        if (geometry instanceof Polygon)
+          coords = getEncodedPolygon((Polygon) geometry, proj, true);
+        else if (geometry instanceof MultiPolygon)
+          coords = getEncodedMultiPolygon((MultiPolygon) geometry, proj, true);
+        else
+          LOG.error("unknown geometry: " + geometry);       
+
+        String polyString = PolylineEncoder.createEncodings(coords).getPoints();
+        graph.setBoundingPolyline(polyString);
+        LOG.info("Bounding polygon for this graph {}", polyString);
+    }
+
+    private List<CoordinatePoint> getEncodedMultiPolygon(MultiPolygon multi, UTMProjection proj, boolean latFirst) {
+        List<CoordinatePoint> coords = new ArrayList<CoordinatePoint>();
+        for (int i = 0; i < multi.getNumGeometries(); i++)
+          coords.addAll(getEncodedPolygon((Polygon)multi.getGeometryN(i), proj, latFirst));
+        return coords;
+    }
+
+    private List<CoordinatePoint> getEncodedPolygon(Polygon poly, UTMProjection proj, boolean latFirst) {
+        Polygon simplePoly = (Polygon)DouglasPeuckerSimplifier.simplify(poly, _boundingSimplifierRadiusInMeters);
+        List<CoordinatePoint> coords = buildLineString(proj, simplePoly.getExteriorRing(), latFirst);
+        for (int i = 0; i < poly.getNumInteriorRing(); i++) {
+          coords.addAll(buildLineString(proj, simplePoly.getInteriorRingN(i), latFirst));
+        }        
+        return coords;
+    }
+    
+    private List<CoordinatePoint> buildLineString(UTMProjection proj, LineString line, boolean latFirst) {
+        List<CoordinatePoint> coords = new ArrayList<CoordinatePoint>();
+        for (int i = 0; i < line.getNumPoints(); i++) {
+          Point point = line.getPointN(i);
+          XYPoint p = new XYPoint(point.getX(), point.getY());
+          coords.add(proj.reverse(p));
+        }        
+        return coords;
+    }    
+  
     @Override
     public void checkInputs() {
         for (GtfsBundle bundle : _gtfsBundles.getBundles()) {
