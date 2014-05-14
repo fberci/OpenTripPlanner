@@ -79,6 +79,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.text.ParseException;
 import java.util.*;
+import org.opentripplanner.api.ws.oba_rest_api.OneBusAwayRequestLogger;
 
 /**
  * A base class for imitating the <a href="http://developer.onebusaway.org/modules/onebusaway-application-modules/current/api/where/index.html">OneBusAway REST API</a>.
@@ -134,7 +135,8 @@ import java.util.*;
 @Produces({ MediaType.APPLICATION_XML, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
 public abstract class OneBusAwayApiMethod<T> {
     private static final Logger LOG = LoggerFactory.getLogger(OneBusAwayApiMethod.class);
-
+    private OneBusAwayRequestLogger requestLogger = new OneBusAwayRequestLogger();
+    
     /**
      * The base API path which all methods are relative to.
      */
@@ -207,7 +209,7 @@ public abstract class OneBusAwayApiMethod<T> {
     
     @GET
     public TransitResponse<T> processResponse() {
-	    //OneBusAwayRequestLogger.LogRequest logRequest = new OneBusAwayRequestLogger().startRequest(uriInfo.getRequestUri(), clientId, apiKey, internalRequest);
+	    OneBusAwayRequestLogger.LogRequest logRequest = requestLogger.startRequest(uriInfo.getRequestUri(), clientId, apiKey, internalRequest);
 
         graph = getGraph(routerId);
         if(graph == null) {
@@ -237,7 +239,7 @@ public abstract class OneBusAwayApiMethod<T> {
             LOG.warn("Unhandled exception: ", e);
         }
 
-	    //logRequest.finishRequest();
+	    logRequest.finishRequest();
 
         if(transitResponse.getStatus() == TransitResponse.Status.NOT_MODIFIED) {
 	        Response.ResponseBuilder response = Response.notModified();

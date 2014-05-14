@@ -44,6 +44,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
 import java.util.EnumMap;
 import java.util.Map;
+import org.opentripplanner.api.ws.oba_rest_api.OneBusAwayRequestLogger;
 
 /**
  * Implements the <a href="http://developer.onebusaway.org/modules/onebusaway-application-modules/current/api/where/methods/agency.html">plan-trip</a> OneBusAway API method. Is in no way compatible with the original method.
@@ -55,6 +56,7 @@ import java.util.Map;
 public class PlanTripMethod extends RoutingResource {
 
     private static final Logger LOG = LoggerFactory.getLogger(PlanTripMethod.class);
+    private OneBusAwayRequestLogger requestLogger = new OneBusAwayRequestLogger();
     
     @Setter @InjectParam 
     public PlanGenerator planGenerator;
@@ -93,7 +95,7 @@ public class PlanTripMethod extends RoutingResource {
 
     @GET
     public TransitResponse<TransitEntryWithReferences<Response>> plan() {
-	    //OneBusAwayRequestLogger.LogRequest logRequest = new OneBusAwayRequestLogger().startRequest(uriInfo.getRequestUri(), clientId, apiKey, internalRequest);
+	    OneBusAwayRequestLogger.LogRequest logRequest = requestLogger.startRequest(uriInfo.getRequestUri(), clientId, apiKey, internalRequest);
 
         Graph graph = getGraph(routerId);
         if(graph == null) {
@@ -180,7 +182,7 @@ public class PlanTripMethod extends RoutingResource {
             }
 
             TransitResponse<TransitEntryWithReferences<Response>> response = builder.getResponseForTripPlan(plan);
-	        //logRequest.finishRequest();
+	        logRequest.finishRequest();
 	        return response;
         } catch(Exception e) {
             LOG.warn("Trip Planning Exception: ", e);

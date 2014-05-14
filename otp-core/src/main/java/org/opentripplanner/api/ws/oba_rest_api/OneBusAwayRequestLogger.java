@@ -24,7 +24,7 @@ import java.util.UUID;
 
 public class OneBusAwayRequestLogger {
 
-	private static GoogleAnalytics ga = new GoogleAnalytics("UA-42709671-1", "OpenTripPlanner-OBA API", MavenVersion.VERSION.toString());
+	private static GoogleAnalytics ga = new GoogleAnalytics("UA-50283889-4", "OpenTripPlanner-OBA API", MavenVersion.VERSION.toString());
 	{
 		ga.getConfig().setDeriveSystemParameters(false);
 		ga.getConfig().setGatherStats(true);
@@ -64,11 +64,11 @@ public class OneBusAwayRequestLogger {
 		private final TimingHit timingHit;
 
 		public void finishRequest() {
-			/*long now = System.currentTimeMillis();
+			long now = System.currentTimeMillis();
 			timingHit.serverResponseTime((int) (now - startTime));
 
 			ga.postAsync(pageHit);
-			ga.postAsync(timingHit);*/
+			ga.postAsync(timingHit);
 		}
 	}
 }
