@@ -132,8 +132,8 @@ public class TransitResponseBuilder {
         return getOkResponse(list(transitRoutes));
     }
 
-    public TransitResponse<TransitEntryWithReferences<TransitRoute>> getResponseForRoute(Route route, List<RouteVariant> variants, List<String> alertIds) {
-        return getOkResponse(entity(getRoute(route, variants, alertIds)));
+    public TransitResponse<TransitEntryWithReferences<TransitRoute>> getResponseForRoute(Route route, List<RouteVariant> variants, List<RouteVariant> relatedVariants, List<String> alertIds) {
+        return getOkResponse(entity(getRoute(route, variants, relatedVariants, alertIds)));
     }
 
     public TransitResponse<TransitEntryWithReferences<TransitStopsForRoute>> getResponseForStopsForRoute(Route route, List<RouteVariant> variants, List<String> alertIds,
@@ -451,16 +451,28 @@ public class TransitResponseBuilder {
     }
     
 //    private final String CACHE_ROUTE_DETAILS = "routeDetails";
-    public TransitRoute getRoute(Route route, List<RouteVariant> variants, List<String> alertIds) {       
+    public TransitRoute getRoute(Route route, List<RouteVariant> variants, List<RouteVariant> relatedVariants, List<String> alertIds) {
+        addToReferences(route);
+
 //        if(_cacheService.<Route, TransitRoute>containsKey(CACHE_ROUTE_DETAILS, route)) {
 //            return _cacheService.<Route, TransitRoute>get(CACHE_ROUTE_DETAILS, route);
 //        }
-        
+
         List<TransitRouteVariant> transitVariants = new ArrayList<TransitRouteVariant>(variants.size());
         for(RouteVariant variant : variants) {
             TransitRouteVariant transitVariant = getTransitVariant(variant);
             transitVariants.add(transitVariant);
         }
+
+        if(relatedVariants != null) {
+            for(RouteVariant relatedVariant : relatedVariants) {
+                TransitRouteVariant relatedTransitVariant = getTransitVariant(relatedVariant);
+                relatedTransitVariant.setRouteId(relatedVariant.getRoute().getId().toString());
+                transitVariants.add(relatedTransitVariant);
+                addToReferences(relatedVariant.getRoute());
+            }
+        }
+
         
         TransitRouteDetails transitRoute = new TransitRouteDetails();
         transitRoute.setAgencyId(route.getAgency().getId());
@@ -474,7 +486,7 @@ public class TransitResponseBuilder {
         transitRoute.setUrl(route.getUrl());
         transitRoute.setVariants(transitVariants);
         transitRoute.setAlertIds(alertIds);
-        
+
 //        _cacheService.<Route, TransitRoute>put(CACHE_ROUTE_DETAILS, route, transitRoute);
         return transitRoute;
     }
@@ -1043,6 +1055,7 @@ public class TransitResponseBuilder {
         }
     }
 
+    public final static RouteVariantComparator ROUTE_VARIANT_COMPARATOR = new RouteVariantComparator();
     public final static RouteComparator ROUTE_COMPARATOR = new RouteComparator();
     public final static class RouteComparator implements Comparator<Route> {
 
@@ -1116,6 +1129,13 @@ public class TransitResponseBuilder {
             }
             
             return a.compareTo(b);
+        }
+    }
+
+    public final static class RouteVariantComparator implements Comparator<RouteVariant> {
+        @Override
+        public int compare(RouteVariant o1, RouteVariant o2) {
+            return ROUTE_COMPARATOR.compare(o1.getRoute(), o2.getRoute());
         }
     }
 }

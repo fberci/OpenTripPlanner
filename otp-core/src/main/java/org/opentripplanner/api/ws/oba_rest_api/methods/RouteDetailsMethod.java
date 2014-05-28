@@ -16,6 +16,7 @@ package org.opentripplanner.api.ws.oba_rest_api.methods;
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.onebusaway.gtfs.model.Route;
 import org.onebusaway.gtfs.model.calendar.ServiceDate;
+import org.opentripplanner.api.common.SearchHintService;
 import org.opentripplanner.api.ws.oba_rest_api.beans.TransitEntryWithReferences;
 import org.opentripplanner.api.ws.oba_rest_api.beans.TransitResponse;
 import org.opentripplanner.api.ws.oba_rest_api.beans.TransitResponseBuilder;
@@ -23,17 +24,24 @@ import org.opentripplanner.api.ws.oba_rest_api.beans.TransitRoute;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.transit_index.RouteVariant;
 
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 import java.text.ParseException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 @Path(OneBusAwayApiMethod.API_BASE_PATH + "route-details" + OneBusAwayApiMethod.API_CONTENT_TYPE)
 public class RouteDetailsMethod extends OneBusAwayApiMethod<TransitEntryWithReferences<TransitRoute>> {
 
     @QueryParam("routeId") private String id;
     @QueryParam("date") private String date;
-    
+    @QueryParam("related") @DefaultValue("false") private boolean related;
+
     @Override
     protected TransitResponse<TransitEntryWithReferences<TransitRoute>> getResponse() {
         AgencyAndId routeId = parseAgencyAndId(id);
@@ -60,9 +68,22 @@ public class RouteDetailsMethod extends OneBusAwayApiMethod<TransitEntryWithRefe
         
         RoutingRequest options = makeTraverseOptions(startTime, routerId);
         
-        List<String> alertIds = getAlertsForRoute(routeId, options, startTime, endTime);
-        List<RouteVariant> routeVariants = getReferenceVariantsForRoute(routeId);
-        
-        return responseBuilder.getResponseForRoute(route, routeVariants, alertIds);
+        Set<String> alertIds = new HashSet<String>(getAlertsForRoute(routeId, options, startTime, endTime));
+        List<RouteVariant> routeVariants = new LinkedList<RouteVariant>(getReferenceVariantsForRoute(routeId));
+        List<RouteVariant> relatedVariants = null;
+
+        SearchHintService searchHintService = graph.getService(SearchHintService.class);
+        if(related && searchHintService != null) {
+            relatedVariants = new LinkedList<RouteVariant>();
+            Collection<AgencyAndId> relatedRouteIds = searchHintService.getHintsForRoute(routeId);
+            for(AgencyAndId relatedRouteId : relatedRouteIds) {
+                //alertIds.addAll(getAlertsForRoute(relatedRouteId, options, startTime, endTime));
+                relatedVariants.addAll(getReferenceVariantsForRoute(relatedRouteId));
+            }
+
+            Collections.sort(relatedVariants, TransitResponseBuilder.ROUTE_VARIANT_COMPARATOR);
+        }
+
+        return responseBuilder.getResponseForRoute(route, routeVariants, relatedVariants, new LinkedList<String>(alertIds));
     }
 }

@@ -15,6 +15,7 @@ package org.opentripplanner.api.ws.oba_rest_api.methods;
 
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.onebusaway.gtfs.model.Route;
+import org.opentripplanner.api.common.SearchHintService;
 import org.opentripplanner.api.ws.oba_rest_api.beans.TransitListEntryWithReferences;
 import org.opentripplanner.api.ws.oba_rest_api.beans.TransitResponse;
 import org.opentripplanner.api.ws.oba_rest_api.beans.TransitResponseBuilder;
@@ -25,12 +26,15 @@ import javax.ws.rs.DefaultValue;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Path(OneBusAwayApiMethod.API_BASE_PATH + "vehicles-for-route" + OneBusAwayApiMethod.API_CONTENT_TYPE)
 public class VehiclesForRouteMethod extends OneBusAwayApiMethod<TransitListEntryWithReferences<TransitVehicle>> {
 
     @QueryParam("routeId") private List<String> ids;
+    @QueryParam("related") @DefaultValue("false") private boolean related;
     @QueryParam("ifModifiedSince") @DefaultValue("-1") private long ifModifiedSince;
     
     @Override
@@ -43,10 +47,20 @@ public class VehiclesForRouteMethod extends OneBusAwayApiMethod<TransitListEntry
         if(ifModifiedSince >= vehicleLocationService.getLastUpdateTime()) {
             return TransitResponseBuilder.getFailResponse(TransitResponse.Status.NOT_MODIFIED);
         }
-        
+
+        SearchHintService searchHintService = graph.getService(SearchHintService.class);
         List<TransitVehicle> transitVehicles = new ArrayList<TransitVehicle>();
+        Set<AgencyAndId> routeIds = new HashSet<AgencyAndId>();
         for(String id : ids) {
             AgencyAndId routeId = parseAgencyAndId(id);
+            routeIds.add(routeId);
+
+            if(related && searchHintService != null) {
+                routeIds.addAll(searchHintService.getHintsForRoute(routeId));
+            }
+        }
+
+        for(AgencyAndId routeId : routeIds) {
             Route route = transitIndexService.getAllRoutes().get(routeId);
             if(route == null)
                 return TransitResponseBuilder.getFailResponse(TransitResponse.Status.NOT_FOUND, "Unknown route.");

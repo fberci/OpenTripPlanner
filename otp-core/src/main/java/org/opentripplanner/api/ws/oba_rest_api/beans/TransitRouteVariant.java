@@ -13,8 +13,10 @@
 
 package org.opentripplanner.api.ws.oba_rest_api.beans;
 
-import java.util.Collection;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Data;
+
+import java.util.Collection;
 
 @Data
 public class TransitRouteVariant {
@@ -23,4 +25,6 @@ public class TransitRouteVariant {
     private String direction;
     private String headsign;
     private TransitPolyline polyline;
+    @JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
+    private String routeId;
 }
