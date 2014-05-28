@@ -24,7 +24,7 @@ import java.util.UUID;
 
 public class OneBusAwayRequestLogger {
 
-	private static GoogleAnalytics ga = new GoogleAnalytics("UA-50283889-4", "OpenTripPlanner-OBA API", MavenVersion.VERSION.toString());
+	private static GoogleAnalytics ga = new GoogleAnalytics("UA-50283889-5", "OpenTripPlanner-OBA API", MavenVersion.VERSION.toString());
 	{
 		ga.getConfig().setDeriveSystemParameters(false);
 		ga.getConfig().setGatherStats(true);
