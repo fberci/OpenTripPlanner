@@ -77,8 +77,10 @@ public class RouteDetailsMethod extends OneBusAwayApiMethod<TransitEntryWithRefe
             relatedVariants = new LinkedList<RouteVariant>();
             Collection<AgencyAndId> relatedRouteIds = searchHintService.getHintsForRoute(routeId);
             for(AgencyAndId relatedRouteId : relatedRouteIds) {
-                //alertIds.addAll(getAlertsForRoute(relatedRouteId, options, startTime, endTime));
-                relatedVariants.addAll(getReferenceVariantsForRoute(relatedRouteId));
+                if(!routeId.equals(relatedRouteId)) {
+                    //alertIds.addAll(getAlertsForRoute(relatedRouteId, options, startTime, endTime));
+                    relatedVariants.addAll(getReferenceVariantsForRoute(relatedRouteId));
+                }
             }
 
             Collections.sort(relatedVariants, TransitResponseBuilder.ROUTE_VARIANT_COMPARATOR);
