@@ -222,14 +222,24 @@ public class TransitIndexBuilder implements GraphBuilderWithGtfsDao {
         if(segment.hopOut != null) {
             Geometry geometry = segment.hopOut.getGeometry();
             Coordinate[] coordinates = geometry.getCoordinates();
-            if(coordinates.length >= 4)
-                ret.add(DirectionUtils.getAzimuth(coordinates[1], coordinates[2])); // BKK <
+            if(coordinates.length >= 2) {
+                Coordinate first = coordinates[0],
+                           second = coordinates[1];
+
+                int index = 1;
+                double minDistance = 15 /* meters */;
+                while(index < coordinates.length && distanceLibrary.fastDistance(first, coordinates[index]) < minDistance) {
+                    ++index;
+                    second = coordinates[index];
+                }
+                ret.add(DirectionUtils.getAzimuth(first, second)); // BKK <
+            }
         }
         /*if(segment.hopIn != null) {
             Geometry geometry = segment.hopIn.getGeometry();
             Coordinate[] coordinates = geometry.getCoordinates();
             int length = coordinates.length;
-            if(length >= 2)
+            if(length >= 4)
                 ret.add(DirectionUtils.getAzimuth(coordinates[length - 3], coordinates[length - 2])); // BKK <
         }*/
         
