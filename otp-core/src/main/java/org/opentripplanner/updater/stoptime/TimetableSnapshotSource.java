@@ -28,6 +28,7 @@ import org.opentripplanner.routing.edgetype.TableTripPattern;
 import org.opentripplanner.routing.edgetype.TimetableResolver;
 import org.opentripplanner.routing.edgetype.factory.GTFSPatternHopFactory;
 import org.opentripplanner.routing.graph.Graph;
+import org.opentripplanner.routing.impl.raptor.RaptorDataService;
 import org.opentripplanner.routing.services.TransitIndexService;
 import org.opentripplanner.routing.trippattern.TripUpdateList;
 import org.opentripplanner.routing.trippattern.Update;
@@ -250,6 +251,13 @@ public class TimetableSnapshotSource {
         transitIndexService.add(result, serviceDate);
 
         LOG.info("Added trip: {} @ {} to {}", trip.getId(), serviceDate.toString(), tripPattern);
+
+        if(graph.getService(RaptorDataService.class) != null) {
+            RaptorDataService raptorDataService = graph.getService(RaptorDataService.class);
+            if(!raptorDataService.addTripPattern(graph, tripPattern)) {
+                LOG.warn("Failed to add trip pattern to raptor index: {} @ {} to {}", trip.getId(), serviceDate.toString(), tripPattern);
+            }
+        }
     }
 
     protected boolean handleCanceledTrip(TripUpdateList tripUpdateList) {
@@ -274,7 +282,7 @@ public class TimetableSnapshotSource {
         }
         TableTripPattern pattern = getPatternForTrip(tripUpdateList.getTripId(), tripUpdateList.getServiceDate());
         if (pattern == null) {
-            LOG.info("Received modified update for non-existing trip (no pattern exists): ", tripUpdateList.getTripId());
+            LOG.info("Received modified update for non-existing trip (no pattern exists): {}", tripUpdateList.getTripId());
             return false;
         }
 

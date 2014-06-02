@@ -13,14 +13,16 @@
 
 package org.opentripplanner.routing.impl.raptor;
 
+import org.onebusaway.gtfs.model.AgencyAndId;
+import org.onebusaway.gtfs.model.Stop;
+import org.opentripplanner.common.model.T2;
+import org.opentripplanner.routing.edgetype.TripPattern;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
-
-import org.onebusaway.gtfs.model.AgencyAndId;
-import org.opentripplanner.common.model.T2;
 
 public class RaptorData implements Serializable {
 
@@ -41,4 +43,22 @@ public class RaptorData implements Serializable {
 
     public MaxTransitRegions maxTransitRegions;
 
+    public RaptorRoute getRoute(TripPattern tripPattern) {
+        OUTSIDE: for(RaptorRoute raptorRoute : routes) {
+            if(tripPattern.getStops().size() != raptorRoute.stops.length) {
+                continue;
+            }
+
+            for(int i = 0; i < tripPattern.getStops().size(); ++i) {
+                Stop stop = tripPattern.getStops().get(i);
+                RaptorStop raptorStop = raptorRoute.stops[i];
+                if(!stop.getId().equals(raptorStop.stopVertex.getStop().getId())) {
+                    continue OUTSIDE;
+                }
+            }
+
+            return raptorRoute;
+        }
+        return null;
+    }
 }

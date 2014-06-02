@@ -13,16 +13,17 @@
 
 package org.opentripplanner.routing.impl.raptor;
 
-import java.io.Serializable;
-import java.util.HashMap;
-
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.edgetype.TransitBoardAlight;
+import org.opentripplanner.routing.edgetype.TripPattern;
 import org.opentripplanner.routing.trippattern.TripTimes;
+
+import java.io.Serializable;
+import java.util.HashMap;
 
 /**
  * A set of trips that have the same stops in the same order In other words, a TripPattern, but
@@ -124,6 +125,16 @@ public class RaptorRoute implements Serializable {
             return null;
 
         return spec;
+    }
+
+    public boolean containsPattern(TripPattern pattern) {
+        for(TransitBoardAlight board : boards[0]) {
+            if(board.getPattern().equals(pattern)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public String toString() {
