@@ -16,6 +16,7 @@ package org.opentripplanner.api.ws.oba_rest_api.methods;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.sun.jersey.api.core.HttpContext;
 import com.sun.jersey.api.core.InjectParam;
 import com.sun.jersey.api.spring.Autowire;
 import com.vividsolutions.jts.geom.Coordinate;
@@ -31,6 +32,7 @@ import org.onebusaway.gtfs.model.Trip;
 import org.onebusaway.gtfs.model.calendar.ServiceDate;
 import org.onebusaway.gtfs.services.calendar.CalendarService;
 import org.opentripplanner.api.ws.oba_rest_api.OneBusAwayApiCacheService;
+import org.opentripplanner.api.ws.oba_rest_api.OneBusAwayRequestLogger;
 import org.opentripplanner.api.ws.oba_rest_api.beans.*;
 import org.opentripplanner.common.geometry.GeometryUtils;
 import org.opentripplanner.common.model.T2;
@@ -79,7 +81,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.text.ParseException;
 import java.util.*;
-import org.opentripplanner.api.ws.oba_rest_api.OneBusAwayRequestLogger;
 
 /**
  * A base class for imitating the <a href="http://developer.onebusaway.org/modules/onebusaway-application-modules/current/api/where/index.html">OneBusAway REST API</a>.
@@ -197,6 +198,7 @@ public abstract class OneBusAwayApiMethod<T> {
 	@HeaderParam("X-BKK-Internal-Request") @DefaultValue("false") private boolean internalRequest;
 
 	@Context private UriInfo uriInfo;
+    @Context private HttpContext httpContext;
 
     protected Graph graph;
     protected TransitIndexService transitIndexService;
@@ -209,7 +211,7 @@ public abstract class OneBusAwayApiMethod<T> {
     
     @GET
     public TransitResponse<T> processResponse() {
-	    OneBusAwayRequestLogger.LogRequest logRequest = requestLogger.startRequest(uriInfo.getRequestUri(), clientId, apiKey, internalRequest);
+	    OneBusAwayRequestLogger.LogRequest logRequest = requestLogger.startRequest(this, httpContext, uriInfo.getRequestUri(), clientId, apiKey, internalRequest);
 
         graph = getGraph(routerId);
         if(graph == null) {
@@ -232,14 +234,15 @@ public abstract class OneBusAwayApiMethod<T> {
 	    TransitResponse<T> transitResponse;
         try {
             transitResponse = getResponse();
+            logRequest.finishRequest();
         } catch (TransitTimesException e) {
 	        transitResponse = TransitResponseBuilder.getFailResponse(TransitResponse.Status.NO_TRANSIT_TIMES);
+            logRequest.exception(e);
         } catch (Exception e) {
             transitResponse = TransitResponseBuilder.getFailResponse();
+            logRequest.exception(e);
             LOG.warn("Unhandled exception: ", e);
         }
-
-	    logRequest.finishRequest();
 
         if(transitResponse.getStatus() == TransitResponse.Status.NOT_MODIFIED) {
 	        Response.ResponseBuilder response = Response.notModified();

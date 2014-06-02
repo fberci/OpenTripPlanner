@@ -13,18 +13,20 @@
 
 package org.opentripplanner.api.ws.oba_rest_api;
 
+import com.brsanthu.googleanalytics.ExceptionHit;
 import com.brsanthu.googleanalytics.GoogleAnalytics;
+import com.brsanthu.googleanalytics.GoogleAnalyticsRequest;
 import com.brsanthu.googleanalytics.PageViewHit;
 import com.brsanthu.googleanalytics.TimingHit;
-import lombok.RequiredArgsConstructor;
-import org.opentripplanner.common.MavenVersion;
+import com.sun.jersey.api.core.HttpContext;
 
 import java.net.URI;
-import java.util.UUID;
 
 public class OneBusAwayRequestLogger {
 
-	private static GoogleAnalytics ga = new GoogleAnalytics("UA-50283889-5", "OpenTripPlanner-OBA API", MavenVersion.VERSION.toString());
+    private static int counter = 1;
+
+	private static GoogleAnalytics ga = new GoogleAnalytics("UA-50283889-5"); //, "OpenTripPlanner-OBA API", MavenVersion.VERSION.toString());
 	{
 		ga.getConfig().setDeriveSystemParameters(false);
 		ga.getConfig().setGatherStats(true);
@@ -33,42 +35,85 @@ public class OneBusAwayRequestLogger {
 	public OneBusAwayRequestLogger() {
 	}
 
-	public LogRequest startRequest(URI uri, String clientId, String apiKey, boolean internalRequest) {
+	public LogRequest startRequest(Object apiMethod, HttpContext req, URI uri, String clientId, String apiKey, boolean internalRequest) {
 		if(clientId == null) {
-			clientId = UUID.randomUUID().toString();
+			clientId = "" + ++counter;
 		}
 
-		String query = uri.getQuery();
-		String url = uri.getPath() + (query == null ? "" : "?" + query);
-
-		PageViewHit pageViewHit = new PageViewHit();
-		pageViewHit.customMetric(0, "" + (internalRequest ? 0 : 1));
-		pageViewHit.customMetric(1, "" + apiKey);
-		pageViewHit.clientId(clientId);
-		pageViewHit.documentUrl(url);
-
-		TimingHit timingHit = new TimingHit();
-		timingHit.customMetric(0, "" + internalRequest);
-		timingHit.customMetric(1, "" + apiKey);
-		timingHit.clientId(clientId);
-		timingHit.documentUrl(url);
-
-		return new LogRequest(pageViewHit, timingHit);
+		return new LogRequest(apiMethod, req, uri, clientId, apiKey, internalRequest);
 	}
 
-	@RequiredArgsConstructor
 	public class LogRequest {
 
 		private final long startTime = System.currentTimeMillis();
-		private final PageViewHit pageHit;
-		private final TimingHit timingHit;
+		private final PageViewHit pageHit = new PageViewHit();
+		private final TimingHit timingHit = new TimingHit();
+
+        private Object apiMethod;
+        private String userAgent;
+        private String userIp;
+        private String clientId;
+        private String url;
+        private String apiKey;
+        private boolean internalRequest;
+
+        protected LogRequest(Object apiMethod, HttpContext req, URI uri, String clientId, String apiKey, boolean internalRequest) {
+
+            this.clientId = clientId;
+            this.apiMethod = apiMethod;
+
+            this.apiKey = apiKey;
+            this.internalRequest = internalRequest;
+
+            this.url = uri.toString();
+            this.userAgent = req.getRequest().getHeaderValue("User-Agent");
+            this.userIp = req.getRequest().getHeaderValue("X-Forwarded-For");
+            if(this.userIp == null) {
+                this.userIp = ""; // req.getRemoteAddr();
+            }
+
+            init(pageHit);
+            pageHit.documentTitle(this.apiMethod.getClass().getSimpleName());
+
+            init(timingHit);
+            timingHit.userTimingCategory("apiRequest");
+            timingHit.userTimingLabel(this.apiMethod.getClass().getSimpleName());
+        }
+
+        private <T extends GoogleAnalyticsRequest<T>> T init(T gar)  {
+            gar.userAgent(userAgent);
+            gar.userIp(userIp);
+            gar.customMetric(1, "" + (internalRequest ? 1 : 0));
+            if(apiKey != null) {
+                gar.customDimention(1, apiKey);
+            }
+            gar.customDimention(2, apiMethod.getClass().getSimpleName());
+            gar.clientId(clientId);
+            gar.documentUrl(url);
+
+            return gar;
+        }
 
 		public void finishRequest() {
 			long now = System.currentTimeMillis();
-			timingHit.serverResponseTime((int) (now - startTime));
+			timingHit.pageLoadTime((int) (now - startTime));
+            timingHit.serverResponseTime((int) (now - startTime));
 
 			ga.postAsync(pageHit);
 			ga.postAsync(timingHit);
 		}
-	}
+
+        public void exception(Exception e) {
+            exception(e.getClass().getSimpleName(), true);
+        }
+
+        public void exception(String description, boolean fatal) {
+            ExceptionHit exceptionHit = init(new ExceptionHit());
+            exceptionHit.exceptionFatal(fatal);
+            exceptionHit.exceptionDescription(description);
+
+            ga.postAsync(pageHit);
+            ga.postAsync(exceptionHit);
+        }
+    }
 }
