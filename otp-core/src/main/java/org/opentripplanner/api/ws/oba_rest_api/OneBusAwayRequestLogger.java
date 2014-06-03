@@ -30,6 +30,7 @@ public class OneBusAwayRequestLogger {
 	{
 		ga.getConfig().setDeriveSystemParameters(false);
 		ga.getConfig().setGatherStats(true);
+                ga.getConfig().setUseHttps(false);
 	}
 
 	public OneBusAwayRequestLogger() {
