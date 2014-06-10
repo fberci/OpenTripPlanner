@@ -99,7 +99,7 @@ public class PlanTripMethod extends RoutingResource {
     @GET
     public TransitResponse<TransitEntryWithReferences<Response>> plan() {
 	    OneBusAwayRequestLogger.LogRequest logRequest
-            = requestLogger.startRequest(this, httpContext, uriInfo.getRequestUri(), clientId, apiKey, internalRequest);
+            = requestLogger.startRequest(this, httpContext, uriInfo.getRequestUri(), clientId, apiKey, internalRequest, dialect);
 
         Graph graph = getGraph(routerId);
         if(graph == null) {
