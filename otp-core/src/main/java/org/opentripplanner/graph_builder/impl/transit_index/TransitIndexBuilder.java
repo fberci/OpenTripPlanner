@@ -228,7 +228,7 @@ public class TransitIndexBuilder implements GraphBuilderWithGtfsDao {
 
                 int index = 1;
                 double minDistance = 15 /* meters */;
-                while(index < coordinates.length && distanceLibrary.fastDistance(first, coordinates[index]) < minDistance) {
+                while(index + 1 < coordinates.length && distanceLibrary.fastDistance(first, coordinates[index]) < minDistance) {
                     ++index;
                     second = coordinates[index];
                 }

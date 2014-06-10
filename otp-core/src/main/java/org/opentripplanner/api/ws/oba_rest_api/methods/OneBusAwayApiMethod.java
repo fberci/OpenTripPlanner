@@ -211,7 +211,7 @@ public abstract class OneBusAwayApiMethod<T> {
     
     @GET
     public TransitResponse<T> processResponse() {
-	    OneBusAwayRequestLogger.LogRequest logRequest = requestLogger.startRequest(this, httpContext, uriInfo.getRequestUri(), clientId, apiKey, internalRequest);
+	    OneBusAwayRequestLogger.LogRequest logRequest = requestLogger.startRequest(this, httpContext, uriInfo.getRequestUri(), clientId, apiKey, internalRequest, dialect);
 
         graph = getGraph(routerId);
         if(graph == null) {
