@@ -17,6 +17,7 @@ import com.google.common.collect.Lists;
 import com.vividsolutions.jts.geom.LineString;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.apache.commons.lang.StringUtils;
 import org.onebusaway.gtfs.model.Agency;
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.onebusaway.gtfs.model.Route;
@@ -40,6 +41,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -65,13 +67,25 @@ public class TransitResponseBuilder {
 	public static class ReferencesWrapper {
 
 		@Getter
-		private final References references;
+		private final EnumSet<References> references;
 
 		public static ReferencesWrapper valueOf(String value) {
-			if("false".equals(value)) return new ReferencesWrapper(References.NONE);
-			if("compact".equals(value)) return new ReferencesWrapper(References.COMPACT);
+			if("false".equals(value)) return new ReferencesWrapper(EnumSet.noneOf(References.class));
+			if("compact".equals(value)) return new ReferencesWrapper(EnumSet.allOf(References.class));
 
-			return new ReferencesWrapper(References.ALL);
+            if(!StringUtils.isEmpty(value) && !value.equals("true")) {
+                String[] values = value.split(",");
+                EnumSet<References> ret = EnumSet.noneOf(References.class);
+                for(String v : values) {
+                    References rv = References.valueOf(v.toUpperCase());
+                    if(rv != null) {
+                        ret.add(rv);
+                    }
+                }
+                return new ReferencesWrapper(ret);
+            }
+
+			return new ReferencesWrapper(EnumSet.of(References.AGENCIES, References.ROUTES, References.TRIPS, References.STOPS, References.ALERTS));
 		}
 	}
 
@@ -80,7 +94,7 @@ public class TransitResponseBuilder {
     }
 
 	public enum References {
-		NONE, COMPACT, ALL
+		COMPACT, AGENCIES, ROUTES, TRIPS, STOPS, ALERTS
 	}
 
     private Dialect _dialect;
@@ -88,10 +102,10 @@ public class TransitResponseBuilder {
     private OneBusAwayApiCacheService _cacheService;
     private OTPTransitReferences _references = new OTPTransitReferences();
 
-    private References _returnReferences;
+    private EnumSet<References> _returnReferences;
 	private boolean _internalRequest;
 
-    public TransitResponseBuilder(Graph graph, References references, Dialect dialect, boolean internalRequest) {
+    public TransitResponseBuilder(Graph graph, EnumSet<References> references, Dialect dialect, boolean internalRequest) {
         _dialect = dialect;
         _returnReferences = references;
         _transitIndexService = graph.getService(TransitIndexService.class);
@@ -429,7 +443,7 @@ public class TransitResponseBuilder {
         TransitRoute transitRoute = new TransitRoute();
         transitRoute.setAgencyId(route.getAgency().getId());
         transitRoute.setColor(route.getColor());
-	    if(_returnReferences != References.COMPACT) {
+	    if(!_returnReferences.contains(References.COMPACT)) {
 			transitRoute.setDescription(route.getDesc());
 	    }
         transitRoute.setId(route.getId().toString());
@@ -901,17 +915,17 @@ public class TransitResponseBuilder {
     /* HELPERS */
     
     public <B> TransitEntryWithReferences<B> entity(B entry) {
-        if(_returnReferences != References.NONE)
-            return new TransitEntryWithReferences<B>(entry, getDialectReferences());
-        else
+        if(_returnReferences.isEmpty())
             return new TransitEntryWithReferences<B>(entry, null);
+        else
+            return new TransitEntryWithReferences<B>(entry, getDialectReferences());
     }
     
     public <B> TransitListEntryWithReferences<B> list(List<B> entry) {
-		if(_returnReferences != References.NONE)
-            return new TransitListEntryWithReferences<B>(entry, getDialectReferences());
-        else
+        if(_returnReferences.isEmpty())
             return new TransitListEntryWithReferences<B>(entry, null);
+        else
+            return new TransitListEntryWithReferences<B>(entry, getDialectReferences());
     }
     
     private TransitReferences getDialectReferences() {
@@ -943,6 +957,9 @@ public class TransitResponseBuilder {
     /* REFERENCES */
     
     public void addToReferences(Agency agency) {
+        if(!_returnReferences.contains(References.AGENCIES)) {
+            return;
+        }
         if(_references.getAgencies().containsKey(agency.getId())) {
             return;
         }
@@ -952,6 +969,9 @@ public class TransitResponseBuilder {
     }
 
     public void addToReferences(Route route) {
+        if(!_returnReferences.contains(References.ROUTES)) {
+            return;
+        }
         if(_references.getRoutes().containsKey(route.getId().toString())) {
             return;
         }
@@ -961,6 +981,9 @@ public class TransitResponseBuilder {
     }
 
     public void addToReferences(Trip trip) {
+        if(!_returnReferences.contains(References.TRIPS)) {
+            return;
+        }
         if(_references.getTrips().containsKey(trip.getId().toString())) {
             return;
         }
@@ -970,6 +993,9 @@ public class TransitResponseBuilder {
     }
 
     public void addToReferences(TransitTrip transitTrip) {
+        if(!_returnReferences.contains(References.TRIPS)) {
+            return;
+        }
         if(_references.getTrips().containsKey(transitTrip.getId())) {
             return;
         }
@@ -978,6 +1004,9 @@ public class TransitResponseBuilder {
     }
 
     public void addToReferences(Stop stop) {
+        if(!_returnReferences.contains(References.STOPS)) {
+            return;
+        }
         if(_references.getStops().containsKey(stop.getId().toString())) {
             return;
         }
@@ -987,6 +1016,9 @@ public class TransitResponseBuilder {
     }
 
     public void addToReferences(TransitStop transitStop) {
+        if(!_returnReferences.contains(References.STOPS)) {
+            return;
+        }
         if(_references.getStops().containsKey(transitStop.getId())) {
             return;
         }
@@ -995,6 +1027,9 @@ public class TransitResponseBuilder {
     }
 
     public void addToReferences(Alert alert) {
+        if(!_returnReferences.contains(References.ALERTS)) {
+            return;
+        }
         if(_references.getAlerts().containsKey(alert.alertId.toString())) {
             return;
         }
