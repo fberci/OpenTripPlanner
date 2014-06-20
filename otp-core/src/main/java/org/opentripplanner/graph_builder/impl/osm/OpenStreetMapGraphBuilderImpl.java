@@ -13,19 +13,8 @@
 
 package org.opentripplanner.graph_builder.impl.osm;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
+import com.vividsolutions.jts.geom.*;
 import lombok.Setter;
-
 import org.opentripplanner.common.DisjointSet;
 import org.opentripplanner.common.RepeatingTimePeriod;
 import org.opentripplanner.common.TurnRestriction;
@@ -62,18 +51,7 @@ import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.core.TraverseModeSet;
-import org.opentripplanner.routing.edgetype.AreaEdge;
-import org.opentripplanner.routing.edgetype.AreaEdgeList;
-import org.opentripplanner.routing.edgetype.ElevatorAlightEdge;
-import org.opentripplanner.routing.edgetype.ElevatorBoardEdge;
-import org.opentripplanner.routing.edgetype.ElevatorHopEdge;
-import org.opentripplanner.routing.edgetype.FreeEdge;
-import org.opentripplanner.routing.edgetype.NamedArea;
-import org.opentripplanner.routing.edgetype.PlainStreetEdge;
-import org.opentripplanner.routing.edgetype.RentABikeOffEdge;
-import org.opentripplanner.routing.edgetype.RentABikeOnEdge;
-import org.opentripplanner.routing.edgetype.StreetEdge;
-import org.opentripplanner.routing.edgetype.StreetTraversalPermission;
+import org.opentripplanner.routing.edgetype.*;
 import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.graph.Vertex;
@@ -87,6 +65,7 @@ import org.opentripplanner.routing.vertextype.ElevatorOffboardVertex;
 import org.opentripplanner.routing.vertextype.ElevatorOnboardVertex;
 import org.opentripplanner.routing.vertextype.ExitVertex;
 import org.opentripplanner.routing.vertextype.IntersectionVertex;
+import org.opentripplanner.routing.vertextype.TransitStopStreetVertex;
 import org.opentripplanner.util.MapUtils;
 import org.opentripplanner.visibility.Environment;
 import org.opentripplanner.visibility.VLPoint;
@@ -95,16 +74,7 @@ import org.opentripplanner.visibility.VisibilityPolygon;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryCollection;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.LineString;
-import com.vividsolutions.jts.geom.LinearRing;
-import com.vividsolutions.jts.geom.MultiLineString;
-import com.vividsolutions.jts.geom.MultiPolygon;
-import com.vividsolutions.jts.geom.Point;
-import com.vividsolutions.jts.geom.Polygon;
+import java.util.*;
 
 /**
  * Builds a street graph from OpenStreetMap data.
@@ -1496,8 +1466,8 @@ public class OpenStreetMapGraphBuilderImpl implements GraphBuilder {
                     LineString geometry;
 
                     /*
-                     * We split segments at intersections, self-intersections, and nodes with ele tags; the only processing we do on other nodes is to
-                     * accumulate their geometry
+                     * We split segments at intersections, self-intersections, nodes with ele tags, and transit stops;
+                     * the only processing we do on other nodes is to accumulate their geometry
                      */
                     if (segmentCoordinates.size() == 0) {
                         segmentCoordinates.add(getCoordinate(osmStartNode));
@@ -1505,7 +1475,8 @@ public class OpenStreetMapGraphBuilderImpl implements GraphBuilder {
 
                     if (intersectionNodes.containsKey(endNode) || i == nodes.size() - 2
                             || nodes.subList(0, i).contains(nodes.get(i))
-                            || osmEndNode.hasTag("ele")) {
+                            || osmEndNode.hasTag("ele")
+                            || isTransitNode(osmEndNode)) {
                         segmentCoordinates.add(getCoordinate(osmEndNode));
 
                         geometry = GeometryUtils.getGeometryFactory().createLineString(
@@ -2637,16 +2608,34 @@ public class OpenStreetMapGraphBuilderImpl implements GraphBuilder {
                     }
                 }
 
+                if (isTransitNode(node)) {
+                    String ref = node.hasTag("ref:bkv") ? node.getTag("ref:bkv") : node.getTag("ref:bkk");
+                    String name = node.getTag("name");
+                    if (ref != null) {
+                        iv = new TransitStopStreetVertex(graph, label, coordinate.x, coordinate.y, name, ref);
+                    }
+                }
+
                 if (iv == null) {
                     iv = new IntersectionVertex(graph, label, coordinate.x, coordinate.y, label);
                     if (node.hasTrafficLight()) {
                         iv.setTrafficLight(true);
                     }
                 }
+
                 intersectionNodes.put(nid, iv);
                 endpoints.add(iv);
             }
             return iv;
+        }
+
+        private boolean isTransitNode(OSMNode node) {
+            return "bus_stop".equals(node.getTag("highway"))
+                    || "tram_stop".equals(node.getTag("railway"))
+                    || "station".equals(node.getTag("railway"))
+                    || "halt".equals(node.getTag("railway"))
+                    || "subway_entrance".equals(node.getTag("railway"))
+                    || "bus_station".equals(node.getTag("amenity"));
         }
 
         @Override
