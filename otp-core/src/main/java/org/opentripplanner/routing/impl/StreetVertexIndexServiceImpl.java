@@ -261,7 +261,7 @@ public class StreetVertexIndexServiceImpl implements StreetVertexIndexService {
                         calculatedName = resources.getString("unnamedStreet");
                     }
                 }
-                StreetLocation closest = new StreetLocation(graph, "corner " + Math.random(), coord,
+                StreetLocation closest = new StreetLocation(graph, "corner " + Math.random(), intersection.getCoordinate(),
                         calculatedName);
                 FreeEdge e = new FreeEdge(closest, intersection);
                 closest.getExtra().add(e);
