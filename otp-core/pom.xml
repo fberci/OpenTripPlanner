@@ -86,7 +86,7 @@
         <dependency>
           <groupId>com.brsanthu</groupId>
           <artifactId>google-analytics-java</artifactId>
-          <version>1.1.0</version>
+          <version>1.1.1</version>
         </dependency>
 
         <!-- JAVA STANDARD LIBRARY EXTENSIONS -->

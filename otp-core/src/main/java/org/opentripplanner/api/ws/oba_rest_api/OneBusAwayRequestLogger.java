@@ -19,6 +19,10 @@ import com.brsanthu.googleanalytics.GoogleAnalyticsRequest;
 import com.brsanthu.googleanalytics.PageViewHit;
 import com.brsanthu.googleanalytics.TimingHit;
 import com.sun.jersey.api.core.HttpContext;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.opentripplanner.api.ws.oba_rest_api.beans.TransitResponseBuilder;
 
 import java.net.URI;
@@ -28,9 +32,30 @@ public class OneBusAwayRequestLogger {
     private static int counter = 1;
 
 	private static GoogleAnalytics ga = new GoogleAnalytics("UA-50283889-5"); //, "OpenTripPlanner-OBA API", MavenVersion.VERSION.toString());
-	{
-		ga.getConfig().setDeriveSystemParameters(false);
-		ga.getConfig().setGatherStats(true);
+    private static final int TIMEOUT_CONNECTION = 100;
+    private static final int TIMEOUT_SOCKET = 100;
+
+    {
+		ga.getConfig().setDiscoverRequestParameters(false);
+        ga.getConfig().setUserAgent("OTP-API");
+        ga.getConfig().setGatherStats(true);
+
+        // Wait at most 100ms for a response, to avoid having too many backlogged requests
+        PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager();
+        connManager.setDefaultMaxPerRoute(1);
+
+        HttpClientBuilder builder = HttpClients.custom().setConnectionManager(connManager);
+        builder.setUserAgent(ga.getConfig().getUserAgent());
+        builder.setDefaultRequestConfig(
+                RequestConfig
+                        .custom()
+                        .setConnectionRequestTimeout(TIMEOUT_CONNECTION)
+                        .setConnectTimeout(TIMEOUT_SOCKET)
+                        .setSocketTimeout(TIMEOUT_SOCKET)
+                        .build()
+        );
+
+        ga.setHttpClient(builder.build());
 	}
 
 	public OneBusAwayRequestLogger() {
