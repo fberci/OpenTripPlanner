@@ -22,7 +22,7 @@ import java.util.Collection;
 
 @Data
 @JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
-@JsonIgnoreProperties({"headsign", "stopId", "sequence"})
+@JsonIgnoreProperties({"headsign", "sequence"})
 public class TransitScheduleStopTime extends TransitStopTime {
 	@XmlTransient
 	private int sequence;

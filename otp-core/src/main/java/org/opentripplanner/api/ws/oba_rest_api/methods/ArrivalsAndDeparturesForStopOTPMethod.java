@@ -27,6 +27,7 @@ import org.opentripplanner.routing.core.RoutingRequest;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -37,32 +38,48 @@ public class ArrivalsAndDeparturesForStopOTPMethod extends OneBusAwayApiMethod<T
     
     @QueryParam("minutesBefore") @DefaultValue("2") private int minutesBefore;
     @QueryParam("minutesAfter") @DefaultValue("30") private int minutesAfter;
-    @QueryParam("stopId") private String stopIdString;
+    @QueryParam("stopId") private List<String> stopIdStrings;
     @QueryParam("time") private Long time;
 	@QueryParam("onlyDepartures") @DefaultValue("true") private boolean onlyDepartures;
 
     @Override
     protected TransitResponse<TransitEntryWithReferences<TransitArrivalsAndDepartures>> getResponse() {
-        
-        AgencyAndId stopId = parseAgencyAndId(stopIdString);
-        Stop stop = transitIndexService.getAllStops().get(stopId);
-        if(stop == null)
+
+        if(stopIdStrings == null || stopIdStrings.isEmpty())
             return TransitResponseBuilder.getFailResponse(TransitResponse.Status.NOT_FOUND, "Unknown stopId.");
-        
+
         if(time == null)
             time = System.currentTimeMillis() / 1000;
         
         long startTime = time - minutesBefore * 60;
         long endTime   = time + minutesAfter  * 60;
-        
-        if(!graph.transitFeedCovers(startTime) && graph.transitFeedCovers(endTime)) {
-            return TransitResponseBuilder.getFailResponse(TransitResponse.Status.NO_TRANSIT_TIMES, "Date is outside the dateset's validity.",
-                    responseBuilder.entity(responseBuilder.getArrivalsAndDepartures(stop, null, null, null, null)));
-        }
-        
+
         RoutingRequest options = makeTraverseOptions(startTime, routerId);
-        
-        List<T2<TransitScheduleStopTime, TransitTrip>> stopTimesWithTrips = getStopTimesForStop(startTime, endTime, stopId, onlyDepartures);
+
+        Stop firstStop = null;
+        List<T2<TransitScheduleStopTime, TransitTrip>> stopTimesWithTrips = new ArrayList<T2<TransitScheduleStopTime, TransitTrip>>();
+        List<String> alertIds = new ArrayList<String>();
+        List<String> nearbyStopIds = new ArrayList<String>();
+
+        for(String stopIdString : stopIdStrings) {
+            AgencyAndId stopId = parseAgencyAndId(stopIdString);
+            Stop stop = transitIndexService.getAllStops().get(stopId);
+            if(stop == null)
+                return TransitResponseBuilder.getFailResponse(TransitResponse.Status.NOT_FOUND, "Unknown stopId: " + stopIdString);
+
+            if(firstStop == null) {
+                firstStop = stop;
+                if(!graph.transitFeedCovers(startTime) && graph.transitFeedCovers(endTime)) {
+                    return TransitResponseBuilder.getFailResponse(TransitResponse.Status.NO_TRANSIT_TIMES, "Date is outside the dateset's validity.",
+                            responseBuilder.entity(responseBuilder.getArrivalsAndDepartures(firstStop, null, null, null, null)));
+                }
+            }
+
+            stopTimesWithTrips.addAll(getStopTimesForStop(startTime, endTime, stopId, onlyDepartures, stopIdStrings.size() > 1));
+            alertIds.addAll(getAlertsForStop(stopId, options, startTime, endTime));
+            nearbyStopIds.addAll(getNearbyStops(stop));
+        }
+
         sortStopTimesWithTrips(stopTimesWithTrips);
         
         List<TransitScheduleStopTime> stopTimes = new LinkedList<TransitScheduleStopTime>();
@@ -71,10 +88,7 @@ public class ArrivalsAndDeparturesForStopOTPMethod extends OneBusAwayApiMethod<T
             stopTimes.add(stopTimeWithTrip.getFirst());
             trips.add(stopTimeWithTrip.getSecond());
         }
-        
-        List<String> alertIds = getAlertsForStop(stopId, options, startTime, endTime);
-        List<String> nearbyStopIds = getNearbyStops(stop);
-        
-        return responseBuilder.getResponseForStop(stop, stopTimes, alertIds, trips, nearbyStopIds);
+
+        return responseBuilder.getResponseForStop(firstStop, stopTimes, alertIds, trips, nearbyStopIds);
     }
 }

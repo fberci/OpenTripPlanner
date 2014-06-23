@@ -133,7 +133,7 @@ import java.util.*;
 
 @Slf4j
 @Autowire
-@Produces({ MediaType.APPLICATION_XML, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+@Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, MediaType.TEXT_XML})
 public abstract class OneBusAwayApiMethod<T> {
     private static final Logger LOG = LoggerFactory.getLogger(OneBusAwayApiMethod.class);
     private OneBusAwayRequestLogger requestLogger = new OneBusAwayRequestLogger();
@@ -623,7 +623,7 @@ public abstract class OneBusAwayApiMethod<T> {
     }
     
     protected List<TransitArrivalAndDeparture> getArrivalsAndDeparturesForStop(long startTime, long endTime, AgencyAndId stopId) {
-        List<T2<TransitScheduleStopTime, TransitTrip>> stopTimesWithTrips = getStopTimesForStop(startTime, endTime, stopId, false);
+        List<T2<TransitScheduleStopTime, TransitTrip>> stopTimesWithTrips = getStopTimesForStop(startTime, endTime, stopId, false, true);
         sortStopTimesWithTrips(stopTimesWithTrips);
         
         List<TransitArrivalAndDeparture> arrivalsAndDepartures = new LinkedList<TransitArrivalAndDeparture>();
@@ -672,7 +672,8 @@ public abstract class OneBusAwayApiMethod<T> {
         return arrivalAndDeparture;
     }
 
-    protected List<T2<TransitScheduleStopTime, TransitTrip>> getStopTimesForStop(long startTime, long endTime, AgencyAndId stopId, boolean onlyDepartures) {
+    protected List<T2<TransitScheduleStopTime, TransitTrip>> getStopTimesForStop(
+            long startTime, long endTime, AgencyAndId stopId, boolean onlyDepartures, boolean keepStopIds) {
 
         PreAlightEdge preAlightEdge = transitIndexService.getPreAlightEdge(stopId);
         PreBoardEdge preBoardEdge = transitIndexService.getPreBoardEdge(stopId);
@@ -680,18 +681,28 @@ public abstract class OneBusAwayApiMethod<T> {
         List<T2<TransitScheduleStopTime, TransitTrip>> alightingTimes = getStopTimesForPreAlightEdge(stopId.toString(), startTime, endTime, preAlightEdge);
 	    List<T2<TransitScheduleStopTime, TransitTrip>> boardingTimes = getStopTimesForPreBoardEdge(stopId.toString(), startTime, endTime, preBoardEdge);
 
-	    return mergeStopTimes(boardingTimes, alightingTimes, onlyDepartures);
+	    return mergeStopTimes(boardingTimes, alightingTimes, onlyDepartures, keepStopIds);
     }
 
-	protected List<T2<TransitScheduleStopTime,TransitTrip>> mergeStopTimes(List<T2<TransitScheduleStopTime, TransitTrip>> boardingTimes, List<T2<TransitScheduleStopTime, TransitTrip>> alightingTimes, boolean onlyDepartures) {
+	protected List<T2<TransitScheduleStopTime,TransitTrip>> mergeStopTimes(
+                List<T2<TransitScheduleStopTime, TransitTrip>> boardingTimes,
+                List<T2<TransitScheduleStopTime, TransitTrip>> alightingTimes,
+                boolean onlyDepartures, boolean keepStopIds) {
+
 		Map<T2<String, Integer>, T2<TransitScheduleStopTime, TransitTrip>> stopTimeMap = new HashMap<T2<String, Integer>, T2<TransitScheduleStopTime, TransitTrip>>();
 		for (T2<TransitScheduleStopTime, TransitTrip> boardingTime : boardingTimes) {
 			T2<String, Integer> key = new T2<String, Integer>(boardingTime.getFirst().getTripId(), boardingTime.getFirst().getSequence());
+            if(!keepStopIds) {
+                boardingTime.getFirst().setStopId(null);
+            }
 			stopTimeMap.put(key, boardingTime);
 		}
 
 		for (T2<TransitScheduleStopTime, TransitTrip> alightingTime : alightingTimes) {
 			T2<String, Integer> key = new T2<String, Integer>(alightingTime.getFirst().getTripId(), alightingTime.getFirst().getSequence());
+            if(!keepStopIds) {
+               alightingTime.getFirst().setStopId(null);
+            }
 			if(stopTimeMap.containsKey(key)) {
 				TransitScheduleStopTime boardingTime = stopTimeMap.get(key).getFirst();
 				boardingTime.setArrivalTime(alightingTime.getFirst().getArrivalTime());
