@@ -2630,12 +2630,12 @@ public class OpenStreetMapGraphBuilderImpl implements GraphBuilder {
         }
 
         private boolean isTransitNode(OSMNode node) {
-            return "bus_stop".equals(node.getTag("highway"))
+            return /*"bus_stop".equals(node.getTag("highway"))
                     || "tram_stop".equals(node.getTag("railway"))
                     || "station".equals(node.getTag("railway"))
                     || "halt".equals(node.getTag("railway"))
-                    || "subway_entrance".equals(node.getTag("railway"))
-                    || "bus_station".equals(node.getTag("amenity"));
+                    ||*/ "subway_entrance".equals(node.getTag("railway"))
+                    /*|| "bus_station".equals(node.getTag("amenity"))*/;
         }
 
         @Override
