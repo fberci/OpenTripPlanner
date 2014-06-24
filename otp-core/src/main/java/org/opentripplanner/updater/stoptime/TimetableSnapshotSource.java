@@ -255,7 +255,7 @@ public class TimetableSnapshotSource {
         if(graph.getService(RaptorDataService.class) != null) {
             RaptorDataService raptorDataService = graph.getService(RaptorDataService.class);
             if(!raptorDataService.addTripPattern(graph, tripPattern)) {
-                LOG.warn("Failed to add trip pattern to raptor index: {} @ {} to {}", trip.getId(), serviceDate.toString(), tripPattern);
+                LOG.warn("Failed to add ADDED trip pattern to raptor index: {} @ {} to {}", trip.getId(), serviceDate.toString(), tripPattern);
             }
         }
     }

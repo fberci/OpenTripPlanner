@@ -13,11 +13,11 @@
 
 package org.opentripplanner.routing.edgetype;
 
-import java.util.List;
+import org.onebusaway.gtfs.model.Stop;
+import org.onebusaway.gtfs.model.Trip;
 
 import javax.xml.bind.annotation.XmlTransient;
-
-import org.onebusaway.gtfs.model.Stop;
+import java.util.List;
 
 /* simple interface for trip patterns */
 public interface TripPattern {
@@ -28,4 +28,6 @@ public interface TripPattern {
 
     int getAlightType(int stopIndex);
     int getBoardType(int stopIndex);
+
+    Trip getExemplar();
 }

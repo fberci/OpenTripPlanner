@@ -19,6 +19,7 @@ import java.util.List;
 
 import javax.xml.bind.annotation.XmlElement;
 
+import lombok.Getter;
 import org.onebusaway.gtfs.model.Frequency;
 import org.onebusaway.gtfs.model.Stop;
 import org.onebusaway.gtfs.model.Trip;
@@ -28,6 +29,7 @@ public class FrequencyBasedTripPattern implements Serializable, TripPattern {
 
     private static final long serialVersionUID = -5392197874345648815L;
 
+    @Getter
     private Trip exemplar;
 
     // sorted by start time

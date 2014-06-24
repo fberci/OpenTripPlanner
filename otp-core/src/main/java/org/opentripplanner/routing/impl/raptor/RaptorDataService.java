@@ -15,6 +15,7 @@ package org.opentripplanner.routing.impl.raptor;
 
 import lombok.Getter;
 import org.onebusaway.gtfs.model.Stop;
+import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.routing.edgetype.TransitBoardAlight;
 import org.opentripplanner.routing.edgetype.TripPattern;
 import org.opentripplanner.routing.graph.Edge;
@@ -39,18 +40,11 @@ public class RaptorDataService implements Serializable {
     }
 
     public boolean addTripPattern(Graph graph, TripPattern pattern) {
-        RaptorRoute raptorRoute = data.getRoute(pattern);
-        if(raptorRoute == null) {
-            return false;
-        }
 
-        if(raptorRoute.containsPattern(pattern)) {
+        RaptorRoute raptorRoute = data.getRoute(pattern);
+        if(raptorRoute != null && raptorRoute.containsPattern(pattern)) {
             return true;
         }
-
-        RaptorRoute newRaptorRoute = new RaptorRoute(raptorRoute.getNStops(), raptorRoute.boards.length);
-        newRaptorRoute.mode = raptorRoute.mode;
-        newRaptorRoute.stops = raptorRoute.stops;
 
         RaptorData newData = new RaptorData();
         newData.stops = data.stops;
@@ -58,13 +52,20 @@ public class RaptorDataService implements Serializable {
         newData.regionData = data.regionData;
         newData.nearbyStops = data.nearbyStops;
         newData.maxTransitRegions = data.maxTransitRegions;
-
         newData.routes = new HashSet<RaptorRoute>(data.routes);
+        newData.routesForStop = new List[data.routesForStop.length];
+        System.arraycopy(data.routesForStop, 0, newData.routesForStop, 0, data.routesForStop.length);
+
+        if(raptorRoute == null) {
+            raptorRoute = createRouteForTripPattern(pattern, newData);
+        }
+
+        RaptorRoute newRaptorRoute = new RaptorRoute(raptorRoute.getNStops(), raptorRoute.boards.length);
         newData.routes.remove(raptorRoute);
         newData.routes.add(newRaptorRoute);
 
-        newData.routesForStop = new List[data.routesForStop.length];
-        System.arraycopy(data.routesForStop, 0, newData.routesForStop, 0, data.routesForStop.length);
+        newRaptorRoute.mode = raptorRoute.mode;
+        newRaptorRoute.stops = raptorRoute.stops;
 
         for(int i = 0; i < newRaptorRoute.stops.length; ++i) {
             RaptorStop raptorStop = newRaptorRoute.stops[i];
@@ -89,7 +90,7 @@ public class RaptorDataService implements Serializable {
 
             newData.routesForStop[raptorStop.index] = new ArrayList<RaptorRoute>(newData.routesForStop[raptorStop.index]);
             for(int j = 0; j < newData.routesForStop[raptorStop.index].size(); ++j) {
-                RaptorRoute stopRoute = (RaptorRoute) newData.routesForStop[raptorStop.index].get(j);
+                RaptorRoute stopRoute = newData.routesForStop[raptorStop.index].get(j);
                 if(stopRoute == raptorRoute) {
                     newData.routesForStop[raptorStop.index].set(j, newRaptorRoute);
                     break;
@@ -99,6 +100,20 @@ public class RaptorDataService implements Serializable {
 
         this.data = newData;
         return true;
+    }
+
+    private RaptorRoute createRouteForTripPattern(TripPattern pattern, RaptorData newData) {
+        RaptorRoute raptorRoute = new RaptorRoute(pattern.getStops().size(), 0);
+        raptorRoute.mode = GtfsLibrary.getTraverseMode(pattern.getExemplar().getRoute());
+
+        for(int i = 0; i < raptorRoute.getNStops(); ++i) {
+            RaptorStop raptorStop = newData.raptorStopsForStopId.get(pattern.getStops().get(i).getId());
+            raptorRoute.stops[i] = raptorStop;
+            newData.routesForStop[raptorStop.index] = new ArrayList<RaptorRoute>(newData.routesForStop[raptorStop.index]);
+            newData.routesForStop[raptorStop.index].add(raptorRoute);
+        }
+
+        return raptorRoute;
     }
 
     private TransitBoardAlight transitBoardForStop(TripPattern pattern, TransitStop stopVertex, Graph graph) {
