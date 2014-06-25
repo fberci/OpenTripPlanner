@@ -14,6 +14,7 @@
 package org.opentripplanner.routing.impl.raptor;
 
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.onebusaway.gtfs.model.Stop;
 import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.routing.edgetype.TransitBoardAlight;
@@ -29,6 +30,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
+@Slf4j
 public class RaptorDataService implements Serializable {
     private static final long serialVersionUID = -5046519968713244930L;
 
@@ -113,6 +115,7 @@ public class RaptorDataService implements Serializable {
             newData.routesForStop[raptorStop.index].add(raptorRoute);
         }
 
+        log.info("Created raptor route for trip {} (pattern: {})", pattern.getExemplar().getId(), pattern);
         return raptorRoute;
     }
 
