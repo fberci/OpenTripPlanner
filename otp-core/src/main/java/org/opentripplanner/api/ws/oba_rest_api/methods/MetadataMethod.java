@@ -48,6 +48,7 @@ public class MetadataMethod extends OneBusAwayApiMethod<TransitEntryWithReferenc
         metadata.setReadableTime(ISO8601Utils.format(now));
         metadata.setValidityStart(responseBuilder.getServiceDateAsString(new ServiceDate(start)));
         metadata.setValidityEnd(responseBuilder.getServiceDateAsString(new ServiceDate(end)));
+        metadata.setInternalRequest(isInternalRequest());
         
         GraphMetadata gm = getGraphMetadata();
         metadata.setLowerLeftLongitude(gm.getLowerLeftLongitude());
