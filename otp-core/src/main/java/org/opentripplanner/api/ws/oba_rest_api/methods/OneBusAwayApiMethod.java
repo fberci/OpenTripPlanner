@@ -150,55 +150,55 @@ public abstract class OneBusAwayApiMethod<T> {
 
     public static final int NEARBY_STOP_RADIUS = 100;
 
-	/**
-	 * API key used to authenticate the client application.
-	 */
-	@QueryParam("key") protected String apiKey;
+    /**
+     * API key used to authenticate the client application.
+     */
+    @QueryParam("key") protected String apiKey;
 
-	/**
-	 * The API version of the request. Currently only version 2 is supported.
-	 */
-	@QueryParam("version") @DefaultValue("2") protected String apiVersion;
+    /**
+     * The API version of the request. Currently only version 2 is supported.
+     */
+    @QueryParam("version") @DefaultValue("2") protected String apiVersion;
 
-	/**
-	 * API response dialect, provided int the URL. May be either <code>otp</code> or <code>oba</code>.
-	 * @see org.opentripplanner.api.ws.oba_rest_api.beans.TransitResponseBuilder.Dialect
-	 */
-	@PathParam ("dialect") protected TransitResponseBuilder.DialectWrapper dialect;
+    /**
+     * API response dialect, provided int the URL. May be either <code>otp</code> or <code>oba</code>.
+     * @see org.opentripplanner.api.ws.oba_rest_api.beans.TransitResponseBuilder.Dialect
+     */
+    @PathParam ("dialect") protected TransitResponseBuilder.DialectWrapper dialect;
 
-	/**
-	 * <code>routerId</code> to return the response for. Uses the default graph if not specified.
-	 */
+    /**
+     * <code>routerId</code> to return the response for. Uses the default graph if not specified.
+     */
     @QueryParam("routerId") protected String routerId;
 
-	/**
-	 * Content-type of the returned response. Defaults to JSON if not provided.
-	 */
+    /**
+     * Content-type of the returned response. Defaults to JSON if not provided.
+     */
     @PathParam ("contentType") protected String contentType;
 
-	/**
-	 * Included the <code>references</code> section in the returned response. Refrenced entities may be
-	 * requested one-at-a-time using the appropriate API methods.
-	 *
-	 * @see org.opentripplanner.api.ws.oba_rest_api.methods.StopMethod
-	 * @see org.opentripplanner.api.ws.oba_rest_api.methods.RouteMethod
-	 * @see org.opentripplanner.api.ws.oba_rest_api.methods.TripMethod
-	 */
+    /**
+     * Included the <code>references</code> section in the returned response. Refrenced entities may be
+     * requested one-at-a-time using the appropriate API methods.
+     *
+     * @see org.opentripplanner.api.ws.oba_rest_api.methods.StopMethod
+     * @see org.opentripplanner.api.ws.oba_rest_api.methods.RouteMethod
+     * @see org.opentripplanner.api.ws.oba_rest_api.methods.TripMethod
+     */
     @QueryParam("includeReferences") protected @DefaultValue("true") TransitResponseBuilder.ReferencesWrapper references;
 
     @Setter @InjectParam
     private GraphService graphService;
 
-	@CookieParam("_ga") private String clientId;
-	/*@Setter @InjectParam("GoogleAnalyticsId")*/ private String googleAnalyticsId;
+    @CookieParam("_ga") private String clientId;
+    /*@Setter @InjectParam("GoogleAnalyticsId")*/ private String googleAnalyticsId;
 
-	/**
-	 * Whether this is a BKK internal request. Defaults to false.
-	 */
-	@HeaderParam("X-BKK-Internal-Request") @DefaultValue("false") private boolean internalRequest;
+    /**
+     * Whether this is a BKK internal request. Defaults to false.
+     */
     @Getter
+    @HeaderParam("X-BKK-Internal-Request") @DefaultValue("false") private boolean internalRequest;
 
-	@Context private UriInfo uriInfo;
+    @Context private UriInfo uriInfo;
     @Context private HttpContext httpContext;
 
     protected Graph graph;
@@ -212,7 +212,7 @@ public abstract class OneBusAwayApiMethod<T> {
     
     @GET
     public TransitResponse<T> processResponse() {
-	    OneBusAwayRequestLogger.LogRequest logRequest = requestLogger.startRequest(this, httpContext, uriInfo.getRequestUri(), clientId, apiKey, internalRequest, dialect);
+        OneBusAwayRequestLogger.LogRequest logRequest = requestLogger.startRequest(this, httpContext, uriInfo.getRequestUri(), clientId, apiKey, internalRequest, dialect);
 
         graph = getGraph(routerId);
         if(graph == null) {
@@ -232,12 +232,12 @@ public abstract class OneBusAwayApiMethod<T> {
         
         responseBuilder = new TransitResponseBuilder(graph, references.getReferences(), dialect.getDialect(), internalRequest);
 
-	    TransitResponse<T> transitResponse;
+        TransitResponse<T> transitResponse;
         try {
             transitResponse = getResponse();
             logRequest.finishRequest();
         } catch (TransitTimesException e) {
-	        transitResponse = TransitResponseBuilder.getFailResponse(TransitResponse.Status.NO_TRANSIT_TIMES);
+            transitResponse = TransitResponseBuilder.getFailResponse(TransitResponse.Status.NO_TRANSIT_TIMES);
             logRequest.exception(e);
         } catch (Exception e) {
             transitResponse = TransitResponseBuilder.getFailResponse();
@@ -246,9 +246,9 @@ public abstract class OneBusAwayApiMethod<T> {
         }
 
         if(transitResponse.getStatus() == TransitResponse.Status.NOT_MODIFIED) {
-	        Response.ResponseBuilder response = Response.notModified();
-	        Response builtResponse = response.entity(transitResponse).build();
-	        throw new WebApplicationException(builtResponse);
+            Response.ResponseBuilder response = Response.notModified();
+            Response builtResponse = response.entity(transitResponse).build();
+            throw new WebApplicationException(builtResponse);
         }
         /*else if(transitResponse.getStatus() == TransitResponse.Status.NOT_FOUND) {
             response = Response.status(Response.Status.NOT_FOUND);
@@ -257,10 +257,10 @@ public abstract class OneBusAwayApiMethod<T> {
             response = Response.serverError();
         }*/
 
-	    return transitResponse;
+        return transitResponse;
     }
 
-	abstract protected TransitResponse<T> getResponse();
+    abstract protected TransitResponse<T> getResponse();
     
     // ---- [] ---- //
     
@@ -411,7 +411,7 @@ public abstract class OneBusAwayApiMethod<T> {
             lat = lastPoint.getY();
         }
 
-	    return new VehicleLocation(routeId, (float) lat, (float) lon, tripId, bearing, status, stopId, serviceDate);
+        return new VehicleLocation(routeId, (float) lat, (float) lon, tripId, bearing, status, stopId, serviceDate);
     }
     
     protected TransitTripStopTimes getTripSchedule(ServiceDate serviceDate, Collection<TransitStopTime> stopTimes) {
@@ -451,66 +451,66 @@ public abstract class OneBusAwayApiMethod<T> {
         return tripSchedule;
     }
 
-	private TransitTripStatus getTripStatus(String stopId, TransitTrip transitTrip, TransitArrivalAndDeparture arrivalAndDeparture) {
+    private TransitTripStatus getTripStatus(String stopId, TransitTrip transitTrip, TransitArrivalAndDeparture arrivalAndDeparture) {
 
-		ServiceDate serviceDate = new ServiceDate(new Date(arrivalAndDeparture.getServiceDate()));
-		AgencyAndId tripId = parseAgencyAndId(transitTrip.getId());
-		Trip trip = getTrip(tripId, serviceDate);
-		TableTripPattern pattern = transitIndexService.getTripPatternForTrip(tripId, serviceDate);
-		Timetable timetable = getTimetableResolver().resolve(pattern, serviceDate);
-		TripTimes tripTimes = timetable.getTripTimes(timetable.getTripIndex(tripId));
-		List<TransitStopTime> stopTimes = getStopTimesForTrip(tripId, serviceDate, pattern, timetable);
+        ServiceDate serviceDate = new ServiceDate(new Date(arrivalAndDeparture.getServiceDate()));
+        AgencyAndId tripId = parseAgencyAndId(transitTrip.getId());
+        Trip trip = getTrip(tripId, serviceDate);
+        TableTripPattern pattern = transitIndexService.getTripPatternForTrip(tripId, serviceDate);
+        Timetable timetable = getTimetableResolver().resolve(pattern, serviceDate);
+        TripTimes tripTimes = timetable.getTripTimes(timetable.getTripIndex(tripId));
+        List<TransitStopTime> stopTimes = getStopTimesForTrip(tripId, serviceDate, pattern, timetable);
 
-		TransitStopTime first = stopTimes.get(0),
-				last  = stopTimes.get(stopTimes.size() - 1);
-		long startTime = Math.min(first.hasDepartureTime() ? first.getDepartureTime() : Long.MAX_VALUE,
-				first.hasPredictedDepartureTime() ? first.getPredictedDepartureTime() : Long.MAX_VALUE),
-				endTime   = Math.max(last.hasArrivalTime() ? last.getArrivalTime() : Long.MIN_VALUE,
-						last.hasPredictedArrivalTime() ? last.getPredictedArrivalTime() : Long.MIN_VALUE);
-		RoutingRequest options = makeTraverseOptions(startTime, routerId);
-		List<String> alertIds = getAlertsForTrip(tripId, trip.getRoute().getId(), options, startTime, endTime);
+        TransitStopTime first = stopTimes.get(0),
+                last  = stopTimes.get(stopTimes.size() - 1);
+        long startTime = Math.min(first.hasDepartureTime() ? first.getDepartureTime() : Long.MAX_VALUE,
+                first.hasPredictedDepartureTime() ? first.getPredictedDepartureTime() : Long.MAX_VALUE),
+                endTime   = Math.max(last.hasArrivalTime() ? last.getArrivalTime() : Long.MIN_VALUE,
+                        last.hasPredictedArrivalTime() ? last.getPredictedArrivalTime() : Long.MIN_VALUE);
+        RoutingRequest options = makeTraverseOptions(startTime, routerId);
+        List<String> alertIds = getAlertsForTrip(tripId, trip.getRoute().getId(), options, startTime, endTime);
 
-		VehicleLocation vehicleLocation = null;
-		VehicleLocationService vehicleLocationService = graph.getService(VehicleLocationService.class);
-		if(vehicleLocationService != null) {
-			vehicleLocation = vehicleLocationService.getForTrip(tripId);
-		}
+        VehicleLocation vehicleLocation = null;
+        VehicleLocationService vehicleLocationService = graph.getService(VehicleLocationService.class);
+        if(vehicleLocationService != null) {
+            vehicleLocation = vehicleLocationService.getForTrip(tripId);
+        }
 
-		if(vehicleLocation == null) {
-			vehicleLocation = createFakeVehicleForTrip(trip, serviceDate, pattern, tripTimes, stopTimes);
-		}
+        if(vehicleLocation == null) {
+            vehicleLocation = createFakeVehicleForTrip(trip, serviceDate, pattern, tripTimes, stopTimes);
+        }
 
-		if(vehicleLocation != null) {
-			Integer stopDiff = null;
-			boolean reverse = false;
-			String nextStopId = vehicleLocation.getStopId().toString();
-			for(TransitStopTime stopTime : stopTimes) {
-				if(stopTime.getStopId().equals(nextStopId)) {
-					if(stopDiff == null) {
-						stopDiff = 0;
-					} else {
-						break;
-					}
-				}
-				if(stopTime.getStopId().equals(stopId)) {
-					if(stopDiff == null) {
-						stopDiff = 0;
-						reverse = true;
-					} else {
-						break;
-					}
-				}
-				if(stopDiff != null) {
-					stopDiff += reverse ? -1 : +1;
-				}
-			}
+        if(vehicleLocation != null) {
+            Integer stopDiff = null;
+            boolean reverse = false;
+            String nextStopId = vehicleLocation.getStopId().toString();
+            for(TransitStopTime stopTime : stopTimes) {
+                if(stopTime.getStopId().equals(nextStopId)) {
+                    if(stopDiff == null) {
+                        stopDiff = 0;
+                    } else {
+                        break;
+                    }
+                }
+                if(stopTime.getStopId().equals(stopId)) {
+                    if(stopDiff == null) {
+                        stopDiff = 0;
+                        reverse = true;
+                    } else {
+                        break;
+                    }
+                }
+                if(stopDiff != null) {
+                    stopDiff += reverse ? -1 : +1;
+                }
+            }
 
-			arrivalAndDeparture.setNumberOfStopsAway(stopDiff);
-			arrivalAndDeparture.setDistanceFromStop(0.); // TODO
-		}
+            arrivalAndDeparture.setNumberOfStopsAway(stopDiff);
+            arrivalAndDeparture.setDistanceFromStop(0.); // TODO
+        }
 
-		return getTripStatus(trip, serviceDate, tripTimes, stopTimes, vehicleLocation, alertIds);
-	}
+        return getTripStatus(trip, serviceDate, tripTimes, stopTimes, vehicleLocation, alertIds);
+    }
 
     protected TransitTripStatus getTripStatus(Trip trip, ServiceDate serviceDate, TripTimes timetable, List<TransitStopTime> stopTimes,
                                               VehicleLocation vehicleLocation, Collection<String> alertIds)
@@ -541,7 +541,7 @@ public abstract class OneBusAwayApiMethod<T> {
         if(nextStop != null && vehicleLocation != null) {
             long now = System.currentTimeMillis() / 1000,
                  nextArrivalTime = firstNotNullTime(nextStop.getPredictedArrivalTime(), nextStop.getPredictedDepartureTime(),
-		                 nextStop.getArrivalTime(), nextStop.getDepartureTime());
+                         nextStop.getArrivalTime(), nextStop.getDepartureTime());
 
             if(vehicleLocation.getVehicleId() != null) {
                 tripStatus.setVehicleId(vehicleLocation.getVehicleId().toString());
@@ -573,16 +573,16 @@ public abstract class OneBusAwayApiMethod<T> {
         return tripStatus;
     }
 
-	private Long firstNotNullTime(Long ... times) {
-		for(Long time : times) {
-			if(time != null) {
-				return time;
-			}
-		}
-		return null;
-	}
+    private Long firstNotNullTime(Long ... times) {
+        for(Long time : times) {
+            if(time != null) {
+                return time;
+            }
+        }
+        return null;
+    }
 
-	protected List<TransitStopTime> getStopTimesForTrip(AgencyAndId tripId, ServiceDate serviceDate, TableTripPattern pattern, Timetable timetable) {
+    protected List<TransitStopTime> getStopTimesForTrip(AgencyAndId tripId, ServiceDate serviceDate, TableTripPattern pattern, Timetable timetable) {
 
         List<TransitStopTime> stopTimes = new LinkedList<TransitStopTime>();
 
@@ -638,7 +638,7 @@ public abstract class OneBusAwayApiMethod<T> {
         return arrivalsAndDepartures;
     }
 
-	protected TransitArrivalAndDeparture getArrivalAndDepartureFromStopTime(TransitTrip trip, TransitScheduleStopTime stopTime) {
+    protected TransitArrivalAndDeparture getArrivalAndDepartureFromStopTime(TransitTrip trip, TransitScheduleStopTime stopTime) {
         TransitArrivalAndDeparture arrivalAndDeparture = new TransitArrivalAndDeparture();
         
         ServiceDate serviceDate = new ServiceDate();
@@ -667,8 +667,8 @@ public abstract class OneBusAwayApiMethod<T> {
         arrivalAndDeparture.setTripHeadsign(trip.getTripHeadsign());
         arrivalAndDeparture.setTripId(trip.getId());
 
-		TransitTripStatus tripStatus = getTripStatus(stopTime.getStopId(), trip, arrivalAndDeparture);
-		arrivalAndDeparture.setTripStatus(tripStatus);
+        TransitTripStatus tripStatus = getTripStatus(stopTime.getStopId(), trip, arrivalAndDeparture);
+        arrivalAndDeparture.setTripStatus(tripStatus);
 
         return arrivalAndDeparture;
     }
@@ -680,51 +680,51 @@ public abstract class OneBusAwayApiMethod<T> {
         PreBoardEdge preBoardEdge = transitIndexService.getPreBoardEdge(stopId);
 
         List<T2<TransitScheduleStopTime, TransitTrip>> alightingTimes = getStopTimesForPreAlightEdge(stopId.toString(), startTime, endTime, preAlightEdge);
-	    List<T2<TransitScheduleStopTime, TransitTrip>> boardingTimes = getStopTimesForPreBoardEdge(stopId.toString(), startTime, endTime, preBoardEdge);
+        List<T2<TransitScheduleStopTime, TransitTrip>> boardingTimes = getStopTimesForPreBoardEdge(stopId.toString(), startTime, endTime, preBoardEdge);
 
-	    return mergeStopTimes(boardingTimes, alightingTimes, onlyDepartures, keepStopIds);
+        return mergeStopTimes(boardingTimes, alightingTimes, onlyDepartures, keepStopIds);
     }
 
-	protected List<T2<TransitScheduleStopTime,TransitTrip>> mergeStopTimes(
+    protected List<T2<TransitScheduleStopTime,TransitTrip>> mergeStopTimes(
                 List<T2<TransitScheduleStopTime, TransitTrip>> boardingTimes,
                 List<T2<TransitScheduleStopTime, TransitTrip>> alightingTimes,
                 boolean onlyDepartures, boolean keepStopIds) {
 
-		Map<T2<String, Integer>, T2<TransitScheduleStopTime, TransitTrip>> stopTimeMap = new HashMap<T2<String, Integer>, T2<TransitScheduleStopTime, TransitTrip>>();
-		for (T2<TransitScheduleStopTime, TransitTrip> boardingTime : boardingTimes) {
-			T2<String, Integer> key = new T2<String, Integer>(boardingTime.getFirst().getTripId(), boardingTime.getFirst().getSequence());
+        Map<T2<String, Integer>, T2<TransitScheduleStopTime, TransitTrip>> stopTimeMap = new HashMap<T2<String, Integer>, T2<TransitScheduleStopTime, TransitTrip>>();
+        for (T2<TransitScheduleStopTime, TransitTrip> boardingTime : boardingTimes) {
+            T2<String, Integer> key = new T2<String, Integer>(boardingTime.getFirst().getTripId(), boardingTime.getFirst().getSequence());
             if(!keepStopIds) {
                 boardingTime.getFirst().setStopId(null);
             }
-			stopTimeMap.put(key, boardingTime);
-		}
+            stopTimeMap.put(key, boardingTime);
+        }
 
-		for (T2<TransitScheduleStopTime, TransitTrip> alightingTime : alightingTimes) {
-			T2<String, Integer> key = new T2<String, Integer>(alightingTime.getFirst().getTripId(), alightingTime.getFirst().getSequence());
+        for (T2<TransitScheduleStopTime, TransitTrip> alightingTime : alightingTimes) {
+            T2<String, Integer> key = new T2<String, Integer>(alightingTime.getFirst().getTripId(), alightingTime.getFirst().getSequence());
             if(!keepStopIds) {
                alightingTime.getFirst().setStopId(null);
             }
-			if(stopTimeMap.containsKey(key)) {
-				TransitScheduleStopTime boardingTime = stopTimeMap.get(key).getFirst();
-				boardingTime.setArrivalTime(alightingTime.getFirst().getArrivalTime());
-				boardingTime.setPredictedArrivalTime(alightingTime.getFirst().getPredictedArrivalTime());
-			} else {
-				if(!onlyDepartures) {
-					stopTimeMap.put(key, alightingTime);
-				}
-			}
-		}
+            if(stopTimeMap.containsKey(key)) {
+                TransitScheduleStopTime boardingTime = stopTimeMap.get(key).getFirst();
+                boardingTime.setArrivalTime(alightingTime.getFirst().getArrivalTime());
+                boardingTime.setPredictedArrivalTime(alightingTime.getFirst().getPredictedArrivalTime());
+            } else {
+                if(!onlyDepartures) {
+                    stopTimeMap.put(key, alightingTime);
+                }
+            }
+        }
 
-		List<T2<TransitScheduleStopTime, TransitTrip>> stopTimes = new ArrayList<T2<TransitScheduleStopTime, TransitTrip>>(stopTimeMap.values());
-		sortStopTimesWithTrips(stopTimes);
-		return stopTimes;
-	}
+        List<T2<TransitScheduleStopTime, TransitTrip>> stopTimes = new ArrayList<T2<TransitScheduleStopTime, TransitTrip>>(stopTimeMap.values());
+        sortStopTimesWithTrips(stopTimes);
+        return stopTimes;
+    }
 
-	protected List<T2<TransitScheduleStopTime, TransitTrip>> getStopTimesForPreAlightEdge(String stopId, long startTime, long endTime,
+    protected List<T2<TransitScheduleStopTime, TransitTrip>> getStopTimesForPreAlightEdge(String stopId, long startTime, long endTime,
             PreAlightEdge edge) {
 
-		RoutingRequest options = makeTraverseOptions(startTime, routerId);
-		options.setArriveBy(true);
+        RoutingRequest options = makeTraverseOptions(startTime, routerId);
+        options.setArriveBy(true);
 
         List<T2<TransitScheduleStopTime, TransitTrip>> result = new ArrayList<T2<TransitScheduleStopTime, TransitTrip>>();
         for(Edge e : edge.getFromVertex().getIncoming()) {
@@ -740,8 +740,8 @@ public abstract class OneBusAwayApiMethod<T> {
     protected List<T2<TransitScheduleStopTime, TransitTrip>> getStopTimesForPreBoardEdge(String stopId, long startTime, long endTime,
             PreBoardEdge edge) {
 
-	    RoutingRequest options = makeTraverseOptions(startTime, routerId);
-	    options.setArriveBy(false);
+        RoutingRequest options = makeTraverseOptions(startTime, routerId);
+        options.setArriveBy(false);
 
         List<T2<TransitScheduleStopTime, TransitTrip>> result = new ArrayList<T2<TransitScheduleStopTime, TransitTrip>>();
         for(Edge e : edge.getToVertex().getOutgoing()) {
@@ -784,7 +784,7 @@ public abstract class OneBusAwayApiMethod<T> {
             TransitScheduleStopTime stopTime = new TransitScheduleStopTime();
             stopTime.setTripId(transitTrip.getId());
             stopTime.setStopId(stopId);
-	        stopTime.setSequence(stopIndex);
+            stopTime.setSequence(stopIndex);
             stopTime.setServiceDate(responseBuilder.getServiceDateAsString(result.getServiceDay().getServiceDate()));
             
             Set<Alert> alerts = result.getBackAlerts();
@@ -797,7 +797,7 @@ public abstract class OneBusAwayApiMethod<T> {
                 stopTime.setAlertIds(alertIds);
             }
 
-	        if (tba.isBoarding()) {
+            if (tba.isBoarding()) {
                 if(!tripTimes.isScheduled())
                     stopTime.setPredictedDepartureTime(midnight + tripTimes.getDepartureTime(stopIndex));
                 if(scheduledTripTimes != null)
@@ -930,7 +930,7 @@ public abstract class OneBusAwayApiMethod<T> {
     private TimetableResolver _getTimetableResolver() {
         TimetableSnapshotSource timetableSnapshotSource = graph.getTimetableSnapshotSource();
         if(timetableSnapshotSource == null) {
-	        return null;
+            return null;
         }
         
         return timetableSnapshotSource.getTimetableSnapshot();
@@ -954,7 +954,7 @@ public abstract class OneBusAwayApiMethod<T> {
     protected Trip getTrip(AgencyAndId tripId, ServiceDate serviceDate) {
         TableTripPattern pattern = transitIndexService.getTripPatternForTrip(tripId, serviceDate);
         int tripIndex = pattern.getTripIndex(tripId);
-	    return pattern.getTrip(tripIndex);
+        return pattern.getTrip(tripIndex);
     }
     
     protected RoutingRequest makeTraverseOptions(long startTime, String routerId) {
@@ -1065,17 +1065,17 @@ public abstract class OneBusAwayApiMethod<T> {
                     return (int) ret;
             }
 
-	        if(a_departureTime != null && b_arrivalTime != null) {
-		        ret = a_departureTime - b_arrivalTime;
-		        if(ret != 0)
-			        return (int) ret;
-	        }
+            if(a_departureTime != null && b_arrivalTime != null) {
+                ret = a_departureTime - b_arrivalTime;
+                if(ret != 0)
+                    return (int) ret;
+            }
 
-	        if(a_arrivalTime != null && b_departureTime != null) {
-		        ret = a_arrivalTime - b_departureTime;
-		        if(ret != 0)
-			        return (int) ret;
-	        }
+            if(a_arrivalTime != null && b_departureTime != null) {
+                ret = a_arrivalTime - b_departureTime;
+                if(ret != 0)
+                    return (int) ret;
+            }
 
             return a.getTripId().compareTo(b.getTripId());
         }
