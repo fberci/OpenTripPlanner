@@ -196,6 +196,7 @@ public abstract class OneBusAwayApiMethod<T> {
 	 * Whether this is a BKK internal request. Defaults to false.
 	 */
 	@HeaderParam("X-BKK-Internal-Request") @DefaultValue("false") private boolean internalRequest;
+    @Getter
 
 	@Context private UriInfo uriInfo;
     @Context private HttpContext httpContext;
