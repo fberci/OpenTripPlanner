@@ -287,13 +287,7 @@ public abstract class OneBusAwayApiMethod<T> {
         if(!serviceDay.serviceIdRunning(pattern.getServiceId()))
             return null;
         
-        Timetable timetable;
-        if(getTimetableResolver() != null) {
-            timetable = getTimetableResolver().resolve(pattern, serviceDate);
-        } else {
-            timetable = pattern.getScheduledTimetable();
-        }
-        
+        Timetable timetable = getTimetable(pattern, serviceDate);
         int tripIndex = timetable.getTripIndex(tripId);
         if(timetable.getTripTimes(tripIndex) instanceof CanceledTripTimes)
             return null;
@@ -457,7 +451,7 @@ public abstract class OneBusAwayApiMethod<T> {
         AgencyAndId tripId = parseAgencyAndId(transitTrip.getId());
         Trip trip = getTrip(tripId, serviceDate);
         TableTripPattern pattern = transitIndexService.getTripPatternForTrip(tripId, serviceDate);
-        Timetable timetable = getTimetableResolver().resolve(pattern, serviceDate);
+        Timetable timetable = getTimetable(pattern, serviceDate);
         TripTimes tripTimes = timetable.getTripTimes(timetable.getTripIndex(tripId));
         List<TransitStopTime> stopTimes = getStopTimesForTrip(tripId, serviceDate, pattern, timetable);
 
@@ -587,7 +581,7 @@ public abstract class OneBusAwayApiMethod<T> {
         List<TransitStopTime> stopTimes = new LinkedList<TransitStopTime>();
 
         long time = serviceDate.getAsDate(graph.getTimeZone()).getTime() / 1000;
-        int tripIndex = pattern.getTripIndex(tripId);
+        int tripIndex = timetable.getTripIndex(tripId);
         
         int numStops = pattern.getStops().size();
         for(int i = 0; i < numStops; ++i) {
@@ -829,23 +823,20 @@ public abstract class OneBusAwayApiMethod<T> {
                 Trip trip = getTrip(vehicle.getTripId(), vehicle.getServiceDate());
                 TableTripPattern pattern = transitIndexService.getTripPatternForTrip(trip.getId(), vehicle.getServiceDate());
 
-                if(pattern != null && pattern.getTripIndex(trip.getId()) >= 0) { 
-                    int tripIndex = pattern.getTripIndex(trip.getId());
-                    Timetable timetable;
-                    if(getTimetableResolver() != null) {
-                        timetable = getTimetableResolver().resolve(pattern, vehicle.getServiceDate());
-                    } else {
-                        timetable = pattern.getScheduledTimetable();
-                    }
+                if(pattern != null) {
+                    Timetable timetable = getTimetable(pattern, vehicle.getServiceDate());
 
-                    if(vehicle.getStopId() != null) {
-                        Stop vehicleStop = transitIndexService.getAllStops().get(vehicle.getStopId());
-                        responseBuilder.addToReferences(vehicleStop);
-                    }
+                    if(timetable != null) {
+                        int tripIndex = timetable.getTripIndex(trip.getId());
+                        if(vehicle.getStopId() != null) {
+                            Stop vehicleStop = transitIndexService.getAllStops().get(vehicle.getStopId());
+                            responseBuilder.addToReferences(vehicleStop);
+                        }
 
-                    transitTrip = responseBuilder.getTrip(trip);
-                    transitTrip.setWheelchairAccessible(timetable.isWheelchairAccessible(tripIndex));
-                    responseBuilder.addToReferences(transitTrip);
+                        transitTrip = responseBuilder.getTrip(trip);
+                        transitTrip.setWheelchairAccessible(timetable.isWheelchairAccessible(tripIndex));
+                        responseBuilder.addToReferences(transitTrip);
+                    }
                 }
             }
 
@@ -953,8 +944,15 @@ public abstract class OneBusAwayApiMethod<T> {
 
     protected Trip getTrip(AgencyAndId tripId, ServiceDate serviceDate) {
         TableTripPattern pattern = transitIndexService.getTripPatternForTrip(tripId, serviceDate);
-        int tripIndex = pattern.getTripIndex(tripId);
-        return pattern.getTrip(tripIndex);
+        return pattern.getTrip(tripId);
+    }
+
+    protected Timetable getTimetable(TableTripPattern pattern, ServiceDate serviceDate) {
+        if(getTimetableResolver() != null) {
+            return getTimetableResolver().resolve(pattern, serviceDate);
+        } else {
+            return pattern.getScheduledTimetable();
+        }
     }
     
     protected RoutingRequest makeTraverseOptions(long startTime, String routerId) {

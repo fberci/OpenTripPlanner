@@ -75,13 +75,7 @@ public class TripDetailsMethod extends OneBusAwayApiMethod<TransitEntryWithRefer
         if(!serviceDay.serviceIdRunning(pattern.getServiceId()))
             return TransitResponseBuilder.getFailResponse(TransitResponse.Status.NOT_OPERATING, "Trip isn't operation on the given service date.");
         
-        Timetable timetable;
-        if(getTimetableResolver() != null) {
-            timetable = getTimetableResolver().resolve(pattern, serviceDate);
-        } else {
-            timetable = pattern.getScheduledTimetable();
-        }
-        
+        Timetable timetable = getTimetable(pattern, serviceDate);
         int tripIndex = timetable.getTripIndex(tripId);
         if(timetable.getTripTimes(tripIndex) instanceof CanceledTripTimes)
             return TransitResponseBuilder.getFailResponse(TransitResponse.Status.NOT_OPERATING, "Trip is canceled on the given service date.");
