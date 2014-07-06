@@ -140,8 +140,9 @@ public class PlanTripMethod extends RoutingResource {
                 if(error.getMessage() != null && errorMessageStatus.containsKey(error.getMessage())) {
                     status = errorMessageStatus.get(error.getMessage());
                 }
-                logRequest.exception(status.getText(), false);
-                return builder.getResponseForErrorTripPlan(status, plan);
+                TransitResponse<TransitEntryWithReferences<Response>> response = builder.getResponseForErrorTripPlan(status, plan);
+                logRequest.finishRequest(response);
+                return response;
             }
             
             TripPlan tripPlan = plan.getPlan();
@@ -187,12 +188,13 @@ public class PlanTripMethod extends RoutingResource {
             }
 
             TransitResponse<TransitEntryWithReferences<Response>> response = builder.getResponseForTripPlan(plan);
-	        logRequest.finishRequest();
+	        logRequest.finishRequest(response);
 	        return response;
         } catch(Exception e) {
             LOG.warn("Trip Planning Exception: ", e);
-            logRequest.exception(e);
-            return TransitResponseBuilder.<TransitEntryWithReferences<Response>>getFailResponse(TransitResponse.Status.UNKNOWN_ERROR, "An error occured: " + e.getClass().getName());
+            TransitResponse<TransitEntryWithReferences<Response>> response = TransitResponseBuilder.<TransitEntryWithReferences<Response>>getFailResponse(TransitResponse.Status.UNKNOWN_ERROR, "An error occured: " + e.getClass().getName());
+            logRequest.exception(response, e);
+            return response;
         }
     }
     

@@ -15,66 +15,77 @@ package org.opentripplanner.api.ws.oba_rest_api;
 
 import com.brsanthu.googleanalytics.ExceptionHit;
 import com.brsanthu.googleanalytics.GoogleAnalytics;
+import com.brsanthu.googleanalytics.GoogleAnalyticsConfig;
 import com.brsanthu.googleanalytics.GoogleAnalyticsRequest;
+import com.brsanthu.googleanalytics.GoogleAnalyticsResponse;
 import com.brsanthu.googleanalytics.PageViewHit;
 import com.brsanthu.googleanalytics.TimingHit;
 import com.sun.jersey.api.core.HttpContext;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.conn.HttpClientConnectionManager;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.opentripplanner.api.ws.oba_rest_api.beans.TransitResponse;
 import org.opentripplanner.api.ws.oba_rest_api.beans.TransitResponseBuilder;
 
+import java.net.InetAddress;
 import java.net.URI;
+import java.net.UnknownHostException;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class OneBusAwayRequestLogger {
 
-        private static int counter = 1;
+    private static int counter = 1;
+    private static int QUEUE_LIMIT = 10000;
+    private static int THREADS = 8;
 
-        private static GoogleAnalytics ga = new GoogleAnalytics("UA-50283889-5"); //, "OpenTripPlanner-OBA API", MavenVersion.VERSION.toString());
-        private static final int TIMEOUT_CONNECTION = 100;
-        private static final int TIMEOUT_SOCKET = 100;
+    private static GoogleAnalytics ga = new OBAGoogleAnalytics("UA-50283889-5");
+    private static final int TIMEOUT_CONNECTION = 1000;
+    private static final int TIMEOUT_SOCKET = 1000;
+    private static final String HOSTNAME = getHostname();
 
-        {
-            ga.getConfig().setDiscoverRequestParameters(false);
-            ga.getConfig().setUserAgent("OTP-API");
-            ga.getConfig().setGatherStats(true);
-            ga.getConfig().setUseHttps(false);
+    public OneBusAwayRequestLogger() {
+    }
 
-            // Wait at most 100ms for a response, to avoid having too many backlogged requests
-            PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager();
-            connManager.setDefaultMaxPerRoute(1);
-
-            HttpClientBuilder builder = HttpClients.custom().setConnectionManager(connManager);
-            builder.setUserAgent(ga.getConfig().getUserAgent());
-            builder.setDefaultRequestConfig(
-                    RequestConfig
-                            .custom()
-                            .setConnectionRequestTimeout(TIMEOUT_CONNECTION)
-                            .setConnectTimeout(TIMEOUT_SOCKET)
-                            .setSocketTimeout(TIMEOUT_SOCKET)
-                            .build()
-            );
-
-            ga.setHttpClient(builder.build());
+    public LogRequest startRequest(Object apiMethod, HttpContext req, URI uri, String clientId, String apiKey, boolean internalRequest, TransitResponseBuilder.DialectWrapper dialect) {
+        if (clientId == null) {
+            clientId = "" + ++counter;
         }
 
-	public OneBusAwayRequestLogger() {
-	}
+        return new LogRequest(apiMethod, req, uri, clientId, apiKey, internalRequest, dialect.getDialect().name());
+    }
 
-	public LogRequest startRequest(Object apiMethod, HttpContext req, URI uri, String clientId, String apiKey, boolean internalRequest, TransitResponseBuilder.DialectWrapper dialect) {
-		if(clientId == null) {
-			clientId = "" + ++counter;
-		}
+    private static String getHostname() {
+        try {
+            String result = InetAddress.getLocalHost().getHostName();
+            if (StringUtils.isNotEmpty(result)) {
+                return result;
+            }
+        } catch (UnknownHostException e) { }
 
-		return new LogRequest(apiMethod, req, uri, clientId, apiKey, internalRequest, dialect.getDialect().name());
-	}
+        String host = System.getenv("COMPUTERNAME");
+        if (host != null)
+            return host;
 
-	public class LogRequest {
+        host = System.getenv("HOSTNAME");
+        if (host != null)
+            return host;
 
-		private final long startTime = System.currentTimeMillis();
-		private final PageViewHit pageHit = new PageViewHit();
-		private final TimingHit timingHit = new TimingHit();
+        return null;
+    }
+
+    public class LogRequest {
+
+        private final long startTime = System.currentTimeMillis();
+        private final PageViewHit pageHit = new PageViewHit();
+        private final TimingHit timingHit = new TimingHit();
 
         private Object apiMethod;
         private String dialect;
@@ -99,7 +110,7 @@ public class OneBusAwayRequestLogger {
             this.userLanguage = req.getRequest().getHeaderValue("Accept-Language");
             this.userAgent = req.getRequest().getHeaderValue("User-Agent");
             this.userIp = req.getRequest().getHeaderValue("X-Forwarded-For");
-            if(this.userIp == null) {
+            if (this.userIp == null) {
                 this.userIp = ""; // req.getRemoteAddr();
             }
 
@@ -107,11 +118,12 @@ public class OneBusAwayRequestLogger {
             pageHit.documentTitle(this.apiMethod.getClass().getSimpleName());
 
             init(timingHit);
+            timingHit.userTimingLabel(this.url);
             timingHit.userTimingCategory("apiRequest");
-            timingHit.userTimingLabel(this.apiMethod.getClass().getSimpleName());
+            timingHit.userTimingVariableName(this.apiMethod.getClass().getSimpleName());
         }
 
-        private <T extends GoogleAnalyticsRequest<T>> T init(T gar)  {
+        private <T extends GoogleAnalyticsRequest<T>> T init(T gar) {
             gar.userAgent(userAgent);
             gar.userIp(userIp);
             gar.userLanguage(userLanguage);
@@ -119,32 +131,120 @@ public class OneBusAwayRequestLogger {
             gar.customDimention(1, apiKey != null ? apiKey : "");
             gar.customDimention(2, apiMethod.getClass().getSimpleName());
             gar.customDimention(3, dialect);
+            gar.customDimention(6, HOSTNAME);
             gar.clientId(clientId);
             gar.documentUrl(url);
 
             return gar;
         }
 
-		public void finishRequest() {
-			long now = System.currentTimeMillis();
-			timingHit.pageLoadTime((int) (now - startTime));
-            timingHit.serverResponseTime((int) (now - startTime));
+        public void finishRequest(TransitResponse<?> response) {
+            long now = System.currentTimeMillis();
+            //timingHit.pageLoadTime(10000 + (int) (now - startTime));
+            //timingHit.serverResponseTime(5000 + (int) (now - startTime));
+            timingHit.userTimingTime((int) (now - startTime));
+            ga.postAsync(timingHit);
 
-			ga.postAsync(pageHit);
-			ga.postAsync(timingHit);
-		}
-
-        public void exception(Exception e) {
-            exception(e.getClass().getSimpleName(), true);
+            pageHit.customDimention(4, response.getText());
+            pageHit.customDimention(5, Integer.toString(response.getCode()));
+            ga.postAsync(pageHit);
         }
 
-        public void exception(String description, boolean fatal) {
+        public void exception(TransitResponse<?> transitResponse, Exception e) {
             ExceptionHit exceptionHit = init(new ExceptionHit());
-            exceptionHit.exceptionFatal(fatal);
-            exceptionHit.exceptionDescription(description);
-
-            ga.postAsync(pageHit);
+            exceptionHit.exceptionFatal(true);
+            exceptionHit.exceptionDescription(e.getMessage());
             ga.postAsync(exceptionHit);
+
+            pageHit.customDimention(4, transitResponse.getText());
+            pageHit.customDimention(5, Integer.toString(transitResponse.getCode()));
+            ga.postAsync(pageHit);
+        }
+    }
+
+    @Slf4j
+    private static class OBAGoogleAnalytics extends GoogleAnalytics {
+
+        public OBAGoogleAnalytics(String trackingId) {
+            super(createConfig(), trackingId);
+
+            PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager();
+            connManager.setDefaultMaxPerRoute(getDefaultMaxPerRoute(getConfig()));
+            new IdleConnectionMonitorThread(connManager).start();
+
+            HttpClientBuilder builder = HttpClients.custom().setConnectionManager(connManager);
+            builder.setUserAgent(getConfig().getUserAgent());
+            builder.setDefaultRequestConfig(
+                    RequestConfig
+                            .custom()
+                            .setConnectionRequestTimeout(TIMEOUT_CONNECTION)
+                            .setConnectTimeout(TIMEOUT_SOCKET)
+                            .setSocketTimeout(TIMEOUT_SOCKET)
+                            .build()
+            );
+
+            setHttpClient(builder.build());
+        }
+
+        @Override
+        public Future<GoogleAnalyticsResponse> postAsync(GoogleAnalyticsRequest request) {
+            try {
+                return super.postAsync(request);
+            } catch (RejectedExecutionException exception) {
+                log.warn("Rejected google analytics request: {}", exception.getMessage());
+                return null;
+            }
+        }
+
+        @Override
+        protected synchronized ThreadPoolExecutor createExecutor(GoogleAnalyticsConfig config) {
+            return new ThreadPoolExecutor(0, config.getMaxThreads(), 5, TimeUnit.MINUTES, new ArrayBlockingQueue<Runnable>(QUEUE_LIMIT), createThreadFactory());
+        }
+
+        private static GoogleAnalyticsConfig createConfig() {
+            GoogleAnalyticsConfig config = new GoogleAnalyticsConfig();
+            config.setDiscoverRequestParameters(false);
+            config.setUserAgent("OTP-API");
+            config.setMaxThreads(THREADS);
+            config.setGatherStats(true);
+            config.setUseHttps(false);
+            return config;
+        }
+    }
+
+    private static class IdleConnectionMonitorThread extends Thread {
+        private final HttpClientConnectionManager connectionManager;
+        private volatile boolean shutdown;
+
+        private IdleConnectionMonitorThread(HttpClientConnectionManager connectionManager) {
+            super("Google Analytics idle connection cleanup");
+            this.connectionManager = connectionManager;
+        }
+
+        @Override
+        public void run() {
+            try {
+                while (!shutdown) {
+                    synchronized (this) {
+                        wait(5000);
+
+                        // Close expired connections
+                        connectionManager.closeExpiredConnections();
+                        // Optionally, close connections
+                        // that have been idle longer than 30 sec
+                        connectionManager.closeIdleConnections(30, TimeUnit.SECONDS);
+                    }
+                }
+            } catch (InterruptedException ex) {
+                // terminate
+            }
+        }
+
+        public void shutdown() {
+            shutdown = true;
+            synchronized (this) {
+                notifyAll();
+            }
         }
     }
 }

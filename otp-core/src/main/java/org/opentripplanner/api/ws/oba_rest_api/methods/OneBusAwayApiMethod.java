@@ -235,13 +235,13 @@ public abstract class OneBusAwayApiMethod<T> {
         TransitResponse<T> transitResponse;
         try {
             transitResponse = getResponse();
-            logRequest.finishRequest();
+            logRequest.finishRequest(transitResponse);
         } catch (TransitTimesException e) {
             transitResponse = TransitResponseBuilder.getFailResponse(TransitResponse.Status.NO_TRANSIT_TIMES);
-            logRequest.exception(e);
+            logRequest.exception(transitResponse, e);
         } catch (Exception e) {
-            transitResponse = TransitResponseBuilder.getFailResponse();
-            logRequest.exception(e);
+            transitResponse = TransitResponseBuilder.getFailResponse(TransitResponse.Status.UNKNOWN_ERROR, "An error occured: " + e.getClass().getName());
+            logRequest.exception(transitResponse, e);
             LOG.warn("Unhandled exception: ", e);
         }
 
