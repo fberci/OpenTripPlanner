@@ -126,7 +126,11 @@ public class CommandLineParameters {
     @Parameter( names = { "-s", "--server"}, 
             description = "run a server")
     boolean server = false;
-    
+
+    @Parameter( names = { "--auth"},
+            description = "Basic authentication string (username:password)")
+    String basicAuth = "admin:admin";
+
     @Parameter( names = { "-t", "--static"}, validateWith = ReadableDirectory.class,
     description = "path to static content")
     String staticDirectory;

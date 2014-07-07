@@ -119,7 +119,7 @@ public class GrizzlyServer {
                 .setCorePoolSize(1).setMaxPoolSize(Runtime.getRuntime().availableProcessors());
         networkListener.getTransport().setWorkerThreadPoolConfig(threadPoolConfig);
         httpServer.addListener(networkListener);
-        ResourceConfig rc = new UriExtensionsConfig("org.opentripplanner");
+        ResourceConfig rc = new OTPApplicationConfig("org.opentripplanner", params.basicAuth);
         /* DelegatingFilterProxy.class.getName() does not seem to work out of the box.
            Register a custom authentication filter, a filter that removes the /ws/ from OTP
            REST API calls, and a filter that wraps JSON in method calls as needed. */

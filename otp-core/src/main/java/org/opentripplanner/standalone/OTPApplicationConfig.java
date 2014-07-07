@@ -1,6 +1,7 @@
 package org.opentripplanner.standalone;
 
 import com.sun.jersey.api.core.PackagesResourceConfig;
+import lombok.Getter;
 
 import javax.ws.rs.core.MediaType;
 import java.util.HashMap;
@@ -9,28 +10,17 @@ import java.util.Map;
 /** Registers URI extensions for some common media types.  This lets clients specify the desired
  * response format right in the URI like http://site.com/whatever.xml instead of
  * http://site.com/whatever with an Accept:application/xml header. */
-public class UriExtensionsConfig extends PackagesResourceConfig
+public class OTPApplicationConfig extends PackagesResourceConfig
 {
 	private Map<String, MediaType> mediaTypeMap;
 
-	public UriExtensionsConfig()
-	{
-		super("org.opentripplanner");
-	}
+    @Getter
+    private String basicAuth;
 
-	public UriExtensionsConfig(Map<String, Object> props)
-	{
-		super(props);
-	}
-
-	public UriExtensionsConfig(String[] paths)
+	public OTPApplicationConfig(String paths, String basicAuth)
 	{
 		super(paths);
-	}
-
-	public UriExtensionsConfig(String paths)
-	{
-		super(paths);
+        this.basicAuth = basicAuth;
 	}
 
 	@Override

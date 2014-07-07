@@ -1,16 +1,17 @@
 package org.opentripplanner.standalone;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
-
 import com.sun.jersey.core.util.Base64;
 import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.jersey.spi.container.ContainerRequestFilter;
+
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Application;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 /** 
  * This Jersey filter can be used to add basic authentication to the Grizzly + Jersey server.
@@ -25,6 +26,9 @@ public class AuthFilter implements ContainerRequestFilter {
         new WebApplicationException(Response.status(Status.UNAUTHORIZED)
             .header(HttpHeaders.WWW_AUTHENTICATE, "Basic realm=\"OTP\"")
             .entity("This OTP resource requires authentication.").build());
+
+    @Context
+    private transient Application application;
     
     @Override
     public ContainerRequest filter(ContainerRequest containerRequest) 
@@ -52,7 +56,7 @@ public class AuthFilter implements ContainerRequestFilter {
         if (auth.startsWith("Basic ") || auth.startsWith("Basic ")) {
             auth = auth.replaceFirst("[Bb]asic ", "");
             String userColonPass = Base64.base64Decode(auth);
-            if (!userColonPass.equals("admin:admin"))
+            if (!userColonPass.equals(((OTPApplicationConfig) application).getBasicAuth()))
                 throw unauthorized;
         } else {
             // fail on unrecognized auth type
