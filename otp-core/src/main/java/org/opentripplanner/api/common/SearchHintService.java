@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -81,13 +82,31 @@ public class SearchHintService implements Serializable {
         }
         
         private void createMappingForRoute(AgencyAndId routeId) {
-            Set<String> shortNames = getShortNamesForRoute(routeId);
+            // Create a set where each routeId is inter-related
+            Set<AgencyAndId> relatedRoutes = new HashSet<AgencyAndId>();
+            // We add the current routeId
+            relatedRoutes.add(routeId);
             
+            Set<String> shortNames = getShortNamesForRoute(routeId);            
             for(String shortName : shortNames) {
-                for(AgencyAndId other : getRouteIdsForShortName(shortName)) {
-                    MapUtils.addToMapSet(searchHintsForRoute, other, routeId);
+                // Add all connected routes and transitively all the already known realtions to those routes
+                for (AgencyAndId connected : getRouteIdsForShortName(shortName)) {
+                    relatedRoutes.add(connected);
+                    Set<AgencyAndId> alreadyRelated = searchHintsForRoute.get(connected);
+                    if (alreadyRelated != null && !alreadyRelated.isEmpty())
+                        relatedRoutes.addAll(alreadyRelated);
+                }                
+            }
+
+            // Create the cartesian product of the routes so each one will be related to another
+            for (AgencyAndId one : relatedRoutes) {
+                for (AgencyAndId another : relatedRoutes) {
+                    if (!one.equals(another)) {
+                        MapUtils.addToMapSet(searchHintsForRoute, one, another);
+                    }
                 }
             }
+            
         }
         
         private Set<String> getShortNamesForRoute(AgencyAndId routeId) {
