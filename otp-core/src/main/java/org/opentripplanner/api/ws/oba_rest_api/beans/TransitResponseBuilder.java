@@ -264,6 +264,9 @@ public class TransitResponseBuilder {
     public TransitRouteVariant getTransitVariant(RouteVariant variant) {
         List<String> stopIds = new ArrayList<String>(variant.getStops().size());
         for(Stop stop : variant.getStops()) {
+            if(isStopPrivate(stop))
+                continue;
+
             addToReferences(stop);
             stopIds.add(stop.getId().toString());
         }
@@ -297,8 +300,11 @@ public class TransitResponseBuilder {
         transitTripDetails.setTripId(trip.getId());
         transitTripDetails.setStopTimes(stopTimes);
         transitTripDetails.setServiceDate(getServiceDateAsString(serviceDate));
-        transitTripDetails.setPolyline(getPolyline(variant.getGeometry()));
-        
+
+        if(!stopTimes.isEmpty()) {
+            transitTripDetails.setPolyline(getPolyline(variant.getGeometry()));
+        }
+
         return transitTripDetails;
     }
     
@@ -487,7 +493,6 @@ public class TransitResponseBuilder {
             }
         }
 
-        
         TransitRouteDetails transitRoute = new TransitRouteDetails();
         transitRoute.setAgencyId(route.getAgency().getId());
         transitRoute.setColor(route.getColor());
@@ -1088,6 +1093,10 @@ public class TransitResponseBuilder {
             default:
                 return "?";
         }
+    }
+
+    public static boolean isStopPrivate(Stop stop) {
+        return stop.getLocationType() < 0;
     }
 
     public final static RouteVariantComparator ROUTE_VARIANT_COMPARATOR = new RouteVariantComparator();

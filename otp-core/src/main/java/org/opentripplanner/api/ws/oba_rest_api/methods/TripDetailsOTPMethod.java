@@ -17,7 +17,6 @@ import org.onebusaway.gtfs.model.AgencyAndId;
 import org.onebusaway.gtfs.model.Trip;
 import org.onebusaway.gtfs.model.calendar.ServiceDate;
 import org.onebusaway.gtfs.services.calendar.CalendarService;
-import org.opentripplanner.api.ws.oba_rest_api.beans.TransitAlert;
 import org.opentripplanner.api.ws.oba_rest_api.beans.TransitEntryWithReferences;
 import org.opentripplanner.api.ws.oba_rest_api.beans.TransitResponse;
 import org.opentripplanner.api.ws.oba_rest_api.beans.TransitResponseBuilder;
@@ -37,7 +36,6 @@ import org.opentripplanner.updater.vehicle_location.VehicleLocationService;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 import java.text.ParseException;
-import java.util.LinkedList;
 import java.util.List;
 
 @Path(OneBusAwayApiMethod.API_BASE_PATH + "trip-details" + OneBusAwayApiMethod.API_CONTENT_TYPE)
@@ -107,8 +105,7 @@ public class TripDetailsOTPMethod extends OneBusAwayApiMethod<TransitEntryWithRe
             return TransitResponseBuilder.getFailResponse(TransitResponse.Status.NOT_OPERATING, "Trip is canceled on the given service date.");
         
         List<TransitStopTime> stopTimes = getStopTimesForTrip(tripId, serviceDate, pattern, timetable);
-        List<TransitAlert> alerts = new LinkedList<TransitAlert>(); // TODO
-        
+
         TransitVehicle transitVehicle = null;
         VehicleLocationService vehicleLocationService = graph.getService(VehicleLocationService.class);
         if(vehicleLocationService != null) {

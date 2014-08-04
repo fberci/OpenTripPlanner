@@ -95,13 +95,22 @@ public class StopsForLocationMethod extends AbstractSearchMethod<TransitListEntr
         } else {
             stops.addAll(transitIndexService.getAllStops().values());
         }
-        
+
         if(query != null && query.length() >= 3) {
             query = normalize(query);
             
             List<Stop> matchingRoutes = getMatchingStops(stops, query);
             stops = Lists.newArrayList(matchingRoutes);
         }
+
+        List<Stop> filteredStops = new ArrayList<Stop>();
+        for(Stop stop : stops) {
+            if(TransitResponseBuilder.isStopPrivate(stop))
+                continue;
+
+            filteredStops.add(stop);
+        }
+        stops = filteredStops;
 
         if(dialect.getDialect() == TransitResponseBuilder.Dialect.OBA) {
             List<Stop> filteredForStopsOnly = new ArrayList<Stop>();

@@ -586,7 +586,9 @@ public abstract class OneBusAwayApiMethod<T> {
         int numStops = pattern.getStops().size();
         for(int i = 0; i < numStops; ++i) {
             TransitStopTime stopTime = new TransitStopTime();
-            stopTime.setStopId(pattern.getStops().get(i).getId().toString());
+            AgencyAndId stopId = pattern.getStops().get(i).getId();
+            Stop stop = transitIndexService.getAllStops().get(stopId);
+            stopTime.setStopId(stopId.toString());
 
             TripTimes tripTimes = timetable.getTripTimes(tripIndex);
             TripTimes scheduledTripTimes = tripTimes.getScheduledTripTimes();
@@ -608,9 +610,13 @@ public abstract class OneBusAwayApiMethod<T> {
                 if(scheduledTripTimes != null)
                     stopTime.setArrivalTime(time + scheduledTripTimes.getArrivalTime(i - 1));
             }
-            
+
+            if(TransitResponseBuilder.isStopPrivate(stop)) {
+                continue;
+            }
+
             // TODO: alerts?
-            
+
             stopTimes.add(stopTime);
         }
         
