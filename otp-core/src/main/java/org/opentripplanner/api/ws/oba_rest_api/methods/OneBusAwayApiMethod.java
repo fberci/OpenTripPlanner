@@ -1005,9 +1005,9 @@ public abstract class OneBusAwayApiMethod<T> {
             filteredVariants = Lists.newArrayList(referenceVariants);
         }
         
-        if(filteredVariants.isEmpty()) {
+        /*if(filteredVariants.isEmpty()) {
             filteredVariants = routeVariants;
-        }
+        }*/
         
         cacheService.put(CACHE_REFERENCE_VARIANTS_FOR_ROUTE, routeId, filteredVariants);
         return filteredVariants;
