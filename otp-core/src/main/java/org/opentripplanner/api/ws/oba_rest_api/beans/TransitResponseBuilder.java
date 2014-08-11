@@ -14,6 +14,7 @@
 package org.opentripplanner.api.ws.oba_rest_api.beans;
 
 import com.google.common.collect.Lists;
+import com.sun.jersey.api.core.HttpRequestContext;
 import com.vividsolutions.jts.geom.LineString;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -37,15 +38,7 @@ import org.opentripplanner.routing.transit_index.RouteVariant;
 import org.opentripplanner.updater.vehicle_location.VehicleLocation;
 import org.opentripplanner.util.PolylineEncoder;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -97,6 +90,7 @@ public class TransitResponseBuilder {
 		COMPACT, AGENCIES, ROUTES, TRIPS, STOPS, ALERTS
 	}
 
+    private Locale _locale;
     private Dialect _dialect;
     private TransitIndexService _transitIndexService;
     private OneBusAwayApiCacheService _cacheService;
@@ -105,12 +99,13 @@ public class TransitResponseBuilder {
     private EnumSet<References> _returnReferences;
 	private boolean _internalRequest;
 
-    public TransitResponseBuilder(Graph graph, EnumSet<References> references, Dialect dialect, boolean internalRequest) {
+    public TransitResponseBuilder(Graph graph, EnumSet<References> references, Dialect dialect, boolean internalRequest, HttpRequestContext httpRequestContext) {
         _dialect = dialect;
         _returnReferences = references;
         _transitIndexService = graph.getService(TransitIndexService.class);
         _cacheService = graph.getService(OneBusAwayApiCacheService.class);
 	    _internalRequest = internalRequest;
+        _locale = httpRequestContext.getAcceptableLanguages().isEmpty() ? Locale.getDefault() : httpRequestContext.getAcceptableLanguages().get(0);
     }
 
     /* RESPONSE */
@@ -331,7 +326,7 @@ public class TransitResponseBuilder {
         TransitStopWithArrivalsAndDepartures tad = new TransitStopWithArrivalsAndDepartures();
         tad.setStopId(stop.getId().toString());
         tad.setArrivalsAndDepartures(arrivalsAndDepartures);
-        tad.setAlertIds(alertIds);
+        tad.setSituationIds(alertIds);
         tad.setNearbyStopIds(nearbyStopIds);
         addToReferences(stop);
         
@@ -775,23 +770,28 @@ public class TransitResponseBuilder {
 		return a == null ? b : a + "-" + b;
 	}
 
-	private static final String CACHE_STRING = "translatedStrings";
     public TransitNaturalLanguageString getTranslatedString(TranslatedString translatedString) {
-        if(translatedString == null) {
-            return null;
+        TransitNaturalLanguageString transitTranslatedString = new TransitNaturalLanguageString();
+        if(translatedString.getTranslation(_locale.toLanguageTag()) != null) {
+            transitTranslatedString.setLang(_locale.toLanguageTag());
+            transitTranslatedString.setValue(deHTMLize(translatedString.getTranslation(_locale.toLanguageTag())));
+        } else if(translatedString.getTranslation(_locale.getCountry()) != null) {
+            transitTranslatedString.setLang(_locale.getCountry());
+            transitTranslatedString.setValue(deHTMLize(translatedString.getTranslation(_locale.getCountry())));
+        } else {
+            transitTranslatedString.setLang("");
+            transitTranslatedString.setValue(deHTMLize(translatedString.getSomeTranslation()));
         }
         
-        TransitNaturalLanguageString transitTranslatedString = _cacheService.<TranslatedString, TransitNaturalLanguageString>get(CACHE_STRING, translatedString);
-        if(transitTranslatedString != null) {
-            return transitTranslatedString;
-        }
-        
-        transitTranslatedString = new TransitNaturalLanguageString();
-        transitTranslatedString.setLang("");
-        transitTranslatedString.setValue(translatedString.getSomeTranslation());
-        
-        _cacheService.<TranslatedString, TransitNaturalLanguageString>put(CACHE_STRING, translatedString, transitTranslatedString);
         return transitTranslatedString;
+    }
+
+    private static String deHTMLize(String htmlString) {
+        String ret = htmlString.replace("<br/>", "\n");
+        ret = ret.replace("<br>", "\n");
+        ret = ret.replace("</p>", "\n");
+        ret = ret.replaceAll("\\<.*?>","");
+        return ret;
     }
     
     private static final String CACHE_ALERT = "alerts";
@@ -893,8 +893,8 @@ public class TransitResponseBuilder {
         return affects;
     }
     
-    private static final String CACHE_SITUATION = "situation";
     public TransitSituation getSituation(TransitAlert transitAlert) {
+        String CACHE_SITUATION = "situation-" + _locale.toLanguageTag();
         TransitSituation transitSituation = _cacheService.<TransitAlert, TransitSituation>get(CACHE_SITUATION, transitAlert);
         if(transitSituation != null) {
             return transitSituation;
@@ -906,7 +906,7 @@ public class TransitResponseBuilder {
         transitSituation.setConsequences(Collections.<TransitSituationConsequences>emptySet());
         transitSituation.setCreationTime(System.currentTimeMillis());
         transitSituation.setDescription(getTranslatedString(transitAlert.getDescription()));
-        transitSituation.setHeader(getTranslatedString(transitAlert.getHeader()));
+        transitSituation.setSummary(getTranslatedString(transitAlert.getHeader()));
         transitSituation.setId(transitAlert.getId());
         transitSituation.setPublicationWindows(getTimeRange(transitAlert.getStart(), transitAlert.getEnd()));
         transitSituation.setReasons(null);

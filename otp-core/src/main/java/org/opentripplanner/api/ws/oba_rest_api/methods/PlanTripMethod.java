@@ -58,7 +58,7 @@ public class PlanTripMethod extends RoutingResource {
 
     private static final Logger LOG = LoggerFactory.getLogger(PlanTripMethod.class);
     private OneBusAwayRequestLogger requestLogger = new OneBusAwayRequestLogger();
-    
+
     @Setter @InjectParam 
     public PlanGenerator planGenerator;
     
@@ -66,7 +66,7 @@ public class PlanTripMethod extends RoutingResource {
     // parameters in the outgoing response. This is a TriMet requirement.
     // Jersey seems to use @Context to inject internal types and @InjectParam or @Resource for DI objects.
     @Context UriInfo uriInfo;
-    
+
     /** Java is immensely painful. TODO: Guava should cover this. */
     interface OneArgFunc<T,U> {
         public T call(U arg);
@@ -131,7 +131,7 @@ public class PlanTripMethod extends RoutingResource {
 	    }
 
         try {
-            TransitResponseBuilder builder = new TransitResponseBuilder(graph, references.getReferences(), dialect.getDialect(), internalRequest);
+            TransitResponseBuilder builder = new TransitResponseBuilder(graph, references.getReferences(), dialect.getDialect(), internalRequest, httpContext.getRequest());
             Response plan = getItineraries();
             
             if(plan.getError() != null) {

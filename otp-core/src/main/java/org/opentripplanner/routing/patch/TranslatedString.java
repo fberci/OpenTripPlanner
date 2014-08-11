@@ -13,19 +13,20 @@
 
 package org.opentripplanner.routing.patch;
 
-import java.io.Serializable;
-import java.util.TreeMap;
+import lombok.Getter;
+import org.opentripplanner.routing.transit_index.adapters.MapAdapter;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
-
-import org.opentripplanner.routing.transit_index.adapters.MapAdapter;
+import java.io.Serializable;
+import java.util.TreeMap;
 
 @XmlType
 public class TranslatedString implements Serializable {
     private static final long serialVersionUID = 2163930399727941628L;
 
+    @Getter
     @XmlElement
     @XmlJavaTypeAdapter(MapAdapter.class)
     public TreeMap<String, String> translations = new TreeMap<String, String>();

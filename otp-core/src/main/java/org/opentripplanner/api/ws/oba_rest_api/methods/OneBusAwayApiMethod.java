@@ -230,7 +230,7 @@ public abstract class OneBusAwayApiMethod<T> {
             graph.putService(OneBusAwayApiCacheService.class, cacheService);
         }
         
-        responseBuilder = new TransitResponseBuilder(graph, references.getReferences(), dialect.getDialect(), internalRequest);
+        responseBuilder = new TransitResponseBuilder(graph, references.getReferences(), dialect.getDialect(), internalRequest, httpContext.getRequest());
 
         TransitResponse<T> transitResponse;
         try {

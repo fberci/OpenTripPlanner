@@ -29,6 +29,6 @@ public class TransitSituation {
     private Collection<TransitSituationAffects> allAffects;
     private Collection<TransitSituationConsequences> consequences;
     private TransitNaturalLanguageString url;
-    private TransitNaturalLanguageString header;
+    private TransitNaturalLanguageString summary;
     private TransitNaturalLanguageString description;
 }
