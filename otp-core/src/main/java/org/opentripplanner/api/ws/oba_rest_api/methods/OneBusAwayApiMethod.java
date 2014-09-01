@@ -25,6 +25,7 @@ import com.vividsolutions.jts.geom.Point;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.onebusaway.gtfs.model.Route;
 import org.onebusaway.gtfs.model.Stop;
@@ -942,7 +943,7 @@ public abstract class OneBusAwayApiMethod<T> {
     }
     
     protected AgencyAndId parseAgencyAndId(String fullId) {
-        if(!fullId.contains("_"))
+        if(StringUtils.isEmpty(fullId) || !fullId.contains("_"))
             return null;
         String[] parts = fullId.split("_", 2);
         return new AgencyAndId(parts[0], parts[1]);

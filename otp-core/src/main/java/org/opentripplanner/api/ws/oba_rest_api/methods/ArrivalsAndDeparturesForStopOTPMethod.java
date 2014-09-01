@@ -65,7 +65,7 @@ public class ArrivalsAndDeparturesForStopOTPMethod extends OneBusAwayApiMethod<T
             AgencyAndId stopId = parseAgencyAndId(stopIdString);
             Stop stop = transitIndexService.getAllStops().get(stopId);
             if(stop == null)
-                return TransitResponseBuilder.getFailResponse(TransitResponse.Status.NOT_FOUND, "Unknown stopId: " + stopIdString);
+                return TransitResponseBuilder.getFailResponse(TransitResponse.Status.NOT_FOUND, "Unknown stopId.");
 
             if(firstStop == null) {
                 firstStop = stop;

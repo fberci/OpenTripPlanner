@@ -248,24 +248,13 @@ public abstract class AbstractSearchMethod<T> extends OneBusAwayApiMethod<T> {
                 if(ret != 0)
                     return ret;
                 
-                LinkedList<Route> ra = a.getRoutes();
-                LinkedList<Route> rb = b.getRoutes();
-                
-                if(ra != null && rb != null) {
-                    ret = rb.size() - ra.size();
-                    if(ret != 0)
-                        return ret;
-                    
-                    if(!ra.equals(rb)) {
-                        while(ret == 0 && !(ra.isEmpty() || rb.isEmpty())) {
-                            ret = TransitResponseBuilder.ROUTE_COMPARATOR.compare(rb.pop(), ra.pop());
-                        }
+                LinkedList<Route> ra = new LinkedList<Route>(a.getRoutes());
+                LinkedList<Route> rb = new LinkedList<Route>(b.getRoutes());
 
-                        if(ret != 0)
-                            return ret;
-                    }
-                }
-                
+				ret = rb.size() - ra.size();
+				if(ret != 0)
+					return ret;
+
                 return b.getStop().getId().toString().compareTo(a.getStop().getId().toString());
             }
         };
