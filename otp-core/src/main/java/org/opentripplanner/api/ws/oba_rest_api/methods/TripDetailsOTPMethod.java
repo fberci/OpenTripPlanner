@@ -106,6 +106,21 @@ public class TripDetailsOTPMethod extends OneBusAwayApiMethod<TransitEntryWithRe
         
         List<TransitStopTime> stopTimes = getStopTimesForTrip(tripId, serviceDate, pattern, timetable);
 
+		if(!stopTimes.isEmpty()) {
+			TransitStopTime first = stopTimes.get(0);
+			TransitStopTime last = stopTimes.get(stopTimes.size() - 1);
+
+			if(first.hasDepartureTime())
+				startTime = first.getDepartureTime();
+			else if(first.hasPredictedDepartureTime())
+				startTime = first.getPredictedDepartureTime();
+
+			if(last.hasPredictedArrivalTime())
+				endTime = last.getPredictedArrivalTime();
+			else if(last.hasArrivalTime())
+				endTime = last.getArrivalTime();
+		}
+
         TransitVehicle transitVehicle = null;
         VehicleLocationService vehicleLocationService = graph.getService(VehicleLocationService.class);
         if(vehicleLocationService != null) {
@@ -118,7 +133,7 @@ public class TripDetailsOTPMethod extends OneBusAwayApiMethod<TransitEntryWithRe
         transitTrip.setWheelchairAccessible(timetable.isWheelchairAccessible(tripIndex));
         
         AgencyAndId routeId = trip.getRoute().getId();
-        List<String> alertIds = getAlertsForRoute(routeId, options, startTime, endTime);
+        List<String> alertIds = getAlertsForTrip(tripId, routeId, options, startTime, endTime);
                 
         return responseBuilder.getResponseForTrip(transitTrip, serviceDate, alertIds, pattern.getStops(), stopTimes, transitVehicle, variant);
     }
