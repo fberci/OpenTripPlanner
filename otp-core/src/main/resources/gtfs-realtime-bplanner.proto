@@ -1,19 +1,35 @@
-syntax = "proto2";
+// bplanner extensions for the GTFS-realtime protocol
 
 option java_package = "com.google.transit.realtime";
-package transit_realtime;
 
 import "gtfs-realtime.proto";
 
-extend VehicleDescriptor {
-	optional bool deviated = 1061 [default = false];
-	optional int32 wheelchairAccessible = 1062 [default = 0];
-	optional int32 vehicle_type = 1063;
-	optional string phone_number = 1064;
-	optional string driver_name = 1065;
-	optional int32 stop_distance_percent = 1066;
+message BPAlert {
+	optional transit_realtime.TranslatedString internalStartText = 1;
+	optional transit_realtime.TranslatedString internalEndText = 2;
 }
 
-extend TripDescriptor {
-	optional string block_id = 1066;
+message BPVehicleDescriptor {
+	optional bool deviated = 1 [default = false];
+	optional int32 wheelchair_accessible = 2 [default = 0];
+	optional int32 vehicle_type = 3;
+	optional string phone_number = 4;
+	optional string driver_name = 5;
+	optional int32 stop_distance_percent = 6;
+}
+
+message BPTripDescriptor {
+	optional string block_id = 1;
+}
+
+extend transit_realtime.VehicleDescriptor {
+	optional BPVehicleDescriptor bp_vehicle = 1060;
+}
+
+extend transit_realtime.TripDescriptor {
+	optional BPTripDescriptor bp_trip = 1060;
+}
+
+extend transit_realtime.Alert {
+	optional BPAlert bp_alert = 1060;
 }

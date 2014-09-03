@@ -54,15 +54,9 @@ public class GtfsRealtimeVehicleLocationUpdater extends PollingGraphUpdater {
 
     protected ExtensionRegistry extensionRegistry = ExtensionRegistry.newInstance();
     {
-        extensionRegistry.add(GtfsRealtimeBplanner.deviated);
-        extensionRegistry.add(GtfsRealtimeBplanner.wheelchairAccessible);
-	    extensionRegistry.add(GtfsRealtimeBplanner.vehicleType);
-	    extensionRegistry.add(GtfsRealtimeBplanner.driverName);
-	    extensionRegistry.add(GtfsRealtimeBplanner.phoneNumber);
-	    extensionRegistry.add(GtfsRealtimeBplanner.blockId);
-	    extensionRegistry.add(GtfsRealtimeBplanner.stopDistancePercent);
+		GtfsRealtimeBplanner.registerAllExtensions(extensionRegistry);
     }
-    
+
     private Graph graph;
     
     private Long lastTimestamp = Long.MIN_VALUE;
@@ -175,7 +169,7 @@ public class GtfsRealtimeVehicleLocationUpdater extends PollingGraphUpdater {
             
             GtfsRealtime.VehiclePosition vehiclePosition = entity.getVehicle();
             GtfsRealtime.TripDescriptor descriptor = vehiclePosition.getTrip();
-            
+
             AgencyAndId tripId = null;
             ServiceDate serviceDate = new ServiceDate();
             if(descriptor.hasTripId()) {
@@ -196,8 +190,9 @@ public class GtfsRealtimeVehicleLocationUpdater extends PollingGraphUpdater {
             }
 
 	        String blockId = null;
-	        if(descriptor.hasExtension(GtfsRealtimeBplanner.blockId)) {
-		        blockId = descriptor.getExtension(GtfsRealtimeBplanner.blockId);
+			GtfsRealtimeBplanner.BPTripDescriptor bpDescriptor = descriptor.getExtension(GtfsRealtimeBplanner.bpTrip);
+	        if(bpDescriptor != null && bpDescriptor.hasBlockId()) {
+		        blockId = bpDescriptor.getBlockId();
 	        }
             
             Integer stopSequence = null;
@@ -216,22 +211,25 @@ public class GtfsRealtimeVehicleLocationUpdater extends PollingGraphUpdater {
 	        Integer stopDistancePercent = null;
             if(vehiclePosition.hasVehicle()) {
                 GtfsRealtime.VehicleDescriptor vehicle = vehiclePosition.getVehicle();
+				GtfsRealtimeBplanner.BPVehicleDescriptor bpVehicle = vehicle.getExtension(GtfsRealtimeBplanner.bpVehicle);
+
                 if(vehicle.hasLicensePlate())
                     licensePlate = vehicle.getLicensePlate();
                 if(vehicle.hasLabel())
                     label = vehicle.getLabel();
                 if(vehicle.hasId())
                     vehicleId = new AgencyAndId(defaultAgencyId, vehicle.getId());
-                if(vehicle.hasExtension(GtfsRealtimeBplanner.deviated))
-                    deviated = vehicle.getExtension(GtfsRealtimeBplanner.deviated);
-	            if(vehicle.hasExtension(GtfsRealtimeBplanner.phoneNumber))
-		            busPhoneNumber = vehicle.getExtension(GtfsRealtimeBplanner.phoneNumber);
-	            if(vehicle.hasExtension(GtfsRealtimeBplanner.driverName))
-		            driverName = vehicle.getExtension(GtfsRealtimeBplanner.driverName);
-	            if(vehicle.hasExtension(GtfsRealtimeBplanner.vehicleType))
-		            vehicleRouteType = vehicle.getExtension(GtfsRealtimeBplanner.vehicleType);
-	            if(vehicle.hasExtension(GtfsRealtimeBplanner.stopDistancePercent))
-		            stopDistancePercent = vehicle.getExtension(GtfsRealtimeBplanner.stopDistancePercent);
+
+                if(bpVehicle != null && bpVehicle.hasDeviated())
+                    deviated = bpVehicle.getDeviated();
+	            if(bpVehicle != null && bpVehicle.hasPhoneNumber())
+		            busPhoneNumber = bpVehicle.getPhoneNumber();
+	            if(bpVehicle != null && bpVehicle.hasDriverName())
+		            driverName = bpVehicle.getDriverName();
+	            if(bpVehicle != null && bpVehicle.hasVehicleType())
+		            vehicleRouteType = bpVehicle.getVehicleType();
+	            if(bpVehicle != null && bpVehicle.hasStopDistancePercent())
+		            stopDistancePercent = bpVehicle.getStopDistancePercent();
             }
             
             long timestamp = feed.getHeader().getTimestamp();

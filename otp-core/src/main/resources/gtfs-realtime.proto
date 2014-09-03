@@ -11,10 +11,9 @@
 // arrival times.
 //
 // This protocol is published at:
-//   http://developers.google.com/transit/gtfs-realtime/
+// https://developers.google.com/transit/gtfs-realtime/
 
 syntax = "proto2";
-
 option java_package = "com.google.transit.realtime";
 package transit_realtime;
 
@@ -30,6 +29,7 @@ package transit_realtime;
 //   items of one specified application; all the other entities will be ignored.
 // - Polling frequency
 message FeedMessage {
+
   // Metadata about this feed and feed message.
   required FeedHeader header = 1;
 
@@ -63,6 +63,7 @@ message FeedHeader {
   // GTFS-realtime specification in order to add and evaluate new features and
   // modifications to the spec.
   extensions 1000 to 1999;
+
 }
 
 // A definition (or update) of an entity in the transit feed.
@@ -188,8 +189,7 @@ message TripUpdate {
       // stops, although not necessarily according to the times of the schedule.
       // At least one of arrival and departure must be provided. If the schedule
       // for this stop contains both arrival and departure times then so must
-      // this update. An update with only an arrival, say, where the schedule
-      // has both, indicates that the trip is terminating early at this stop.
+      // this update. 
       SCHEDULED = 0;
 
       // The stop is skipped, i.e., the vehicle will not stop at this stop.
@@ -210,6 +210,7 @@ message TripUpdate {
     // GTFS-realtime specification in order to add and evaluate new features
     // and modifications to the spec.
     extensions 1000 to 1999;
+
   }
 
   // Updates to StopTimes for the trip (both future, i.e., predictions, and in
@@ -233,7 +234,7 @@ message TripUpdate {
   // - stop_sequences 10,... have unknown delay.
   repeated StopTimeUpdate stop_time_update = 2;
 
-  // Moment at which the vehicle's real-time progress was measured.  In POSIX
+  // Moment at which the vehicle's real-time progress was measured. In POSIX
   // time (i.e., the number of seconds since January 1st 1970 00:00:00 UTC).
   optional uint64 timestamp = 4;
 
@@ -241,6 +242,7 @@ message TripUpdate {
   // GTFS-realtime specification in order to add and evaluate new features and
   // modifications to the spec.
   extensions 1000 to 1999;
+
 }
 
 // Realtime positioning information for a given vehicle.
@@ -295,8 +297,8 @@ message VehiclePosition {
   optional CongestionLevel congestion_level = 6;
 
   // The extensions namespace allows 3rd-party developers to extend the
-  // GTFS-realtime specification in order to add and evaluate new features
-  // and modifications to the spec.
+  // GTFS-realtime specification in order to add and evaluate new features and
+  // modifications to the spec.
   extensions 1000 to 1999;
 }
 
@@ -360,6 +362,7 @@ message Alert {
   // GTFS-realtime specification in order to add and evaluate new features
   // and modifications to the spec.
   extensions 1000 to 1999;
+
 }
 
 //
@@ -401,8 +404,8 @@ message Position {
   optional float speed = 5;
 
   // The extensions namespace allows 3rd-party developers to extend the
-  // GTFS-realtime specification in order to add and evaluate new features
-  // and modifications to the spec.
+  // GTFS-realtime specification in order to add and evaluate new features and
+  // modifications to the spec.
   extensions 1000 to 1999;
 }
 
@@ -432,7 +435,6 @@ message TripDescriptor {
   // Format of the field is same as that of GTFS/frequencies.txt/start_time,
   // e.g., 11:15:35 or 25:15:35.
   optional string start_time = 2;
-
   // The scheduled start date of this trip instance.
   // Must be provided to disambiguate trips that are so late as to collide with
   // a scheduled trip on a next day. For example, for a train that departs 8:00
@@ -465,28 +467,14 @@ message TripDescriptor {
     // A trip that existed in the schedule but was removed.
     CANCELED = 3;
 
-    // A trip that replaces a portion of static schedule.
-    // If the trip selector identifies a certain trip instance, then only that
-    // instance is replaced. If the selector identifies a route, then all the
-    // trips along that route are replaced.
-    //
-    // The replacement applies only to the portion of the trip supplied. For
-    // instance, consider a route that goes through stops A,B,C,D,E,F, and a
-    // REPLACEMENT trip provides data for stops A,B,C. Then, the times for stops
-    // D,E,F are still taken from the static schedule.
-    //
-    // A feed might supply several REPLACEMENT trips. In this case, the portion
-    // of static schedule that is replaced is the union of what is defined by
-    // all the feeds. Normally, all the REPLACEMENT trips should either
-    // correspond to the same route or to individual trip instances.
-    REPLACEMENT = 5;
   }
   optional ScheduleRelationship schedule_relationship = 4;
 
   // The extensions namespace allows 3rd-party developers to extend the
-  // GTFS-realtime specification in order to add and evaluate new features
-  // and modifications to the spec.
+  // GTFS-realtime specification in order to add and evaluate new features and
+  // modifications to the spec.
   extensions 1000 to 1999;
+
 }
 
 // Identification information for the vehicle performing the trip.
@@ -504,8 +492,8 @@ message VehicleDescriptor {
   optional string license_plate = 3;
 
   // The extensions namespace allows 3rd-party developers to extend the
-  // GTFS-realtime specification in order to add and evaluate new features
-  // and modifications to the spec.
+  // GTFS-realtime specification in order to add and evaluate new features and
+  // modifications to the spec.
   extensions 1000 to 1999;
 }
 
@@ -523,9 +511,10 @@ message EntitySelector {
   optional string stop_id = 5;
 
   // The extensions namespace allows 3rd-party developers to extend the
-  // GTFS-realtime specification in order to add and evaluate new features
-  // and modifications to the spec.
+  // GTFS-realtime specification in order to add and evaluate new features and
+  // modifications to the spec.
   extensions 1000 to 1999;
+
 }
 
 // An internationalized message containing per-language versions of a snippet of

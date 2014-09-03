@@ -394,9 +394,6 @@ public class TripUpdateList extends AbstractUpdate {
             case UNSCHEDULED:
                 tripUpdateList = getUpdateForUnscheduledTrip(tripId, rtTripUpdate, timestamp, serviceDate, timeZone);
                 break;
-            case REPLACEMENT:
-                tripUpdateList = getUpdateForReplacementTrip(tripId, rtTripUpdate, timestamp, serviceDate, timeZone);
-                break;
             }
             
             if(tripUpdateList != null) {
@@ -406,43 +403,6 @@ public class TripUpdateList extends AbstractUpdate {
             }
         }
         return updates;
-    }
-
-    private static TripUpdateList getUpdateForReplacementTrip(AgencyAndId tripId,
-            GtfsRealtime.TripUpdate tripUpdate, long timestamp, ServiceDate serviceDate, TimeZone timeZone) {
-        
-        /*if(!validateTripDescriptor(tripUpdate.getTrip())) {
-            return null;
-        }
-
-        List<Update> updates = new LinkedList<Update>();
-        for(GtfsRealtime.TripUpdate.StopTimeUpdate stopTimeUpdate
-                : tripUpdate.getStopTimeUpdateList()) {
-
-            Update u = getStopTimeUpdateForTrip(tripId, timestamp, serviceDate, stopTimeUpdate, timeZone);
-            if(u == null) {
-                return null;
-            }
-            updates.add(u);
-        }
-
-        if(updates.size() < 2) {
-            LOG.warn("At least two stop times must be provided for a replacement trip.");
-            return null;
-        }
-
-        Integer wheelchairAccessible = null;
-        if(tripUpdate.hasVehicle()) {
-            GtfsRealtime.VehicleDescriptor vehicleDescriptor = tripUpdate.getVehicle();
-            if(vehicleDescriptor.hasExtension(GtfsRealtimeBplanner.wheelchairAccessible)) {
-                wheelchairAccessible = vehicleDescriptor.getExtension(GtfsRealtimeBplanner.wheelchairAccessible);
-            }
-        }
-
-        return TripUpdateList.forModifiedTrip(tripId, timestamp, serviceDate, updates, wheelchairAccessible);*/
-
-        LOG.warn("ScheduleRelationship.REPLACEMENT trips are currently not handled.");
-        return null;
     }
 
     private static TripUpdateList getUpdateForUnscheduledTrip(AgencyAndId tripId,
@@ -501,8 +461,9 @@ public class TripUpdateList extends AbstractUpdate {
         Integer wheelchairAccessible = null;
         if(tripUpdate.hasVehicle()) {
             GtfsRealtime.VehicleDescriptor vehicleDescriptor = tripUpdate.getVehicle();
-            if(vehicleDescriptor.hasExtension(GtfsRealtimeBplanner.wheelchairAccessible)) {
-                wheelchairAccessible = vehicleDescriptor.getExtension(GtfsRealtimeBplanner.wheelchairAccessible);
+			GtfsRealtimeBplanner.BPVehicleDescriptor bpVehicleDescriptor = vehicleDescriptor.getExtension(GtfsRealtimeBplanner.bpVehicle);
+            if(bpVehicleDescriptor != null && bpVehicleDescriptor.hasWheelchairAccessible()) {
+                wheelchairAccessible = bpVehicleDescriptor.getWheelchairAccessible();
             }
         }
         
@@ -536,10 +497,11 @@ public class TripUpdateList extends AbstractUpdate {
         
         Integer wheelchairAccessible = null;
         if(tripUpdate.hasVehicle()) {
-            GtfsRealtime.VehicleDescriptor vehicleDescriptor = tripUpdate.getVehicle();
-            if(vehicleDescriptor.hasExtension(GtfsRealtimeBplanner.wheelchairAccessible)) {
-                wheelchairAccessible = vehicleDescriptor.getExtension(GtfsRealtimeBplanner.wheelchairAccessible);
-            }
+			GtfsRealtime.VehicleDescriptor vehicleDescriptor = tripUpdate.getVehicle();
+			GtfsRealtimeBplanner.BPVehicleDescriptor bpVehicleDescriptor = vehicleDescriptor.getExtension(GtfsRealtimeBplanner.bpVehicle);
+			if(bpVehicleDescriptor != null && bpVehicleDescriptor.hasWheelchairAccessible()) {
+				wheelchairAccessible = bpVehicleDescriptor.getWheelchairAccessible();
+			}
         }
 
         return TripUpdateList.forUpdatedTrip(tripId, timestamp, serviceDate, updates, wheelchairAccessible);

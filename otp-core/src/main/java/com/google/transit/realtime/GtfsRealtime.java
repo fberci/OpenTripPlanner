@@ -3621,7 +3621,7 @@ public final class GtfsRealtime {
      * <code>optional uint64 timestamp = 4;</code>
      *
      * <pre>
-     * Moment at which the vehicle's real-time progress was measured.  In POSIX
+     * Moment at which the vehicle's real-time progress was measured. In POSIX
      * time (i.e., the number of seconds since January 1st 1970 00:00:00 UTC).
      * </pre>
      */
@@ -3630,7 +3630,7 @@ public final class GtfsRealtime {
      * <code>optional uint64 timestamp = 4;</code>
      *
      * <pre>
-     * Moment at which the vehicle's real-time progress was measured.  In POSIX
+     * Moment at which the vehicle's real-time progress was measured. In POSIX
      * time (i.e., the number of seconds since January 1st 1970 00:00:00 UTC).
      * </pre>
      */
@@ -4805,8 +4805,7 @@ public final class GtfsRealtime {
          * stops, although not necessarily according to the times of the schedule.
          * At least one of arrival and departure must be provided. If the schedule
          * for this stop contains both arrival and departure times then so must
-         * this update. An update with only an arrival, say, where the schedule
-         * has both, indicates that the trip is terminating early at this stop.
+         * this update. 
          * </pre>
          */
         SCHEDULED(0, 0),
@@ -4841,8 +4840,7 @@ public final class GtfsRealtime {
          * stops, although not necessarily according to the times of the schedule.
          * At least one of arrival and departure must be provided. If the schedule
          * for this stop contains both arrival and departure times then so must
-         * this update. An update with only an arrival, say, where the schedule
-         * has both, indicates that the trip is terminating early at this stop.
+         * this update. 
          * </pre>
          */
         public static final int SCHEDULED_VALUE = 0;
@@ -6085,7 +6083,7 @@ public final class GtfsRealtime {
      * <code>optional uint64 timestamp = 4;</code>
      *
      * <pre>
-     * Moment at which the vehicle's real-time progress was measured.  In POSIX
+     * Moment at which the vehicle's real-time progress was measured. In POSIX
      * time (i.e., the number of seconds since January 1st 1970 00:00:00 UTC).
      * </pre>
      */
@@ -6096,7 +6094,7 @@ public final class GtfsRealtime {
      * <code>optional uint64 timestamp = 4;</code>
      *
      * <pre>
-     * Moment at which the vehicle's real-time progress was measured.  In POSIX
+     * Moment at which the vehicle's real-time progress was measured. In POSIX
      * time (i.e., the number of seconds since January 1st 1970 00:00:00 UTC).
      * </pre>
      */
@@ -7491,7 +7489,7 @@ public final class GtfsRealtime {
        * <code>optional uint64 timestamp = 4;</code>
        *
        * <pre>
-       * Moment at which the vehicle's real-time progress was measured.  In POSIX
+       * Moment at which the vehicle's real-time progress was measured. In POSIX
        * time (i.e., the number of seconds since January 1st 1970 00:00:00 UTC).
        * </pre>
        */
@@ -7502,7 +7500,7 @@ public final class GtfsRealtime {
        * <code>optional uint64 timestamp = 4;</code>
        *
        * <pre>
-       * Moment at which the vehicle's real-time progress was measured.  In POSIX
+       * Moment at which the vehicle's real-time progress was measured. In POSIX
        * time (i.e., the number of seconds since January 1st 1970 00:00:00 UTC).
        * </pre>
        */
@@ -7513,7 +7511,7 @@ public final class GtfsRealtime {
        * <code>optional uint64 timestamp = 4;</code>
        *
        * <pre>
-       * Moment at which the vehicle's real-time progress was measured.  In POSIX
+       * Moment at which the vehicle's real-time progress was measured. In POSIX
        * time (i.e., the number of seconds since January 1st 1970 00:00:00 UTC).
        * </pre>
        */
@@ -7527,7 +7525,7 @@ public final class GtfsRealtime {
        * <code>optional uint64 timestamp = 4;</code>
        *
        * <pre>
-       * Moment at which the vehicle's real-time progress was measured.  In POSIX
+       * Moment at which the vehicle's real-time progress was measured. In POSIX
        * time (i.e., the number of seconds since January 1st 1970 00:00:00 UTC).
        * </pre>
        */
@@ -14230,27 +14228,6 @@ public final class GtfsRealtime {
        * </pre>
        */
       CANCELED(3, 3),
-      /**
-       * <code>REPLACEMENT = 5;</code>
-       *
-       * <pre>
-       * A trip that replaces a portion of static schedule.
-       * If the trip selector identifies a certain trip instance, then only that
-       * instance is replaced. If the selector identifies a route, then all the
-       * trips along that route are replaced.
-       *
-       * The replacement applies only to the portion of the trip supplied. For
-       * instance, consider a route that goes through stops A,B,C,D,E,F, and a
-       * REPLACEMENT trip provides data for stops A,B,C. Then, the times for stops
-       * D,E,F are still taken from the static schedule.
-       *
-       * A feed might supply several REPLACEMENT trips. In this case, the portion
-       * of static schedule that is replaced is the union of what is defined by
-       * all the feeds. Normally, all the REPLACEMENT trips should either
-       * correspond to the same route or to individual trip instances.
-       * </pre>
-       */
-      REPLACEMENT(4, 5),
       ;
 
       /**
@@ -14289,27 +14266,6 @@ public final class GtfsRealtime {
        * </pre>
        */
       public static final int CANCELED_VALUE = 3;
-      /**
-       * <code>REPLACEMENT = 5;</code>
-       *
-       * <pre>
-       * A trip that replaces a portion of static schedule.
-       * If the trip selector identifies a certain trip instance, then only that
-       * instance is replaced. If the selector identifies a route, then all the
-       * trips along that route are replaced.
-       *
-       * The replacement applies only to the portion of the trip supplied. For
-       * instance, consider a route that goes through stops A,B,C,D,E,F, and a
-       * REPLACEMENT trip provides data for stops A,B,C. Then, the times for stops
-       * D,E,F are still taken from the static schedule.
-       *
-       * A feed might supply several REPLACEMENT trips. In this case, the portion
-       * of static schedule that is replaced is the union of what is defined by
-       * all the feeds. Normally, all the REPLACEMENT trips should either
-       * correspond to the same route or to individual trip instances.
-       * </pre>
-       */
-      public static final int REPLACEMENT_VALUE = 5;
 
 
       public final int getNumber() { return value; }
@@ -14320,7 +14276,6 @@ public final class GtfsRealtime {
           case 1: return ADDED;
           case 2: return UNSCHEDULED;
           case 3: return CANCELED;
-          case 5: return REPLACEMENT;
           default: return null;
         }
       }
@@ -19455,24 +19410,24 @@ public final class GtfsRealtime {
       "\007\020\320\017\"\'\n\tTimeRange\022\r\n\005start\030\001 \001(\004\022\013\n\003end\030" +
       "\002 \001(\004\"i\n\010Position\022\020\n\010latitude\030\001 \002(\002\022\021\n\tl" +
       "ongitude\030\002 \002(\002\022\017\n\007bearing\030\003 \001(\002\022\020\n\010odome" +
-      "ter\030\004 \001(\001\022\r\n\005speed\030\005 \001(\002*\006\010\350\007\020\320\017\"\233\002\n\016Tri",
+      "ter\030\004 \001(\001\022\r\n\005speed\030\005 \001(\002*\006\010\350\007\020\320\017\"\212\002\n\016Tri",
       "pDescriptor\022\017\n\007trip_id\030\001 \001(\t\022\020\n\010route_id" +
       "\030\005 \001(\t\022\022\n\nstart_time\030\002 \001(\t\022\022\n\nstart_date" +
       "\030\003 \001(\t\022T\n\025schedule_relationship\030\004 \001(\01625." +
       "transit_realtime.TripDescriptor.Schedule" +
-      "Relationship\"`\n\024ScheduleRelationship\022\r\n\t" +
+      "Relationship\"O\n\024ScheduleRelationship\022\r\n\t" +
       "SCHEDULED\020\000\022\t\n\005ADDED\020\001\022\017\n\013UNSCHEDULED\020\002\022" +
-      "\014\n\010CANCELED\020\003\022\017\n\013REPLACEMENT\020\005*\006\010\350\007\020\320\017\"M" +
-      "\n\021VehicleDescriptor\022\n\n\002id\030\001 \001(\t\022\r\n\005label" +
-      "\030\002 \001(\t\022\025\n\rlicense_plate\030\003 \001(\t*\006\010\350\007\020\320\017\"\222\001" +
-      "\n\016EntitySelector\022\021\n\tagency_id\030\001 \001(\t\022\020\n\010r",
-      "oute_id\030\002 \001(\t\022\022\n\nroute_type\030\003 \001(\005\022.\n\004tri" +
-      "p\030\004 \001(\0132 .transit_realtime.TripDescripto" +
-      "r\022\017\n\007stop_id\030\005 \001(\t*\006\010\350\007\020\320\017\"\206\001\n\020Translate" +
-      "dString\022C\n\013translation\030\001 \003(\0132..transit_r" +
-      "ealtime.TranslatedString.Translation\032-\n\013" +
-      "Translation\022\014\n\004text\030\001 \002(\t\022\020\n\010language\030\002 " +
-      "\001(\tB\035\n\033com.google.transit.realtime"
+      "\014\n\010CANCELED\020\003*\006\010\350\007\020\320\017\"M\n\021VehicleDescript" +
+      "or\022\n\n\002id\030\001 \001(\t\022\r\n\005label\030\002 \001(\t\022\025\n\rlicense" +
+      "_plate\030\003 \001(\t*\006\010\350\007\020\320\017\"\222\001\n\016EntitySelector\022" +
+      "\021\n\tagency_id\030\001 \001(\t\022\020\n\010route_id\030\002 \001(\t\022\022\n\n",
+      "route_type\030\003 \001(\005\022.\n\004trip\030\004 \001(\0132 .transit" +
+      "_realtime.TripDescriptor\022\017\n\007stop_id\030\005 \001(" +
+      "\t*\006\010\350\007\020\320\017\"\206\001\n\020TranslatedString\022C\n\013transl" +
+      "ation\030\001 \003(\0132..transit_realtime.Translate" +
+      "dString.Translation\032-\n\013Translation\022\014\n\004te" +
+      "xt\030\001 \002(\t\022\020\n\010language\030\002 \001(\tB\035\n\033com.google" +
+      ".transit.realtime"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {

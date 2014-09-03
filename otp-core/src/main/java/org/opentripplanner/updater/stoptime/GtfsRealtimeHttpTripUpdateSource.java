@@ -14,20 +14,18 @@
 package org.opentripplanner.updater.stoptime;
 
 import com.google.protobuf.ExtensionRegistry;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
-import java.util.prefs.Preferences;
-
-import org.opentripplanner.updater.PreferencesConfigurable;
+import com.google.transit.realtime.GtfsRealtime;
+import com.google.transit.realtime.GtfsRealtimeBplanner;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.trippattern.TripUpdateList;
+import org.opentripplanner.updater.PreferencesConfigurable;
 import org.opentripplanner.util.HttpUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.transit.realtime.GtfsRealtime;
-import com.google.transit.realtime.GtfsRealtimeBplanner;
+import java.io.InputStream;
+import java.util.List;
+import java.util.prefs.Preferences;
 
 public class GtfsRealtimeHttpTripUpdateSource implements TripUpdateSource, PreferencesConfigurable {
     
@@ -35,8 +33,7 @@ public class GtfsRealtimeHttpTripUpdateSource implements TripUpdateSource, Prefe
 
     protected ExtensionRegistry extensionRegistry = ExtensionRegistry.newInstance();
     {
-        extensionRegistry.add(GtfsRealtimeBplanner.deviated);
-        extensionRegistry.add(GtfsRealtimeBplanner.wheelchairAccessible);
+		GtfsRealtimeBplanner.registerAllExtensions(extensionRegistry);
     }
 
     /**

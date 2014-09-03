@@ -13,10 +13,9 @@
 
 package org.opentripplanner.updater.alerts;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.prefs.Preferences;
-
+import com.google.protobuf.ExtensionRegistry;
+import com.google.transit.realtime.GtfsRealtime;
+import com.google.transit.realtime.GtfsRealtimeBplanner;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.impl.PatchServiceImpl;
 import org.opentripplanner.routing.services.PatchService;
@@ -26,7 +25,9 @@ import org.opentripplanner.updater.PollingGraphUpdater;
 import org.opentripplanner.util.HttpUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.google.transit.realtime.GtfsRealtime;
+
+import java.io.InputStream;
+import java.util.prefs.Preferences;
 
 /**
  * GTFS-RT alerts updater
@@ -44,6 +45,11 @@ import com.google.transit.realtime.GtfsRealtime;
 public class GtfsRealtimeAlertsUpdater extends PollingGraphUpdater {
     
     private static final Logger LOG = LoggerFactory.getLogger(GtfsRealtimeAlertsUpdater.class);
+
+	protected ExtensionRegistry extensionRegistry = ExtensionRegistry.newInstance();
+	{
+		GtfsRealtimeBplanner.registerAllExtensions(extensionRegistry);
+	}
 
     private GraphUpdaterManager updaterManager;
 
@@ -105,7 +111,7 @@ public class GtfsRealtimeAlertsUpdater extends PollingGraphUpdater {
                 return;
             }
 
-            final GtfsRealtime.FeedMessage feed = GtfsRealtime.FeedMessage.PARSER.parseFrom(data);
+            final GtfsRealtime.FeedMessage feed = GtfsRealtime.FeedMessage.PARSER.parseFrom(data, extensionRegistry);
 
             long feedTimestamp = feed.getHeader().getTimestamp();
             if (feedTimestamp <= lastTimestamp) {
