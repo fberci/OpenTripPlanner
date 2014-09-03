@@ -13,6 +13,7 @@
 
 package org.opentripplanner.api.ws.oba_rest_api.beans;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Data;
 import org.opentripplanner.routing.patch.TranslatedString;
 
@@ -29,4 +30,10 @@ public class TransitAlert {
     private TranslatedString url;
     private TranslatedString header;
     private TranslatedString description;
+
+	@JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
+	private TranslatedString startText;
+
+	@JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
+	private TranslatedString endText;
 }

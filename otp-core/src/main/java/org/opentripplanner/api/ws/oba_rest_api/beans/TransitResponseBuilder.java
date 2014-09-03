@@ -794,8 +794,9 @@ public class TransitResponseBuilder {
         return ret;
     }
     
-    private static final String CACHE_ALERT = "alerts";
     public TransitAlert getAlert(Alert alert) {
+		final String CACHE_ALERT = "alerts_" + _dialect;
+
         if(alert.stopIds != null) {
             for(AgencyAndId stopId : alert.stopIds) {
                 Stop stop = _transitIndexService.getAllStops().get(stopId);
@@ -832,6 +833,11 @@ public class TransitResponseBuilder {
             transitAlert.setStart(alert.effectiveStartDate.getTime() / 1000);
         if(alert.effectiveEndDate != null)
             transitAlert.setEnd(alert.effectiveEndDate.getTime() / 1000);
+
+		if(_dialect == Dialect.MOBILE) {
+			transitAlert.setStartText(alert.bpInternalStartTime);
+			transitAlert.setEndText(alert.bpInternalEndTime);
+		}
 
 	    List<String> stopIds = new LinkedList<String>();
         if(alert.stopIds != null) {

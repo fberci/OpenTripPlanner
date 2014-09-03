@@ -13,6 +13,7 @@
 
 package org.opentripplanner.routing.patch;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.onebusaway.gtfs.model.AgencyAndId;
 
 import javax.xml.bind.annotation.XmlElement;
@@ -52,7 +53,13 @@ public class Alert implements Serializable {
     @XmlElement
     public Date effectiveEndDate;
 
-    public static HashSet<Alert> newSimpleAlertSet(String text) {
+	@JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
+	public TranslatedString bpInternalStartTime;
+
+	@JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
+	public TranslatedString bpInternalEndTime;
+
+	public static HashSet<Alert> newSimpleAlertSet(String text) {
         Alert note = createSimpleAlerts(text);
         HashSet<Alert> notes = new HashSet<Alert>(1);
         notes.add(note);

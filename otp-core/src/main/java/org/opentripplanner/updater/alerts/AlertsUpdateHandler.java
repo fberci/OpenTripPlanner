@@ -19,6 +19,7 @@ import com.google.transit.realtime.GtfsRealtime.FeedEntity;
 import com.google.transit.realtime.GtfsRealtime.FeedMessage;
 import com.google.transit.realtime.GtfsRealtime.TimeRange;
 import com.google.transit.realtime.GtfsRealtime.TranslatedString.Translation;
+import com.google.transit.realtime.GtfsRealtimeBplanner;
 import lombok.Getter;
 import lombok.Setter;
 import org.onebusaway.gtfs.model.AgencyAndId;
@@ -43,6 +44,7 @@ import java.util.Set;
  *
  */
 public class AlertsUpdateHandler {
+
     private static final Logger log = LoggerFactory.getLogger(AlertsUpdateHandler.class);
 
     private String defaultAgencyId;
@@ -67,19 +69,28 @@ public class AlertsUpdateHandler {
             if (!entity.hasAlert()) {
                 continue;
             }
+
             GtfsRealtime.Alert alert = entity.getAlert();
-            String id = entity.getId();
-            handleAlert(id, message.getHeader().getTimestamp(),  alert);
+			GtfsRealtimeBplanner.BPAlert bpAlert = alert.getExtension(GtfsRealtimeBplanner.bpAlert);
+            handleAlert(entity.getId(), message.getHeader().getTimestamp(), alert, bpAlert);
         }
     }
 
-    private void handleAlert(String id, long timestamp, GtfsRealtime.Alert alert) {
+    private void handleAlert(String id, long timestamp, GtfsRealtime.Alert alert, GtfsRealtimeBplanner.BPAlert bpAlert) {
         Alert alertText = new Alert();
         alertText.alertDescriptionText = deBuffer(alert.getDescriptionText());
         alertText.alertHeaderText = deBuffer(alert.getHeaderText());
         alertText.alertUrl = deBuffer(alert.getUrl());
         alertText.alertId = new AgencyAndId(defaultAgencyId, id);
 	    alertText.timestamp = timestamp;
+
+		if(bpAlert != null) {
+			if(bpAlert.hasInternalStartText())
+				alertText.bpInternalStartTime = deBuffer(bpAlert.getInternalStartText());
+			if(bpAlert.hasInternalEndText())
+				alertText.bpInternalEndTime = deBuffer(bpAlert.getInternalEndText());
+		}
+
         ArrayList<TimePeriod> periods        = new ArrayList<TimePeriod>();
         ArrayList<TimePeriod> displayPeriods = new ArrayList<TimePeriod>();
         if(alert.getActivePeriodCount() > 0) {
