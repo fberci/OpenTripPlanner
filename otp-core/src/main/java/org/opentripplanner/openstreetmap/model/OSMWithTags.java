@@ -202,7 +202,7 @@ public class OSMWithTags {
      */
     private boolean isTagDeniedAccess(String tagName) {
         String tagValue = getTag(tagName);
-        return "no".equals(tagValue) || "license".equals(tagValue);
+        return "no".equals(tagValue) || "license".equals(tagValue) || isThroughTrafficExplicitlyDisallowed();
     }
 
     /**
