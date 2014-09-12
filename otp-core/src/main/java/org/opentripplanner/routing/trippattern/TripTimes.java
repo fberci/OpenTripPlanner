@@ -13,10 +13,7 @@
 
 package org.opentripplanner.routing.trippattern;
 
-import java.util.Comparator;
-
 import lombok.AllArgsConstructor;
-
 import org.onebusaway.gtfs.model.Stop;
 import org.onebusaway.gtfs.model.Trip;
 import org.opentripplanner.routing.core.RoutingRequest;
@@ -28,6 +25,8 @@ import org.opentripplanner.routing.edgetype.TimedTransferEdge;
 import org.opentripplanner.routing.request.BannedStopSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Comparator;
 
 /**
  * A TripTimes represents the arrival and departure times for a single trip in an Timetable. It
@@ -289,9 +288,9 @@ public abstract class TripTimes {
             return false;
 
         if (bicycle)
-            if ((trip.getTripBikesAllowed() != 2) &&    // trip does not explicitly allow bikes and
-                (trip.getRoute().getBikesAllowed() != 2 // route does not explicitly allow bikes or  
-                || trip.getTripBikesAllowed() == 1))    // trip explicitly forbids bikes
+            if ((trip.getTripBikesAllowed() != 1) &&    // trip does not explicitly allow bikes and
+                (trip.getRoute().getBikesAllowed() != 1 // route does not explicitly allow bikes or
+                || trip.getTripBikesAllowed() == 2))    // trip explicitly forbids bikes
                 return false;
         
         // Check transfer table rules

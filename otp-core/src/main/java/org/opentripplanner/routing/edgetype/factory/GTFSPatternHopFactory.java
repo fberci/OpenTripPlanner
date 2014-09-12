@@ -845,8 +845,8 @@ public class GTFSPatternHopFactory {
         }
 
         int bikes = 0;
-        if ((trip.getRoute().getBikesAllowed() == 2 && trip.getTripBikesAllowed() != 1)
-                || trip.getTripBikesAllowed() == 2) {
+        if ((trip.getRoute().getBikesAllowed() == 1 && trip.getTripBikesAllowed() != 2)
+                || trip.getTripBikesAllowed() == 1) {
             bikes = TableTripPattern.FLAG_BIKES_ALLOWED;
         }
 
