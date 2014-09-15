@@ -856,6 +856,43 @@ public abstract class OneBusAwayApiMethod<T> {
         return transitVehicles;
     }
 
+	protected TransitVehicle getTransitVehicleForTrip(VehicleLocationService vehicleLocationService, AgencyAndId tripId, ServiceDate serviceDate) {
+		VehicleLocation vehicle = vehicleLocationService.getForTrip(tripId);
+		TransitTrip transitTrip = null;
+
+		if(vehicle == null) {
+			return null;
+		}
+
+		if(serviceDate != null && !serviceDate.equals(vehicle.getServiceDate()))
+			return null;
+
+		Trip trip = getTrip(vehicle.getTripId(), vehicle.getServiceDate());
+		TableTripPattern pattern = transitIndexService.getTripPatternForTrip(trip.getId(), vehicle.getServiceDate());
+
+		if(pattern != null) {
+			Timetable timetable = getTimetable(pattern, vehicle.getServiceDate());
+
+			if(timetable != null) {
+				int tripIndex = timetable.getTripIndex(trip.getId());
+				if(vehicle.getStopId() != null) {
+					Stop vehicleStop = transitIndexService.getAllStops().get(vehicle.getStopId());
+					responseBuilder.addToReferences(vehicleStop);
+				}
+
+				transitTrip = responseBuilder.getTrip(trip);
+				transitTrip.setWheelchairAccessible(timetable.isWheelchairAccessible(tripIndex));
+				responseBuilder.addToReferences(transitTrip);
+			}
+		}
+
+		TransitVehicle transitVehicle = responseBuilder.getVehicle(vehicle);
+		if(transitTrip != null)
+			transitVehicle.setTripId(transitTrip.getId());
+
+		return transitVehicle;
+	}
+
     protected List<String> getAlertsForStop(AgencyAndId stopId, RoutingRequest options, long startTime, long endTime) {
 
         Set<String> alertIds = new HashSet<String>();
