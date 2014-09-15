@@ -22,6 +22,7 @@ public class TransitBikeRentalStation {
     private double lon;
     private String name;
     private String code;
+	private String type;
     private int bikes;
     private int spaces;
 }

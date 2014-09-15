@@ -13,16 +13,6 @@
 
 package org.opentripplanner.routing.impl.raptor;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-
-import org.onebusaway.gtfs.model.AgencyAndId;
 import org.opentripplanner.common.pqueue.BinHeap;
 import org.opentripplanner.common.pqueue.OTPPriorityQueue;
 import org.opentripplanner.common.pqueue.OTPPriorityQueueFactory;
@@ -41,6 +31,15 @@ import org.opentripplanner.routing.vertextype.TransitStopArrive;
 import org.opentripplanner.routing.vertextype.TransitStopDepart;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 public class RaptorSearch {
     private static final Logger log = LoggerFactory.getLogger(RaptorSearch.class);
@@ -497,7 +496,7 @@ public class RaptorSearch {
             MaxWalkState start = new MaxWalkState(options.rctx.origin, walkOptions);
             spt = dijkstra.getShortestPathTree(start);
             for (State state : spt.getAllStates()) {
-                if (state.getVertex() instanceof TransitStop || state.getVertex() instanceof TransitStopArrive || state.getVertex() instanceof TransitStopDepart)
+                if (!state.isBikeRenting() && (state.getVertex() instanceof TransitStop || state.getVertex() instanceof TransitStopArrive || state.getVertex() instanceof TransitStopDepart))
                     transitStopStates.add(state);
             }
             // also, compute an initial spt from the target so that we can find out what transit
@@ -603,6 +602,9 @@ public class RaptorSearch {
             targetStates = spt.getStates(walkOptions.rctx.target);
         if (targetStates != null) {
             TARGET: for (State targetState : targetStates) {
+				if(targetState.isBikeRenting()) {
+					continue TARGET;
+				}
                 RaptorState parent = (RaptorState) targetState.getExtension("raptorParent");
                 RaptorState state;
                 if (parent != null) {

@@ -13,17 +13,6 @@
 
 package org.opentripplanner.routing.impl.raptor;
 
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.ListIterator;
-
-import javax.annotation.PostConstruct;
-
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.onebusaway.gtfs.model.Stop;
 import org.opentripplanner.common.geometry.DistanceLibrary;
@@ -54,6 +43,16 @@ import org.opentripplanner.routing.vertextype.TransitVertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.annotation.PostConstruct;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.ListIterator;
 
 public class Raptor implements PathService {
     private static final Logger log = LoggerFactory.getLogger(Raptor.class);
@@ -113,7 +112,7 @@ public class Raptor implements PathService {
                     new NoThruTrafficPathParser() };
         }
 
-        if (!options.getModes().isTransit()) {
+        if (!options.getModes().isTransit() || !options.getModes().getWalk()) {
             return sptService.getShortestPathTree(options).getPaths();
         }
 

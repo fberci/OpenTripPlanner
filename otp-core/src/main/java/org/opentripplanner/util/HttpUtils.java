@@ -13,6 +13,8 @@
 
 package org.opentripplanner.util;
 
+import lombok.AllArgsConstructor;
+import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -23,7 +25,6 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.cookie.DateUtils;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
@@ -47,41 +48,52 @@ public class HttpUtils {
     }
 
     public InputStream getData(String url, long timestamp) throws IOException {
-        HttpGet httpGet = null;
-        HttpResponse httpResponse = null;
-        
-        try {
-            httpGet = new HttpGet(url);
-            if(timestamp >= 0)
-                httpGet.addHeader(HEADER_IFMODSINCE, DateUtils.formatDate(new Date(timestamp * 1000)));
-
-            httpResponse = httpClient.execute(httpGet);
-        
-            if(httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
-                cleanup(null, httpGet, httpResponse);
-                return null;
-            }
-
-            if(httpResponse.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-                cleanup(null, httpGet, httpResponse);
-                return null;
-            }
-
-            HttpEntity entity = httpResponse.getEntity();
-            if (entity == null) {
-                httpGet.abort();
-                return null;
-            }
-            
-            cleanup(null, null, null);
-            
-            InputStream instream = entity.getContent();
-            return instream;
-        } catch (IOException e) {
-            cleanup(null, httpGet, httpResponse);
-            throw e;
-        }
+		ResultWithTimestamp result = getDataWithTimestamp(url, timestamp);
+		return result != null ? result.data : null;
     }
+
+	public ResultWithTimestamp getDataWithTimestamp(String url, long timestamp) throws IOException {
+		HttpGet httpGet = null;
+		HttpResponse httpResponse = null;
+		long responseTimestamp = -1;
+
+		try {
+			httpGet = new HttpGet(url);
+			if(timestamp >= 0)
+				httpGet.addHeader(HEADER_IFMODSINCE, org.apache.http.impl.cookie.DateUtils.formatDate(new Date(timestamp * 1000)));
+
+			httpResponse = httpClient.execute(httpGet);
+
+			if(httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
+				cleanup(null, httpGet, httpResponse);
+				return null;
+			}
+
+			if(httpResponse.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+				cleanup(null, httpGet, httpResponse);
+				throw new IOException("Unexpected response status: " + httpResponse.getStatusLine().getReasonPhrase());
+			}
+
+			HttpEntity entity = httpResponse.getEntity();
+			if (entity == null) {
+				httpGet.abort();
+				return null;
+			}
+
+			cleanup(null, null, null);
+
+			Header lastModified = httpResponse.getFirstHeader("Last-Modified");
+			if(lastModified != null) {
+				responseTimestamp = org.apache.http.client.utils.DateUtils.parseDate(lastModified.getValue()).getTime() / 1000;
+			}
+
+			InputStream instream = entity.getContent();
+			return new ResultWithTimestamp(instream, responseTimestamp);
+		} catch (IOException e) {
+			cleanup(null, httpGet, httpResponse);
+			throw e;
+		}
+	}
 
     public static void testUrl(String url) throws IOException {
         HttpHead head = new HttpHead(url);
@@ -128,4 +140,10 @@ public class HttpUtils {
     public void cleanup() {
         httpClient.getConnectionManager().shutdown();
     }
+
+	@AllArgsConstructor
+	public static class ResultWithTimestamp {
+		public InputStream data;
+		public long timestamp;
+	}
 }

@@ -50,8 +50,10 @@ public abstract class GenericXmlBikeRentalDataSource implements BikeRentalDataSo
     ArrayList<BikeRentalStation> stations = new ArrayList<BikeRentalStation>();
 
     private XPathExpression xpathExpr;
+	private Graph graph;
+	private long timestamp = -1;
 
-    public GenericXmlBikeRentalDataSource(String path) {
+	public GenericXmlBikeRentalDataSource(String path) {
         XPathFactory factory = XPathFactory.newInstance();
 
         XPath xpath = factory.newXPath();
@@ -66,12 +68,13 @@ public abstract class GenericXmlBikeRentalDataSource implements BikeRentalDataSo
     public boolean update() {
         HttpUtils httpUtils = new HttpUtils();
         try {
-            InputStream data = httpUtils.getData(url);
-            if (data == null) {
-                log.warn("Failed to get data from url " + url);
-                return false;
-            }
-            parseXML(data);
+            HttpUtils.ResultWithTimestamp data = httpUtils.getDataWithTimestamp(url, timestamp);
+			if(data != null) {
+				timestamp = data.timestamp;
+				parseXML(data.data);
+			} else {
+				return false;
+			}
         } catch (IOException e) {
             httpUtils.cleanup();
             log.warn("Error reading bike rental feed from " + url, e);
@@ -152,12 +155,21 @@ public abstract class GenericXmlBikeRentalDataSource implements BikeRentalDataSo
     public String toString() {
         return getClass().getName() + "(" + url + ")";
     }
-    
-    @Override
-    public void configure(Graph graph, Preferences preferences) {
-        String url = preferences.get("url", null);
-        if (url == null)
-            throw new IllegalArgumentException("Missing mandatory 'url' configuration.");
-        setUrl(url);
-    }
+
+	@Override
+	public void configure(Graph graph, Preferences preferences) {
+		String url = preferences.get("url", null);
+		if (url == null)
+			throw new IllegalArgumentException("Missing mandatory 'url' configuration.");
+		setUrl(url);
+		setGraph(graph);
+	}
+
+	public void setGraph(Graph graph) {
+		this.graph = graph;
+	}
+
+	public Graph getGraph() {
+		return graph;
+	}
 }

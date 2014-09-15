@@ -13,11 +13,7 @@
 
 package org.opentripplanner.routing.impl.raptor;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-
+import com.vividsolutions.jts.geom.Coordinate;
 import org.apache.commons.math3.util.FastMath;
 import org.opentripplanner.common.geometry.DistanceLibrary;
 import org.opentripplanner.common.geometry.SphericalDistanceLibrary;
@@ -41,7 +37,10 @@ import org.opentripplanner.routing.vertextype.TransitStop;
 import org.opentripplanner.routing.vertextype.TransitStopArrive;
 import org.opentripplanner.routing.vertextype.TransitStopDepart;
 
-import com.vividsolutions.jts.geom.Coordinate;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 
 public class TargetBound implements SearchTerminationStrategy, SkipTraverseResultStrategy, RemainingWeightHeuristic, ShortestPathTreeFactory {
 
@@ -111,10 +110,10 @@ public class TargetBound implements SearchTerminationStrategy, SkipTraverseResul
     public boolean shouldSearchContinue(Vertex origin, Vertex target, State current,
             ShortestPathTree spt, RoutingRequest traverseOptions) {
         final Vertex vertex = current.getVertex();
-        if (vertex instanceof TransitStop || vertex instanceof TransitStopDepart || vertex instanceof TransitStopArrive) {
+        if (!current.isBikeRenting() && (vertex instanceof TransitStop || vertex instanceof TransitStopDepart || vertex instanceof TransitStopArrive)) {
             transitStopsVisited.add(current);
         }
-        if (vertex == realTarget) {
+        if (!current.isBikeRenting() && vertex == realTarget) {
             addBounder(current);
         }
         return true;

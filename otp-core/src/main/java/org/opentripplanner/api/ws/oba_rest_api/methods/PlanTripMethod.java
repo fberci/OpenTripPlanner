@@ -26,6 +26,7 @@ import org.opentripplanner.api.ws.oba_rest_api.beans.TransitResponse;
 import org.opentripplanner.api.ws.oba_rest_api.beans.TransitResponseBuilder;
 import org.opentripplanner.routing.core.OptimizeType;
 import org.opentripplanner.routing.core.RoutingRequest;
+import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.edgetype.TableTripPattern;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.patch.Alert;
@@ -129,6 +130,10 @@ public class PlanTripMethod extends RoutingResource {
 				transferPenalty.set(0, 900);
 		    }
 	    }
+
+		if(!modes.isEmpty() && modes.get(0).contains(TraverseMode.BICYCLE)) {
+			this.maxWalkDistance.add(0, Double.MAX_VALUE);
+		}
 
         try {
             TransitResponseBuilder builder = new TransitResponseBuilder(graph, references.getReferences(), dialect.getDialect(), internalRequest, httpContext.getRequest());

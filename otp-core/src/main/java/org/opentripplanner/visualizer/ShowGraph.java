@@ -16,21 +16,6 @@ package org.opentripplanner.visualizer;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.index.strtree.STRtree;
-import java.awt.Point;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
-import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Queue;
-import java.util.Set;
-import java.util.concurrent.LinkedBlockingQueue;
 import org.opentripplanner.gbannotation.GraphBuilderAnnotation;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.TraverseMode;
@@ -45,10 +30,27 @@ import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.graph.Vertex;
 import org.opentripplanner.routing.spt.GraphPath;
+import org.opentripplanner.routing.vertextype.BikeRentalStationVertex;
 import org.opentripplanner.routing.vertextype.IntersectionVertex;
 import org.opentripplanner.routing.vertextype.TransitStationStop;
 import processing.core.PApplet;
 import processing.core.PFont;
+
+import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Processing applet to show a map of the graph. The user can: - Use mouse wheel to zoom (or right drag, or ctrl-drag) - Left drag to pan around the
@@ -545,6 +547,9 @@ public class ShowGraph extends PApplet implements MouseWheelListener {
                     if (iv.isTrafficLight()) {
                         drawVertex(v, 7);
                     }
+                } else if (v instanceof BikeRentalStationVertex) {
+                    BikeRentalStationVertex iv = (BikeRentalStationVertex) v;
+					drawVertex(iv, 5);
                 }
             }
             /* Draw highlighted edges in another color */

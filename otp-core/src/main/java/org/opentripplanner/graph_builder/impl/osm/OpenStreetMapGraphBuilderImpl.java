@@ -169,6 +169,9 @@ public class OpenStreetMapGraphBuilderImpl implements GraphBuilder {
     @Setter
     private boolean staticBikeRental = false;
 
+	@Setter
+	private boolean staticBikeRentalReference = false;
+
     public List<String> provides() {
         return Arrays.asList("streets", "turns");
     }
@@ -707,7 +710,7 @@ public class OpenStreetMapGraphBuilderImpl implements GraphBuilder {
             // handle turn restrictions, road names, and level maps in relations
             processRelations();
 
-            if (staticBikeRental) {
+            if (staticBikeRental || staticBikeRentalReference) {
                 processBikeRentalNodes();
             }
 
@@ -821,6 +824,7 @@ public class OpenStreetMapGraphBuilderImpl implements GraphBuilder {
                 BikeRentalStation station = new BikeRentalStation();
                 station.id = "" + node.getId();
                 station.name = creativeName;
+				station.code = node.getTag("ref");
                 station.x = node.getLon();
                 station.y = node.getLat();
                 // The following make sure that spaces+bikes=capacity, always.
@@ -829,10 +833,17 @@ public class OpenStreetMapGraphBuilderImpl implements GraphBuilder {
                 station.spacesAvailable = capacity / 2;
                 station.bikesAvailable = capacity - station.spacesAvailable;
                 station.realTimeData = false;
-                bikeRentalService.addStation(station);
-                BikeRentalStationVertex stationVertex = new BikeRentalStationVertex(graph, station);
-                new RentABikeOnEdge(stationVertex, stationVertex, networkSet);
-                new RentABikeOffEdge(stationVertex, stationVertex, networkSet);
+
+				if(staticBikeRental) {
+					bikeRentalService.addStation(station);
+					BikeRentalStationVertex stationVertex = new BikeRentalStationVertex(graph, station);
+					new RentABikeOnEdge(stationVertex, stationVertex, networkSet);
+					new RentABikeOffEdge(stationVertex, stationVertex, networkSet);
+				}
+
+				if(staticBikeRentalReference) {
+					bikeRentalService.addReference(station);
+				}
             }
             LOG.info("Created " + n + " bike rental stations.");
         }
@@ -1794,7 +1805,6 @@ public class OpenStreetMapGraphBuilderImpl implements GraphBuilder {
         public void addNode(OSMNode node) {
             if (node.isTag("amenity", "bicycle_rental")) {
                 _bikeRentalNodes.add(node);
-                return;
             }
             if (!(_nodesWithNeighbors.contains(node.getId()) || _areaNodes.contains(node.getId())))
                 return;

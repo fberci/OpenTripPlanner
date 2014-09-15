@@ -40,10 +40,11 @@ public class BicycleRentalMethod extends OneBusAwayApiMethod<TransitListEntryWit
         for(BikeRentalStation station : stations) {
             TransitBikeRentalStation transitBikeRentalStation = new TransitBikeRentalStation();
             transitBikeRentalStation.setId(station.id);
-            transitBikeRentalStation.setCode(station.name.substring(0, 4));
+            transitBikeRentalStation.setCode(station.code);
             transitBikeRentalStation.setName(station.name);
             transitBikeRentalStation.setBikes(station.bikesAvailable);
             transitBikeRentalStation.setSpaces(station.spacesAvailable);
+			transitBikeRentalStation.setType(station.type);
             transitBikeRentalStation.setLon(station.x);
             transitBikeRentalStation.setLat(station.y);
 

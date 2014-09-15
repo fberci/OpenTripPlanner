@@ -13,15 +13,21 @@
 
 package org.opentripplanner.routing.bike_rental;
 
+import org.apache.commons.lang.StringUtils;
+
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class BikeRentalStationService implements Serializable {
     private static final long serialVersionUID = -1288992939159246764L;
 
     private Set<BikeRentalStation> stations = new HashSet<BikeRentalStation>();
+
+	private Map<String, BikeRentalStation> referenceStations = new HashMap<String, BikeRentalStation>();
 
     public Collection<BikeRentalStation> getStations() {
         return stations;
@@ -35,4 +41,14 @@ public class BikeRentalStationService implements Serializable {
     public void removeStation(BikeRentalStation station) {
         stations.remove(station);
     }
+
+	public void addReference(BikeRentalStation station) {
+		if(!StringUtils.isEmpty(station.code)) {
+			referenceStations.put(station.code, station);
+		}
+	}
+
+	public Map<String, BikeRentalStation> getReference() {
+		return referenceStations;
+	}
 }

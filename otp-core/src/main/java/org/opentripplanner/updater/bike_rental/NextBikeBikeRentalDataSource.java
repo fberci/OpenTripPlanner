@@ -13,7 +13,9 @@
 
 package org.opentripplanner.updater.bike_rental;
 
+import org.apache.commons.lang.StringUtils;
 import org.opentripplanner.routing.bike_rental.BikeRentalStation;
+import org.opentripplanner.routing.bike_rental.BikeRentalStationService;
 
 import java.util.Map;
 
@@ -29,13 +31,25 @@ public class NextBikeBikeRentalDataSource extends GenericXmlBikeRentalDataSource
             return null;
         }
 
-        BikeRentalStation brstation = new BikeRentalStation();
-        brstation.id = attributes.get("uid");
-        brstation.x = Double.parseDouble(attributes.get("lng"));
-        brstation.y = Double.parseDouble(attributes.get("lat"));
-        brstation.name = attributes.get("name");
-        brstation.bikesAvailable = Integer.parseInt(attributes.get("bikes"));
-        brstation.spacesAvailable = Integer.parseInt(attributes.get("bike_racks")) - brstation.bikesAvailable;
-        return brstation;
+        BikeRentalStation bikeRentalStation = new BikeRentalStation();
+        bikeRentalStation.id = attributes.get("uid");
+        bikeRentalStation.x = Double.parseDouble(attributes.get("lng"));
+        bikeRentalStation.y = Double.parseDouble(attributes.get("lat"));
+		bikeRentalStation.code = attributes.get("name").substring(0, 4);
+        bikeRentalStation.name = attributes.get("name").substring(5);
+		bikeRentalStation.type = attributes.get("terminal_type");
+        bikeRentalStation.bikesAvailable = Integer.parseInt(attributes.get("bikes"));
+        bikeRentalStation.spacesAvailable = Integer.parseInt(attributes.get("bike_racks")) - bikeRentalStation.bikesAvailable;
+
+		if(!StringUtils.isEmpty(bikeRentalStation.code)) {
+			BikeRentalStationService bikeRentalStationService = getGraph().getService(BikeRentalStationService.class);
+			BikeRentalStation referenceStation = bikeRentalStationService.getReference().get(bikeRentalStation.code);
+			if(referenceStation != null) {
+				bikeRentalStation.x = referenceStation.x;
+				bikeRentalStation.y = referenceStation.y;
+			}
+		}
+
+        return bikeRentalStation;
     }
 }

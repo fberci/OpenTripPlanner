@@ -377,6 +377,7 @@ public class PlanGenerator {
         leg.interlineWithPreviousLeg = states[0].getBackEdge() instanceof PatternInterlineDwell;
 
         leg.rentedBike = states[0].isBikeRenting() && states[states.length - 1].isBikeRenting();
+		leg.walkingBike = states[states.length - 1].isBackWalkingBike();
 
         return leg;
     }
