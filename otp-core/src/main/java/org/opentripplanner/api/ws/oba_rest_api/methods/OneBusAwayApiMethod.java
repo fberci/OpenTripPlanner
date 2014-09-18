@@ -988,7 +988,7 @@ public abstract class OneBusAwayApiMethod<T> {
 
     protected Trip getTrip(AgencyAndId tripId, ServiceDate serviceDate) {
         TableTripPattern pattern = transitIndexService.getTripPatternForTrip(tripId, serviceDate);
-        return pattern.getTrip(tripId);
+        return pattern != null ? pattern.getTrip(tripId) : null;
     }
 
     protected Timetable getTimetable(TableTripPattern pattern, ServiceDate serviceDate) {
