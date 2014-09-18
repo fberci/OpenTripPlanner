@@ -39,7 +39,7 @@ public class NextBikeBikeRentalDataSource extends GenericXmlBikeRentalDataSource
         bikeRentalStation.name = attributes.get("name").substring(5);
 		bikeRentalStation.type = attributes.get("terminal_type");
         bikeRentalStation.bikesAvailable = Integer.parseInt(attributes.get("bikes"));
-        bikeRentalStation.spacesAvailable = Integer.parseInt(attributes.get("bike_racks")) - bikeRentalStation.bikesAvailable;
+        bikeRentalStation.spacesAvailable = Math.max(0, Integer.parseInt(attributes.get("bike_racks")) - bikeRentalStation.bikesAvailable);
 
 		if(!StringUtils.isEmpty(bikeRentalStation.code)) {
 			BikeRentalStationService bikeRentalStationService = getGraph().getService(BikeRentalStationService.class);
