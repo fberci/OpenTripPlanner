@@ -89,7 +89,7 @@ import java.util.*;
  * The following methods are implements:
  *  - agencies-with-coverage           {@link AgenciesWithCoverageMethod}
  *  - agency                           {@link AgencyMethod}
- *  - arrival-and-departure-for-stop   
+ *  - arrival-and-departure-for-stop   {@link ArrivalAndDepartureForStopMethod}
  *  - arrivals-and-departures-for-stop {@link ArrivalsAndDeparturesForStopMethod}
  *  - cancel-alarm                     -
  *  - current-time                     {@link MetadataMethod}
@@ -125,7 +125,8 @@ import java.util.*;
  *  - vehicles-for-location             {@link VehiclesForLocationMethod}
  *  - vehicles-for-stop                 {@link VehiclesForStopMethod}
  *  - vehicles-for-route                {@link VehiclesForRouteMethod}
- * 
+ *  - vehicle-for-trip                  {@link VehicleForTripMethod}
+ *
  * Differences
  *  - StopV2Bean#direction
  *  - RouteV2Bean#type
@@ -178,9 +179,11 @@ public abstract class OneBusAwayApiMethod<T> {
     @PathParam ("contentType") protected String contentType;
 
     /**
-     * Included the <code>references</code> section in the returned response. Refrenced entities may be
+     * Included the <code>references</code> section in the returned response. Referenced entities may be
      * requested one-at-a-time using the appropriate API methods.
      *
+	 * @see org.opentripplanner.api.ws.oba_rest_api.methods.AgencyMethod
+	 * @see org.opentripplanner.api.ws.oba_rest_api.methods.AlertMethod
      * @see org.opentripplanner.api.ws.oba_rest_api.methods.StopMethod
      * @see org.opentripplanner.api.ws.oba_rest_api.methods.RouteMethod
      * @see org.opentripplanner.api.ws.oba_rest_api.methods.TripMethod
