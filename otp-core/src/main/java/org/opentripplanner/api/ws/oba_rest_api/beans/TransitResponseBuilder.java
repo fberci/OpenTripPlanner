@@ -29,7 +29,10 @@ import org.opentripplanner.api.ws.Response;
 import org.opentripplanner.api.ws.oba_rest_api.OneBusAwayApiCacheService;
 import org.opentripplanner.gtfs.GtfsLibrary;
 import org.opentripplanner.routing.core.TraverseMode;
+import org.opentripplanner.routing.edgetype.FrequencyBoard;
 import org.opentripplanner.routing.edgetype.TableTripPattern;
+import org.opentripplanner.routing.edgetype.TransitBoardAlight;
+import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.patch.Alert;
 import org.opentripplanner.routing.patch.TranslatedString;
@@ -1055,9 +1058,36 @@ public class TransitResponseBuilder {
             return _cacheService.<AgencyAndId, List<AgencyAndId>>get(CACHE_ROUTEIDS_FOR_STOP, stopId);
         }
         
-        List<AgencyAndId> routeIds = _transitIndexService.getRoutesForStop(stopId);
+        List<AgencyAndId> routeIds = findRoutesForStop(stopId);
         _cacheService.<AgencyAndId, List<AgencyAndId>>put(CACHE_ROUTEIDS_FOR_STOP, stopId, routeIds);
         return routeIds;
+    }
+
+    private List<AgencyAndId> findRoutesForStop(AgencyAndId stopId) {
+        Set<AgencyAndId> out = new HashSet<AgencyAndId>();
+        Edge edge = _transitIndexService.getPreBoardEdge(stopId);
+        if (edge == null)
+            return Collections.emptyList();
+
+        for (Edge e: edge.getToVertex().getOutgoing()) {
+            Trip trip = null;
+            if (e instanceof TransitBoardAlight && ((TransitBoardAlight) e).isBoarding()) {
+                TransitBoardAlight board = (TransitBoardAlight) e;
+                trip = board.getPattern().getExemplar();
+            }
+            else if (e instanceof FrequencyBoard) {
+                FrequencyBoard board = (FrequencyBoard) e;
+                trip = board.getPattern().getTrip();
+            }
+
+            if(trip != null && !isOperationalReferenceTrip(trip))
+                out.add(trip.getRoute().getId());
+        }
+        return new ArrayList<AgencyAndId>(out);
+    }
+
+    private boolean isOperationalReferenceTrip(Trip trip) {
+        return trip.getId().getId().startsWith("REF_");
     }
     
     public final static String CACHE_SERVICE_DATE = "serviceDate";
