@@ -13,14 +13,15 @@
 
 package org.opentripplanner.routing.edgetype;
 
-import java.util.ArrayList;
-import java.util.List;
 import lombok.Getter;
-
 import org.onebusaway.gtfs.model.AgencyAndId;
+import org.onebusaway.gtfs.model.Route;
 import org.onebusaway.gtfs.model.Stop;
 import org.onebusaway.gtfs.model.StopTime;
 import org.onebusaway.gtfs.model.Trip;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A ScheduledStopPattern is an intermediate object used when processing GTFS files. It represents an ordered
@@ -35,10 +36,12 @@ public class ScheduledStopPattern {
     final ArrayList<Stop> stops;
     final ArrayList<Integer> pickups;
     final ArrayList<Integer> dropoffs;
+    final AgencyAndId routeId;
 
     AgencyAndId calendarId;
 
-    public ScheduledStopPattern(ArrayList<Stop> stops, ArrayList<Integer> pickups, ArrayList<Integer> dropoffs, AgencyAndId calendarId) {
+    public ScheduledStopPattern(Route route, ArrayList<Stop> stops, ArrayList<Integer> pickups, ArrayList<Integer> dropoffs, AgencyAndId calendarId) {
+        this.routeId = route.getId();
         this.stops = stops;
         this.pickups = pickups;
         this.dropoffs = dropoffs;
@@ -55,7 +58,7 @@ public class ScheduledStopPattern {
     }
 
     public int hashCode() {
-        return this.stops.hashCode() ^ this.calendarId.hashCode() + this.pickups.hashCode() + this.dropoffs.hashCode();
+        return this.routeId.hashCode() + this.stops.hashCode() ^ this.calendarId.hashCode() + this.pickups.hashCode() + this.dropoffs.hashCode();
     }
 
     public String toString() {
@@ -71,7 +74,6 @@ public class ScheduledStopPattern {
             pickups.add(stoptime.getPickupType());
             dropoffs.add(stoptime.getDropOffType());
         }
-        return new ScheduledStopPattern(stops, pickups, dropoffs, trip.getServiceId());
+        return new ScheduledStopPattern(trip.getRoute(), stops, pickups, dropoffs, trip.getServiceId());
     }
-
 }
