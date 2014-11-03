@@ -125,7 +125,7 @@ public class TripDetailsOTPMethod extends OneBusAwayApiMethod<TransitEntryWithRe
         VehicleLocationService vehicleLocationService = graph.getService(VehicleLocationService.class);
         if(vehicleLocationService != null) {
             VehicleLocation vehicle = vehicleLocationService.getForTrip(tripId);
-            if(vehicle != null)
+            if(vehicle != null && vehicle.getServiceDate().equals(serviceDate))
                 transitVehicle = responseBuilder.getVehicle(vehicle);
         }
         
