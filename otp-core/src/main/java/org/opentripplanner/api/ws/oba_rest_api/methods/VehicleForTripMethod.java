@@ -50,7 +50,7 @@ public class VehicleForTripMethod extends OneBusAwayApiMethod<TransitListEntryWi
 		List<ServiceDate> serviceDates = new ArrayList<ServiceDate>();
 		List<TransitVehicle> transitVehicles = new ArrayList<TransitVehicle>();
 
-		if(!dates.isEmpty()) {
+		if(dates.isEmpty()) {
 			for(String ignored : ids) {
 				serviceDates.add(new ServiceDate());
 			}
