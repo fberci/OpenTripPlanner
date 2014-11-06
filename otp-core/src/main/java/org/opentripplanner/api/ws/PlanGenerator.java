@@ -236,7 +236,8 @@ public class PlanGenerator {
 
         calculateElevations(itinerary, edges);
 
-        itinerary.walkDistance = lastState.getWalkDistance();
+        itinerary.walkDistance = sumDistance(TraverseMode.WALK, itinerary.legs);
+        itinerary.bikeDistance = sumDistance(TraverseMode.BICYCLE, itinerary.legs);
 
         itinerary.transfers = lastState.getNumBoardings();
         if (itinerary.transfers > 0 && !(states[0].getVertex() instanceof OnboardDepartVertex)) {
@@ -244,6 +245,16 @@ public class PlanGenerator {
         }
 
         return itinerary;
+    }
+
+    private double sumDistance(TraverseMode mode, List<Leg> legs) {
+        String modeString = mode.toString();
+        double distance = 0;
+        for(Leg leg : legs) {
+            if(modeString.equals(leg.mode))
+                distance += leg.distance;
+        }
+        return distance;
     }
 
     private Calendar makeCalendar(State state) {
