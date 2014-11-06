@@ -13,8 +13,8 @@
 
 package org.opentripplanner.routing.edgetype;
 
-import java.util.Set;
-
+import com.google.common.collect.Sets;
+import com.vividsolutions.jts.geom.LineString;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.StateEditor;
@@ -23,8 +23,7 @@ import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Vertex;
 import org.opentripplanner.routing.vertextype.BikeRentalStationVertex;
 
-import com.google.common.collect.Sets;
-import com.vividsolutions.jts.geom.LineString;
+import java.util.Set;
 
 /**
  * Renting or dropping off a rented bike edge.
@@ -68,7 +67,7 @@ public abstract class RentABikeAbstractEdge extends Edge {
                 : options.bikeRentalPickupTime);
         s1.setBikeRenting(true);
         s1.setBikeRentalNetwork(networks);
-        s1.setBackMode(s0.getNonTransitMode());
+        s1.setBackMode(TraverseMode.LEG_SWITCH);
         State s1b = s1.makeState();
         return s1b;
     }
@@ -91,7 +90,7 @@ public abstract class RentABikeAbstractEdge extends Edge {
         s1e.incrementTimeInSeconds(options.isArriveBy() ? options.bikeRentalPickupTime
                 : options.bikeRentalDropoffTime);
         s1e.setBikeRenting(false);
-        s1e.setBackMode(TraverseMode.WALK);
+        s1e.setBackMode(TraverseMode.LEG_SWITCH);
         State s1 = s1e.makeState();
         return s1;
     }
