@@ -128,6 +128,8 @@ public class OTPConfigurator {
         prototypeRoutingRequest.setBoardSlack(10);
         prototypeRoutingRequest.setAlightSlack(10);
         prototypeRoutingRequest.setMaxWalkDistance(1300);
+        prototypeRoutingRequest.setBikeRentalPickupCost(120);
+        prototypeRoutingRequest.setBikeRentalPickupTime(60);
         cpf.bind(RoutingRequest.class, prototypeRoutingRequest);
         
         // Perform field injection on bound instances and call post-construct methods
