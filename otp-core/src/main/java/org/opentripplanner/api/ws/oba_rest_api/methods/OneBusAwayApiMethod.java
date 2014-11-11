@@ -683,10 +683,14 @@ public abstract class OneBusAwayApiMethod<T> {
         PreAlightEdge preAlightEdge = transitIndexService.getPreAlightEdge(stopId);
         PreBoardEdge preBoardEdge = transitIndexService.getPreBoardEdge(stopId);
 
-        List<T2<TransitScheduleStopTime, TransitTrip>> alightingTimes = getStopTimesForPreAlightEdge(stopId.toString(), startTime, endTime, preAlightEdge);
-        List<T2<TransitScheduleStopTime, TransitTrip>> boardingTimes = getStopTimesForPreBoardEdge(stopId.toString(), startTime, endTime, preBoardEdge);
+        if(preAlightEdge != null && preBoardEdge != null) {
+            List<T2<TransitScheduleStopTime, TransitTrip>> alightingTimes = getStopTimesForPreAlightEdge(stopId.toString(), startTime, endTime, preAlightEdge);
+            List<T2<TransitScheduleStopTime, TransitTrip>> boardingTimes = getStopTimesForPreBoardEdge(stopId.toString(), startTime, endTime, preBoardEdge);
 
-        return mergeStopTimes(boardingTimes, alightingTimes, onlyDepartures, keepStopIds);
+            return mergeStopTimes(boardingTimes, alightingTimes, onlyDepartures, keepStopIds);
+        } else {
+            return Collections.emptyList();
+        }
     }
 
     protected List<T2<TransitScheduleStopTime,TransitTrip>> mergeStopTimes(
