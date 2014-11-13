@@ -144,7 +144,7 @@ public class TransitResponseBuilder {
         return getOkResponse(list(transitRoutes));
     }
 
-    public TransitResponse<TransitEntryWithReferences<TransitRoute>> getResponseForRoute(Route route, List<RouteVariant> variants, List<RouteVariant> relatedVariants, List<String> alertIds) {
+    public TransitResponse<TransitEntryWithReferences<TransitRouteDetails>> getResponseForRoute(Route route, List<RouteVariant> variants, List<RouteVariant> relatedVariants, List<String> alertIds) {
         return getOkResponse(entity(getRoute(route, variants, relatedVariants, alertIds)));
     }
 
@@ -469,7 +469,7 @@ public class TransitResponseBuilder {
     }
     
 //    private final String CACHE_ROUTE_DETAILS = "routeDetails";
-    public TransitRoute getRoute(Route route, List<RouteVariant> variants, List<RouteVariant> relatedVariants, List<String> alertIds) {
+    public TransitRouteDetails getRoute(Route route, List<RouteVariant> variants, List<RouteVariant> relatedVariants, List<String> alertIds) {
         addToReferences(route);
 
 //        if(_cacheService.<Route, TransitRoute>containsKey(CACHE_ROUTE_DETAILS, route)) {

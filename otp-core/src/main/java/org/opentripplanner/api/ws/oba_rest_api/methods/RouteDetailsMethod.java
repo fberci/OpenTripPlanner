@@ -20,7 +20,7 @@ import org.opentripplanner.api.common.SearchHintService;
 import org.opentripplanner.api.ws.oba_rest_api.beans.TransitEntryWithReferences;
 import org.opentripplanner.api.ws.oba_rest_api.beans.TransitResponse;
 import org.opentripplanner.api.ws.oba_rest_api.beans.TransitResponseBuilder;
-import org.opentripplanner.api.ws.oba_rest_api.beans.TransitRoute;
+import org.opentripplanner.api.ws.oba_rest_api.beans.TransitRouteDetails;
 import org.opentripplanner.routing.core.RoutingRequest;
 import org.opentripplanner.routing.transit_index.RouteVariant;
 
@@ -36,14 +36,14 @@ import java.util.List;
 import java.util.Set;
 
 @Path(OneBusAwayApiMethod.API_BASE_PATH + "route-details" + OneBusAwayApiMethod.API_CONTENT_TYPE)
-public class RouteDetailsMethod extends OneBusAwayApiMethod<TransitEntryWithReferences<TransitRoute>> {
+public class RouteDetailsMethod extends OneBusAwayApiMethod<TransitEntryWithReferences<TransitRouteDetails>> {
 
     @QueryParam("routeId") private String id;
     @QueryParam("date") private String date;
     @QueryParam("related") @DefaultValue("false") private boolean related;
 
     @Override
-    protected TransitResponse<TransitEntryWithReferences<TransitRoute>> getResponse() {
+    protected TransitResponse<TransitEntryWithReferences<TransitRouteDetails>> getResponse() {
         AgencyAndId routeId = parseAgencyAndId(id);
         Route route = transitIndexService.getAllRoutes().get(routeId);
         if(route == null) {
