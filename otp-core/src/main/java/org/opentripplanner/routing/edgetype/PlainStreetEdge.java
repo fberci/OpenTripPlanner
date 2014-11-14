@@ -436,6 +436,13 @@ public class PlainStreetEdge extends StreetEdge implements Cloneable {
         return options.getSpeed(traverseMode);
     }
 
+    public double minLength() {
+        double quick = elevationProfileSegment.getSlopeSpeedEffectiveLength();
+        double safety = elevationProfileSegment.getBicycleSafetyEffectiveLength();
+        double slope = elevationProfileSegment.getSlopeWorkCost();
+        return Math.min(length, Math.min(quick, Math.min(safety, slope)));
+    }
+
     @Override
     public double weightLowerBound(RoutingRequest options) {
         return timeLowerBound(options) * options.walkReluctance;
@@ -443,7 +450,7 @@ public class PlainStreetEdge extends StreetEdge implements Cloneable {
 
     @Override
     public double timeLowerBound(RoutingRequest options) {
-        return this.length / options.getStreetSpeedUpperBound();
+        return minLength() / options.getStreetSpeedUpperBound();
     }
 
     public void setSlopeSpeedEffectiveLength(double slopeSpeedEffectiveLength) {
