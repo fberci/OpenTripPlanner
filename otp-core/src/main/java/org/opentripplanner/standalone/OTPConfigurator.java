@@ -87,7 +87,6 @@ public class OTPConfigurator {
         // Core OTP modules
         OTPComponentProviderFactory cpf = new OTPComponentProviderFactory(); 
         cpf.bind(GraphService.class, getGraphService());
-        cpf.bind(RoutingRequest.class);
         cpf.bind(PlanGenerator.class);
         cpf.bind(MetadataService.class);
         cpf.bind(SPTService.class, new GenericAStar());
