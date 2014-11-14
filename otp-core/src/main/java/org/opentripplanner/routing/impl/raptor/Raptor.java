@@ -113,7 +113,8 @@ public class Raptor implements PathService {
         }
 
         if (!options.getModes().isTransit() || !options.getModes().getWalk()) {
-            return sptService.getShortestPathTree(options).getPaths();
+            log.debug("Falling back to A* for bicycle trips");
+            return shortPathService.getPaths(options);
         }
 
         //also fall back to A* for short trips
