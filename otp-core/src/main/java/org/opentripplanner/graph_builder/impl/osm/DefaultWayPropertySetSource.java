@@ -64,8 +64,7 @@ public class DefaultWayPropertySetSource implements WayPropertySetSource {
                 0.60, 0.60);
         setProperties(props, "highway=path", StreetTraversalPermission.PEDESTRIAN_AND_BICYCLE,
                 0.75, 0.75);
-        setProperties(props, "highway=pedestrian",
-                StreetTraversalPermission.PEDESTRIAN_AND_BICYCLE, 0.90, 0.90);
+        setProperties(props, "highway=pedestrian", StreetTraversalPermission.PEDESTRIAN, 0.90, 0.90);
         setProperties(props, "highway=footway", StreetTraversalPermission.PEDESTRIAN_AND_BICYCLE,
                 1.1, 1.1);
         setProperties(props, "highway=bridleway", StreetTraversalPermission.PEDESTRIAN_AND_BICYCLE,
@@ -290,8 +289,12 @@ public class DefaultWayPropertySetSource implements WayPropertySetSource {
         /* special cases for footway, pedestrian and bicycles */
         setProperties(props, "highway=footway;bicycle=designated",
                 StreetTraversalPermission.PEDESTRIAN_AND_BICYCLE, 0.75, 0.75);
+        setProperties(props, "highway=footway;bicycle=yes",
+                StreetTraversalPermission.PEDESTRIAN_AND_BICYCLE, 0.9, 0.9);
         setProperties(props, "highway=footway;bicycle=yes;area=yes",
                 StreetTraversalPermission.PEDESTRIAN_AND_BICYCLE, 0.9, 0.9);
+        setProperties(props, "highway=pedestrian;bicycle=yes",
+                StreetTraversalPermission.PEDESTRIAN_AND_BICYCLE, 0.75, 0.75);
         setProperties(props, "highway=pedestrian;bicycle=designated",
                 StreetTraversalPermission.PEDESTRIAN_AND_BICYCLE, 0.75, 0.75);
 
