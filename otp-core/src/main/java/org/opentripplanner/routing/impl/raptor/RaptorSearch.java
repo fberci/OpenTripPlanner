@@ -496,7 +496,7 @@ public class RaptorSearch {
             MaxWalkState start = new MaxWalkState(options.rctx.origin, walkOptions);
             spt = dijkstra.getShortestPathTree(start);
             for (State state : spt.getAllStates()) {
-                if (!state.isBikeRenting() && (state.getVertex() instanceof TransitStop || state.getVertex() instanceof TransitStopArrive || state.getVertex() instanceof TransitStopDepart))
+                if (!state.isBikeRenting() && !isWorstTimeExceeded(state, options) && (state.getVertex() instanceof TransitStop || state.getVertex() instanceof TransitStopArrive || state.getVertex() instanceof TransitStopDepart))
                     transitStopStates.add(state);
             }
             // also, compute an initial spt from the target so that we can find out what transit
@@ -602,7 +602,7 @@ public class RaptorSearch {
             targetStates = spt.getStates(walkOptions.rctx.target);
         if (targetStates != null) {
             TARGET: for (State targetState : targetStates) {
-				if(targetState.isBikeRenting()) {
+				if(targetState.isBikeRenting() || isWorstTimeExceeded(targetState, options)) {
 					continue TARGET;
 				}
                 RaptorState parent = (RaptorState) targetState.getExtension("raptorParent");
@@ -738,6 +738,13 @@ public class RaptorSearch {
             return heap;
         }
 
+    }
+
+    private boolean isWorstTimeExceeded(State v, RoutingRequest opt) {
+        if (opt.isArriveBy())
+            return v.getTimeSeconds() < opt.worstTime;
+        else
+            return v.getTimeSeconds() > opt.worstTime;
     }
 
     public void reset(RoutingRequest options) {

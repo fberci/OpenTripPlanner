@@ -135,6 +135,10 @@ public class PlanTripMethod extends RoutingResource {
 			this.maxWalkDistance.add(0, Double.MAX_VALUE);
 		}
 
+        if(maxHours.isEmpty()) {
+            maxHours.add(5);
+        }
+
         try {
             TransitResponseBuilder builder = new TransitResponseBuilder(graph, references.getReferences(), dialect.getDialect(), internalRequest, httpContext.getRequest());
             Response plan = getItineraries();

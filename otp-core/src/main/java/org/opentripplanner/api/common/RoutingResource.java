@@ -13,16 +13,8 @@
 
 package org.opentripplanner.api.common;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.TimeZone;
-
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.QueryParam;
-import javax.xml.datatype.DatatypeConfigurationException;
-
+import com.sun.jersey.api.core.InjectParam;
+import lombok.Setter;
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.opentripplanner.routing.core.OptimizeType;
 import org.opentripplanner.routing.core.RoutingRequest;
@@ -32,8 +24,14 @@ import org.opentripplanner.routing.services.GraphService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.sun.jersey.api.core.InjectParam;
-import lombok.Setter;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.QueryParam;
+import javax.xml.datatype.DatatypeConfigurationException;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
 
 /**
  * This class defines all the JAX-RS query parameters for a path search as fields, allowing them to 
@@ -263,7 +261,15 @@ public abstract class RoutingResource {
     @QueryParam("disableRemainingWeightHeuristic")
     protected List<Boolean> disableRemainingWeightHeuristic;
     
-    /* 
+    /**
+     * Skip all transit and walking more than N hours before/after the specified search time. This
+     * is useful for avoiding previous/next day solutions to early-morning arrive-by and late night
+     * depart-after searches.
+     */
+    @QueryParam("maxHours")
+    protected List<Integer> maxHours;
+
+    /*
      * somewhat ugly bug fix: the graphService is only needed here for fetching per-graph time zones. 
      * this should ideally be done when setting the routing context, but at present departure/
      * arrival time is stored in the request as an epoch time with the TZ already resolved, and other
@@ -455,6 +461,17 @@ public abstract class RoutingResource {
         }
 
         request.setLocale(locale);
+        
+        /* Set the absolute "worst time" relative to the search time. 
+         * Perhaps the value in the RoutingRequest should be relative rather than absolute. */
+        Integer hours = get(maxHours, n, null);
+        if (hours != null) {
+            int seconds = hours * 60 * 60;
+            if (request.arriveBy) seconds *= -1;
+            long worst_t = request.dateTime + seconds;
+            request.setWorstTime(worst_t);            
+        }
+        
         return request;
     }
 
