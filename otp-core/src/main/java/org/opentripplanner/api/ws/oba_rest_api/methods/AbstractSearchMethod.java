@@ -96,7 +96,7 @@ public abstract class AbstractSearchMethod<T> extends OneBusAwayApiMethod<T> {
         
         if(stops != null) {
             for(Stop stop : stops) {
-                alertIds.addAll(getAlertsForStop(patchService, stop.getId(), false));
+               alertIds.addAll(getAlertsForStop(patchService, stop.getId(), false));
             }
         }
         
@@ -107,6 +107,72 @@ public abstract class AbstractSearchMethod<T> extends OneBusAwayApiMethod<T> {
         }
         
         return new ArrayList<String>(alertIds);
+    }
+
+    protected List<Stop> getMatchingStopsAndStations(Iterable<Stop> stops, String normalizedQuery) {
+        List<Stop> list = getMatchingStations(stops, normalizedQuery);
+        list.addAll(getMatchingStops(stops, normalizedQuery));
+        return list;
+    }
+
+    protected List<Stop> getMatchingStations(Iterable<Stop> stops, String query) {
+        if(query.length() < 3)
+            return null;
+
+        List<StopIndex> matchedStops = new LinkedList<StopIndex>();
+        for(Stop stop : stops) {
+            if(stop.getLocationType() != 1) {
+                continue;
+            }
+
+            StopNameVariations variations = getStopNameVariationsForStop(stop);
+
+            List<StopIndex> matches = new LinkedList<StopIndex>();
+            if(variations.realStopName.contains(query)) {
+                matches.add(scoreStopMatch(variations.realStopName, query, stop));
+            }
+            if(variations.fullStopName.contains(query)) {
+                matches.add(scoreStopMatch(variations.fullStopName, query, stop));
+            }
+            if(variations.stopName.contains(query)) {
+                matches.add(scoreStopMatch(variations.stopName, query, stop));
+            }
+            if(variations.subStopName.contains(query)) {
+                matches.add(scoreStopMatch(variations.subStopName, query, stop));
+            }
+            if(variations.code != null && variations.code.equals(query)) {
+                matches.add(new StopIndex(100, stop, null));
+            }
+            if(variations.desc != null && stop.getLocationType() == 0 && variations.desc.equals(query)) {
+                matches.add(new StopIndex(100, stop, null));
+            }
+
+            for(String word : variations.words) {
+                if(word.contains(query) && word.startsWith(query)) {
+                    matches.add(scoreStopMatch(startingWordMultiplier, word, query, stop));
+                }
+                else if(word.contains(query)) {
+                    matches.add(scoreStopMatch(wordMultiplier, word, query, stop));
+                }
+            }
+
+            if(!matches.isEmpty()) {
+                Collections.sort(matches, StopIndex.COMPARATOR);
+                matchedStops.add(matches.get(0));
+            }
+        }
+
+        Collections.sort(matchedStops, StopIndex.COMPARATOR);
+
+        List<Stop> ret = new LinkedList<Stop>();
+        for(StopIndex stopIndex : matchedStops) {
+            if(stopIndex.getScore() < MIN_SCORE && ret.size() > MIN_RESULTS)
+                continue;
+
+            ret.add(stopIndex.getStop());
+        }
+
+        return ret;
     }
 
     protected List<Stop> getMatchingStops(Iterable<Stop> stops, String query) {
@@ -142,7 +208,10 @@ public abstract class AbstractSearchMethod<T> extends OneBusAwayApiMethod<T> {
             }
             
             for(String word : variations.words) {
-                if(word.contains(query)) {
+                if(word.contains(query) && word.startsWith(query)) {
+                    matches.add(scoreStopMatch(startingWordMultiplier, word, query, stop));
+                }
+                else if(word.contains(query)) {
                     matches.add(scoreStopMatch(wordMultiplier, word, query, stop));
                 }
             }
@@ -165,7 +234,7 @@ public abstract class AbstractSearchMethod<T> extends OneBusAwayApiMethod<T> {
         
         return ret;
     }
-    
+
     private static final String CACHE_STOP_NAME_VARIATIONS = "stopNameVariations";
     private StopNameVariations getStopNameVariationsForStop(Stop stop) {
         StopNameVariations variations = cacheService.<Stop, StopNameVariations>get(CACHE_STOP_NAME_VARIATIONS, stop);
@@ -195,14 +264,16 @@ public abstract class AbstractSearchMethod<T> extends OneBusAwayApiMethod<T> {
         private final String desc;
         private final String code;
     }
-    
+
     // TODO: nincsenek megalapozva a számok méretei
-    private int    MIN_SCORE       = 40;
-    private int    MIN_RESULTS     =  5;
-    private float  wordMultiplier  = 0.60F,
-                   railMultiplier  = 0.10F,
-                   tramMultiplier  = 0.07F,
-                   otherMultiplier = 0.03F;
+    private int    MIN_SCORE         = 80;
+    private int    MIN_RESULTS       =  5;
+    private float  wordMultiplier    =  0.10F,
+                   startingWordMultiplier = 0.40F,
+                   stationMultiplier =  0.05F,
+                   railMultiplier    =  0.10F,
+                   tramMultiplier    =  0.07F,
+                   otherMultiplier   =  0.03F;
     
     private StopIndex scoreStopMatch(String name, String query, Stop stop) {
         return scoreStopMatch(1.0F, name, query, stop);
@@ -210,13 +281,18 @@ public abstract class AbstractSearchMethod<T> extends OneBusAwayApiMethod<T> {
     
     private StopIndex scoreStopMatch(float multiplier, String name, String query, Stop stop) {
         
-        float score = 100F * ((float) query.length() / (float) name.length()); // minél nagyobb részre illeszkedik annál jobb         
-       
+        float score = 100F * ((query.length() - 0.75f * name.indexOf(query)) / (float) name.length()); // minél nagyobb részre illeszkedik annál jobb
+
         LinkedList<Route> routes = new LinkedList<Route>();
-        for(AgencyAndId routeId : getRoutesForStop(stop.getId())) {
+        List<AgencyAndId> stopRoutes = getRoutesForStop(stop.getId());
+        if(stop.getLocationType() == 2) {
+            //for(Stop stop : transitIndexService.getStopsByParentStation())
+            multiplier = stationMultiplier;
+        }
+        for (AgencyAndId routeId : stopRoutes) {
             Route route = transitIndexService.getAllRoutes().get(routeId);
             routes.add(route);
-            
+
             if(route.getType() == 1 || route.getType() == 2) {
                 multiplier += railMultiplier;
             }
@@ -227,7 +303,7 @@ public abstract class AbstractSearchMethod<T> extends OneBusAwayApiMethod<T> {
                 multiplier += otherMultiplier;
             }
         }
-        
+
         score *= multiplier;
         
         Collections.sort(routes, TransitResponseBuilder.ROUTE_COMPARATOR);

@@ -46,7 +46,7 @@ public class SearchMethod extends AbstractSearchMethod<TransitEntryWithReference
         Iterable<Route> allRoutes = transitIndexService.getAllRoutes().values();
         
         String normalizedQuery = normalize(query);
-        List<Stop>   stops     = getMatchingStops (allStops,  normalizedQuery);
+        List<Stop>   stops     = getMatchingStopsAndStations(allStops, normalizedQuery);
         List<Route>  routes    = getMatchingRoutes(allRoutes, normalizedQuery, searchHintService);
         List<String> alertIds  = getMatchingAlerts(patchService, stops, routes);
         
