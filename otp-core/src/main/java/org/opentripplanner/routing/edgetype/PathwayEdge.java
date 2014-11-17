@@ -1,14 +1,13 @@
 package org.opentripplanner.routing.edgetype;
 
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.LineString;
 import org.opentripplanner.common.geometry.GeometryUtils;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.StateEditor;
+import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Vertex;
-
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.LineString;
-import org.opentripplanner.routing.core.TraverseMode;
 
 /* This program is free software: you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public License
@@ -32,15 +31,19 @@ public class PathwayEdge extends Edge {
 
     private int wheelchairTraversalTime = -1;
 
+    private final LineString geometry;
+
     public PathwayEdge(Vertex fromv, Vertex tov, int traversalTime, int wheelchairTraversalTime) {
         super(fromv, tov);
         this.traversalTime = traversalTime;
         this.wheelchairTraversalTime = wheelchairTraversalTime;
+        geometry = GeometryUtils.makeLineString(fromv.getCoordinate().x, fromv.getCoordinate().y, tov.getCoordinate().x, tov.getCoordinate().y);
     }
 
     public PathwayEdge(Vertex fromv, Vertex tov, int traversalTime) {
         super(fromv, tov);
         this.traversalTime = traversalTime;
+        geometry = GeometryUtils.makeLineString(fromv.getCoordinate().x, fromv.getCoordinate().y, tov.getCoordinate().x, tov.getCoordinate().y);
     }
 
     private static final long serialVersionUID = -3311099256178798981L;
@@ -77,8 +80,9 @@ public class PathwayEdge extends Edge {
         }
         StateEditor s1 = s0.edit(this);
         s1.incrementTimeInSeconds(time);
-        s1.incrementWeight(time);
+        s1.incrementWeight(time * s0.getOptions().walkReluctance);
         s1.setBackMode(getMode());
+        s1.incrementWalkDistance(time / s0.getOptions().getWalkSpeed());
         return s1.makeState();
     }
 }
