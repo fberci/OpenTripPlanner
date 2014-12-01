@@ -633,12 +633,21 @@ public class TransitResponseBuilder {
         transitStop.setDirection(stop.getDirection() == null ? "" : stop.getDirection());
         transitStop.setLocationType(stop.getLocationType());
 	    transitStop.setRouteIds(routeIds);
+
+        if(_dialect != Dialect.OBA && !StringUtils.isEmpty(stop.getParentStation())) {
+            AgencyAndId parentStationId = new AgencyAndId(stop.getId().getAgencyId(), stop.getParentStation());
+            Stop parentStation = _transitIndexService.getAllStops().get(parentStationId);
+            if(parentStation != null) {
+                addToReferences(parentStation);
+                transitStop.setParentStationId(parentStationId.toString());
+            } else {
+                transitStop.setParentStationId(null);
+            }
+        }
+
 	    if(_internalRequest && _dialect == Dialect.OTP) {
 		    transitStop.setDescription(stop.getDesc());
 	    }
-        if(_dialect != Dialect.OBA) {
-            transitStop.setParentStation(stop.getParentStation());
-        }
         if(_dialect != Dialect.OBA) {
             transitStop.setWheelchairBoarding(1 == stop.getWheelchairBoarding());
         }
@@ -657,7 +666,7 @@ public class TransitResponseBuilder {
                 transitStop.setDirection(getAngleAsDirection(Double.parseDouble(stop.getDirection())));
             }
         }
-        
+
         _cacheService.<Stop, TransitStop>put(CACHE_STOP, stop, transitStop);
         return transitStop;
     }

@@ -31,7 +31,7 @@ public class TransitStop {
     private String description;
     private int locationType;
     @JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
-    private String parentStation;
+    private String parentStationId;
     @JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
     private TraverseMode type;
     private Boolean wheelchairBoarding;
