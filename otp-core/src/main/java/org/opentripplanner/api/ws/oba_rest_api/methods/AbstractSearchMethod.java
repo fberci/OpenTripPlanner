@@ -110,9 +110,16 @@ public abstract class AbstractSearchMethod<T> extends OneBusAwayApiMethod<T> {
     }
 
     protected List<Stop> getMatchingStopsAndStations(Iterable<Stop> stops, String normalizedQuery) {
-        List<Stop> list = getMatchingStations(stops, normalizedQuery);
-        list.addAll(getMatchingStops(stops, normalizedQuery));
-        return list;
+        List<Stop> list1 = getMatchingStations(stops, normalizedQuery);
+        List<Stop> list2 = getMatchingStations(stops, normalizedQuery);
+        if(list1 == null && list2 == null)
+            return null;
+        if(list1 == null)
+            return list2;
+        if(list2 == null)
+            return list1;
+        list1.addAll(list2);
+        return list1;
     }
 
     protected List<Stop> getMatchingStations(Iterable<Stop> stops, String query) {
