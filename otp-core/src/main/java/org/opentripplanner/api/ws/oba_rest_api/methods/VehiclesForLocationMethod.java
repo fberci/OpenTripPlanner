@@ -15,6 +15,7 @@ package org.opentripplanner.api.ws.oba_rest_api.methods;
 
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
+import org.apache.http.util.TextUtils;
 import org.opentripplanner.api.ws.oba_rest_api.beans.TransitListEntryWithReferences;
 import org.opentripplanner.api.ws.oba_rest_api.beans.TransitResponse;
 import org.opentripplanner.api.ws.oba_rest_api.beans.TransitResponseBuilder;
@@ -31,7 +32,8 @@ import java.util.List;
 
 @Path(OneBusAwayApiMethod.API_BASE_PATH + "vehicles-for-location" + OneBusAwayApiMethod.API_CONTENT_TYPE)
 public class VehiclesForLocationMethod extends OneBusAwayApiMethod<TransitListEntryWithReferences<TransitVehicle>> {
-    
+
+    @QueryParam("query") private String query;
     @QueryParam("lat") private Float lat;
     @QueryParam("lon") private Float lon;
     @QueryParam("latSpan") private Float latSpan;
@@ -69,9 +71,19 @@ public class VehiclesForLocationMethod extends OneBusAwayApiMethod<TransitListEn
         } else {
             vehicles = vehicleLocationService.getAll();            
         }
-        
+
         List<TransitVehicle> transitVehicles = new LinkedList<TransitVehicle>();
         for(VehicleLocation vehicle : vehicles) {
+            if(!TextUtils.isEmpty(query)) {
+                boolean idMatches = matches(vehicle.getVehicleId().toString()),
+                        licencePlaceMatches = matches(vehicle.getLicensePlate()),
+                        driverMatches = isInternalRequest() && matches(vehicle.getDriverName()),
+                        blockMatches = matches(vehicle.getBlockId()),
+                        labelMatches = matches(vehicle.getLabel());
+                if(!(idMatches || licencePlaceMatches || driverMatches || blockMatches || labelMatches))
+                    continue;
+            }
+
             if(vehicle.getTripId() != null) {
                 responseBuilder.addToReferences(getTrip(vehicle.getTripId(), vehicle.getServiceDate()));
             }
@@ -79,5 +91,9 @@ public class VehiclesForLocationMethod extends OneBusAwayApiMethod<TransitListEn
         }
         
         return responseBuilder.getResponseForList(transitVehicles);
+    }
+
+    private boolean matches(String value) {
+        return !TextUtils.isEmpty(value) && value.contains(query);
     }
 }
