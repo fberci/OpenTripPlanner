@@ -158,6 +158,11 @@ public abstract class OneBusAwayApiMethod<T> {
     @QueryParam("key") protected String apiKey;
 
     /**
+     * The application version for the API key.
+     */
+    @QueryParam("appVersion") protected String appVersion;
+
+    /**
      * The API version of the request. Currently only version 2 is supported.
      */
     @QueryParam("version") @DefaultValue("2") protected String apiVersion;
@@ -945,7 +950,24 @@ public abstract class OneBusAwayApiMethod<T> {
     protected List<String> getAlertsForTrip(AgencyAndId tripId, AgencyAndId routeId, RoutingRequest options, long startTime, long endTime) {
         return getAlertsForRoute(routeId, options, startTime, endTime); // TODO ~ return trip alerts
     }
-    
+
+    protected List<String> getAlertsForApp(RoutingRequest options, long startTime, long endTime) {
+        LinkedList<String> alertIds = new LinkedList<String>();
+        PatchService patchService = graph.getService(PatchService.class);
+        if(patchService != null && apiKey != null) {
+            for(Patch patch : patchService.getAppPatches(apiKey, appVersion)) {
+                if(patch.activeDuring(options, startTime, endTime)) {
+                    Alert alert = patch.getAlert();
+                    if(alert != null) {
+                        responseBuilder.addToReferences(alert);
+                        alertIds.add(alert.alertId.toString());
+                    }
+                }
+            }
+        }
+        return alertIds;
+    }
+
     protected final static String CACHE_NEARBY_STOPS = "nearbyStops";
     protected final List<String> getNearbyStops(Stop stop) {
         List<TransitStop> nearbyTransitStops = cacheService.get(CACHE_NEARBY_STOPS, stop);

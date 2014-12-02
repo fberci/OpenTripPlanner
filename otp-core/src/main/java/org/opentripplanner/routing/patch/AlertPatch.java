@@ -13,13 +13,8 @@
 
 package org.opentripplanner.routing.patch;
 
-import java.util.LinkedList;
-import java.util.List;
-
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
-
+import lombok.Getter;
+import lombok.Setter;
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.opentripplanner.routing.core.StateEditor;
 import org.opentripplanner.routing.graph.Edge;
@@ -28,6 +23,12 @@ import org.opentripplanner.routing.services.TransitIndexService;
 import org.opentripplanner.routing.transit_index.RouteSegment;
 import org.opentripplanner.routing.transit_index.RouteVariant;
 import org.opentripplanner.routing.transit_index.adapters.AgencyAndIdAdapter;
+
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * This adds a note to all boardings of a given route or stop (optionally, in a given direction)
@@ -46,6 +47,10 @@ public class AlertPatch extends AbstractPatch {
     private AgencyAndId trip;
 
     private AgencyAndId stop;
+
+    @Setter
+    @Getter
+    private Alert.AppAndVersion appAndVersion;
 
     private String direction;
 
@@ -255,6 +260,15 @@ public class AlertPatch extends AbstractPatch {
                 return false;
             }
         }
+        if (appAndVersion == null) {
+            if (other.appAndVersion != null) {
+                return false;
+            }
+        } else {
+            if (!appAndVersion.equals(other.appAndVersion)) {
+                return false;
+            }
+        }
         if(cancelled != other.cancelled) {
             return false;
         }
@@ -267,7 +281,8 @@ public class AlertPatch extends AbstractPatch {
                 (trip == null ? 0 : trip.hashCode()) +
                 (stop == null ? 0 : stop.hashCode()) +
                 (route == null ? 0 : route.hashCode()) +
-                (alert == null ? 0 : alert.hashCode())) *
+                (alert == null ? 0 : alert.hashCode()) *
+                (appAndVersion == null ? 0 : appAndVersion.hashCode())) *
                 (cancelled ? 5 : 7);
     }
 }

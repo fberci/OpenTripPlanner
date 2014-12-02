@@ -14,6 +14,9 @@
 package org.opentripplanner.routing.patch;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.onebusaway.gtfs.model.AgencyAndId;
 
 import javax.xml.bind.annotation.XmlElement;
@@ -42,9 +45,13 @@ public class Alert implements Serializable {
     
     public List<AgencyAndId> routeIds;
 
+    public List<AppAndVersion> apps;
+
     public AgencyAndId alertId;
 
 	public long timestamp;
+
+    public boolean disableApp;
 
     //null means unknown
     @XmlElement
@@ -107,5 +114,13 @@ public class Alert implements Serializable {
         return (alertDescriptionText == null ? 0 : alertDescriptionText.hashCode())
                 + (alertHeaderText == null ? 0 : alertHeaderText.hashCode())
                 + (alertUrl == null ? 0 : alertUrl.hashCode());
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AppAndVersion {
+        public String apiKey;
+        public String appVersion;
     }
 }

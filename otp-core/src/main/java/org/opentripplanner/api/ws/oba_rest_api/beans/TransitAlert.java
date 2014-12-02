@@ -31,6 +31,9 @@ public class TransitAlert {
     private TranslatedString header;
     private TranslatedString description;
 
+    @JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
+    private Boolean disableApp;
+
 	@JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
 	private TranslatedString startText;
 

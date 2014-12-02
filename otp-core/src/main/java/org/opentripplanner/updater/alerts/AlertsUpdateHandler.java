@@ -89,6 +89,8 @@ public class AlertsUpdateHandler {
 				alertText.bpInternalStartTime = deBuffer(bpAlert.getInternalStartText());
 			if(bpAlert.hasInternalEndText())
 				alertText.bpInternalEndTime = deBuffer(bpAlert.getInternalEndText());
+            if(bpAlert.hasDisableApp())
+                alertText.disableApp = bpAlert.getDisableApp();
 		}
 
         ArrayList<TimePeriod> periods        = new ArrayList<TimePeriod>();
@@ -121,8 +123,6 @@ public class AlertsUpdateHandler {
             periods.add(new TimePeriod(0, Long.MAX_VALUE));
         }
         for (EntitySelector informed : alert.getInformedEntityList()) {
-            String patchId = createId(id, informed);
-
             String routeId = null;
             if (informed.hasRouteId()) {
                 routeId = informed.getRouteId();
@@ -149,6 +149,16 @@ public class AlertsUpdateHandler {
                 continue;
             }
 
+            Alert.AppAndVersion appAndVersion = null;
+            if(informed.hasExtension(GtfsRealtimeBplanner.bpSelector)) {
+                GtfsRealtimeBplanner.BPEntitySelector bpEntitySelector = informed.getExtension(GtfsRealtimeBplanner.bpSelector);
+                appAndVersion = new Alert.AppAndVersion();
+                if(bpEntitySelector.hasApiKey())
+                    appAndVersion.setApiKey(bpEntitySelector.getApiKey());
+                if(bpEntitySelector.hasAppVersion())
+                    appAndVersion.setAppVersion(bpEntitySelector.getAppVersion());
+            }
+
             AlertPatch patch = new AlertPatch();
             if (routeId != null) {
                 if(alertText.routeIds == null)
@@ -167,14 +177,25 @@ public class AlertsUpdateHandler {
                     alertText.stopIds.add(new AgencyAndId(agencyId, stopId));
                 patch.setStop(new AgencyAndId(agencyId, stopId));
             }
-            if(routeId == null && tripId == null && stopId == null) {
+
+            if(appAndVersion != null) {
+                if(alertText.apps == null)
+                    alertText.apps = new LinkedList<Alert.AppAndVersion>();
+                if(!alertText.apps.contains(appAndVersion))
+                    alertText.apps.add(appAndVersion);
+                patch.setAppAndVersion(appAndVersion);
+            }
+
+            if(routeId == null && tripId == null && stopId == null && appAndVersion == null) {
                 patch.setAgencyId(agencyId);
             }
+
             patch.setCancelled(false); //alert.getEffect() == GtfsRealtime.Alert.Effect.NO_SERVICE); - handle with TripUpdates
             patch.setTimePeriods(periods);
             patch.setDisplayTimePeriods(displayPeriods);
             patch.setAlert(alertText);
 
+            String patchId = createId(id, patch);
             patch.setId(patchId);
             patchIds.add(patchId);
 
@@ -182,13 +203,13 @@ public class AlertsUpdateHandler {
         }
     }
 
-    private String createId(String id, EntitySelector informed) {
+    private String createId(String id, AlertPatch alert) {
         return id + " "
-            + (informed.hasAgencyId  () ? informed.getAgencyId  () : " null ") + " "
-            + (informed.hasRouteId   () ? informed.getRouteId   () : " null ") + " "
-            + (informed.hasRouteType () ? informed.getRouteType () : " null ") + " "
-            + (informed.hasStopId    () ? informed.getStopId    () : " null ") + " "
-            + (informed.hasTrip() ? informed.getTrip().getTripId() : " null ");
+                + (alert.getAgency() != null ? alert.getAgency() : " null ") + " "
+                + (alert.getRoute() != null ? alert.getRoute() : " null ") + " "
+                + (alert.getTrip() != null ? alert.getTrip() : " null ") + " "
+                + (alert.getStop() != null ? alert.getStop() : " null ") + " "
+                + (alert.getAppAndVersion() != null ? alert.getAppAndVersion() : " null ");
     }
 
     /**

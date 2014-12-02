@@ -7,6 +7,12 @@ import "gtfs-realtime.proto";
 message BPAlert {
 	optional transit_realtime.TranslatedString internalStartText = 1;
 	optional transit_realtime.TranslatedString internalEndText = 2;
+	optional bool disable_app = 3;
+}
+
+message BPEntitySelector {
+	optional string api_key = 1;
+	optional string app_version = 2;
 }
 
 message BPVehicleDescriptor {
@@ -32,4 +38,8 @@ extend transit_realtime.TripDescriptor {
 
 extend transit_realtime.Alert {
 	optional BPAlert bp_alert = 1060;
+}
+
+extend transit_realtime.EntitySelector {
+	optional BPEntitySelector bp_selector = 1060;
 }

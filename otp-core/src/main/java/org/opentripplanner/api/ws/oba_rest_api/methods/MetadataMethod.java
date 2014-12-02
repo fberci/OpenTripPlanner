@@ -19,6 +19,7 @@ import org.opentripplanner.api.ws.GraphMetadata;
 import org.opentripplanner.api.ws.oba_rest_api.beans.TransitEntryWithReferences;
 import org.opentripplanner.api.ws.oba_rest_api.beans.TransitMetadata;
 import org.opentripplanner.api.ws.oba_rest_api.beans.TransitResponse;
+import org.opentripplanner.routing.core.RoutingRequest;
 
 import javax.ws.rs.Path;
 import java.util.Calendar;
@@ -57,7 +58,11 @@ public class MetadataMethod extends OneBusAwayApiMethod<TransitEntryWithReferenc
         metadata.setUpperRightLatitude(gm.getUpperRightLatitude());
         
         metadata.setBoundingPolyLine(gm.getBoundingPolyLine());
-        
+
+        long time = System.currentTimeMillis() / 1000;
+        RoutingRequest options = makeTraverseOptions(time, routerId);
+        metadata.setAlertIds(getAlertsForApp(options, time, time));
+
         return responseBuilder.getResponseForMetadata(metadata);
     }
 

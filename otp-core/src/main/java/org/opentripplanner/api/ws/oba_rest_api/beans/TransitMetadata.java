@@ -15,6 +15,8 @@ package org.opentripplanner.api.ws.oba_rest_api.beans;
 
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class TransitMetadata {
     private long time;
@@ -25,5 +27,6 @@ public class TransitMetadata {
     /** The bounding box of the graph, in decimal degrees. */
     private double lowerLeftLatitude, lowerLeftLongitude, upperRightLatitude, upperRightLongitude;
     /** The bounding polyline the graph, in encoded polyline string. */
-    private String boundingPolyLine;    
+    private String boundingPolyLine;
+    private List<String> alertIds;
 }

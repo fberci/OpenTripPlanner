@@ -13,17 +13,10 @@
 
 package org.opentripplanner.routing.impl;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
-import java.util.Map.Entry;
 import lombok.Setter;
-
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.opentripplanner.routing.graph.Graph;
+import org.opentripplanner.routing.patch.Alert;
 import org.opentripplanner.routing.patch.AlertPatch;
 import org.opentripplanner.routing.patch.Patch;
 import org.opentripplanner.routing.services.GraphService;
@@ -31,6 +24,15 @@ import org.opentripplanner.routing.services.PatchService;
 import org.opentripplanner.util.MapUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
 
 @Component
 public class PatchServiceImpl implements PatchService {
@@ -43,6 +45,7 @@ public class PatchServiceImpl implements PatchService {
     private HashMap<String, Patch> patches = new HashMap<String, Patch>();
     private HashMap<AgencyAndId,List<Patch>> patchesByRoute = new HashMap<AgencyAndId, List<Patch>>();
     private HashMap<AgencyAndId, List<Patch>> patchesByStop = new HashMap<AgencyAndId, List<Patch>>();
+    private HashMap<Alert.AppAndVersion, List<Patch>> patchesByApp = new HashMap<Alert.AppAndVersion, List<Patch>>();
 
     protected PatchServiceImpl() {
     }
@@ -76,6 +79,29 @@ public class PatchServiceImpl implements PatchService {
     }
 
     @Override
+    public Collection<Patch> getAppPatches(String apiKey, String appVersion) {
+        Set<Patch> result = new HashSet<Patch>();
+        Alert.AppAndVersion appAndVersion;
+
+        appAndVersion = new Alert.AppAndVersion(apiKey, appVersion);
+        if (patchesByApp.containsKey(appAndVersion)) {
+            result.addAll(patchesByApp.get(appAndVersion));
+        }
+
+        appAndVersion = new Alert.AppAndVersion(apiKey, null);
+        if (patchesByApp.containsKey(appAndVersion)) {
+            result.addAll(patchesByApp.get(appAndVersion));
+        }
+
+        appAndVersion = new Alert.AppAndVersion(null, null);
+        if (patchesByApp.containsKey(appAndVersion)) {
+            result.addAll(patchesByApp.get(appAndVersion));
+        }
+
+        return result;
+    }
+
+    @Override
     public synchronized void apply(Patch patch) {
         if (graph == null)
             graph = graphService.getGraph();
@@ -95,6 +121,10 @@ public class PatchServiceImpl implements PatchService {
             AgencyAndId route = alertPatch.getRoute();
             if (route != null) {
                 MapUtils.addToMapList(patchesByRoute, route, patch);
+            }
+            Alert.AppAndVersion appAndVersion = alertPatch.getAppAndVersion();
+            if (appAndVersion != null) {
+                MapUtils.addToMapList(patchesByApp, appAndVersion, patch);
             }
         }
 
@@ -146,6 +176,10 @@ public class PatchServiceImpl implements PatchService {
             AgencyAndId route = alertPatch.getRoute();
             if (route != null) {
                 MapUtils.removeFromMapList(patchesByRoute, route, patch);
+            }
+            Alert.AppAndVersion appAndVersion = alertPatch.getAppAndVersion();
+            if (appAndVersion != null) {
+                MapUtils.removeFromMapList(patchesByApp, appAndVersion, patch);
             }
         }
 

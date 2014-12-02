@@ -13,11 +13,11 @@
 
 package org.opentripplanner.routing.services;
 
-import java.util.Collection;
-import java.util.Set;
-
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.opentripplanner.routing.patch.Patch;
+
+import java.util.Collection;
+import java.util.Set;
 
 public interface PatchService {
     
@@ -26,7 +26,9 @@ public interface PatchService {
 	Collection<Patch> getStopPatches(AgencyAndId stop);
 
 	Collection<Patch> getRoutePatches(AgencyAndId route);
-	
+
+    Collection<Patch> getAppPatches(String apiKey, String appVersion);
+
 	void apply(Patch patch);
 	
 	void expire(Set<String> ids);

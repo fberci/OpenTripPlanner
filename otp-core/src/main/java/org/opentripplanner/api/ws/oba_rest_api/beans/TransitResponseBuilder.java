@@ -841,6 +841,10 @@ public class TransitResponseBuilder {
         transitAlert.setDescription(alert.alertDescriptionText);
 	    transitAlert.setTimestamp(alert.timestamp);
 
+        if(alert.disableApp) {
+            transitAlert.setDisableApp(true);
+        }
+
         if(alert.effectiveStartDate != null)
             transitAlert.setStart(alert.effectiveStartDate.getTime() / 1000);
         if(alert.effectiveEndDate != null)
