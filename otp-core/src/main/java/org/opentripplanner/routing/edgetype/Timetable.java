@@ -379,6 +379,9 @@ public class Timetable implements Serializable {
             if (tripUpdate.isCancellation()) {
                 newTimes = new CanceledTripTimes(scheduledTimes);
             }
+            else if(tripUpdate.hasNoData()) {
+                newTimes = scheduledTimes;
+            }
             else if(tripUpdate.hasDelay()) {
                 // 'stop' Index as in transit stop (not 'end', not 'hop')
                 int stopIndex = tripUpdate.findUpdateStopIndex(pattern);

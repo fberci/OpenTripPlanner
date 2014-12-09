@@ -79,6 +79,10 @@ public class TripUpdateList extends AbstractUpdate {
         return !updates.isEmpty() && updates.get(0).hasDelay();
     }
 
+    public boolean hasNoData() {
+        return !updates.isEmpty() && updates.get(0).getStatus() == Update.Status.PLANNED;
+    }
+
     public enum Status {
         /** This trip should be added to the graph, valid on the given serviceDate. */
         ADDED,
