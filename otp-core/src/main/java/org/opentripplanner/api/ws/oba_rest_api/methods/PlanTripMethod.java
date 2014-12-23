@@ -87,6 +87,7 @@ public class PlanTripMethod extends RoutingResource {
     }
 
 	@QueryParam("key") protected String apiKey;
+	@QueryParam("appVersion") protected String appVersion;
 	@PathParam("dialect") protected TransitResponseBuilder.DialectWrapper dialect;
     @QueryParam("routerId") private String routerId;
     @QueryParam("includeReferences") @DefaultValue("true") private TransitResponseBuilder.ReferencesWrapper references;
@@ -100,7 +101,7 @@ public class PlanTripMethod extends RoutingResource {
     @GET
     public TransitResponse<TransitEntryWithReferences<Response>> plan() {
 	    OneBusAwayRequestLogger.LogRequest logRequest
-            = requestLogger.startRequest(this, httpContext, uriInfo.getRequestUri(), clientId, apiKey, internalRequest, dialect);
+            = requestLogger.startRequest(this, httpContext, uriInfo.getRequestUri(), clientId, apiKey, appVersion, internalRequest, dialect);
 
         Graph graph = getGraph(routerId);
         if(graph == null) {

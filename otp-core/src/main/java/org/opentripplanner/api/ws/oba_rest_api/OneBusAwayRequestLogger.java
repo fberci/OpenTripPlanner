@@ -28,6 +28,7 @@ import org.apache.http.conn.HttpClientConnectionManager;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.util.TextUtils;
 import org.opentripplanner.api.ws.oba_rest_api.beans.TransitResponse;
 import org.opentripplanner.api.ws.oba_rest_api.beans.TransitResponseBuilder;
 
@@ -42,6 +43,7 @@ import java.util.concurrent.TimeUnit;
 
 public class OneBusAwayRequestLogger {
 
+    private static String EMPTY = "(empty)";
     private static int counter = 1;
     private static int QUEUE_LIMIT = 10000;
     private static int THREADS = 8;
@@ -54,12 +56,12 @@ public class OneBusAwayRequestLogger {
     public OneBusAwayRequestLogger() {
     }
 
-    public LogRequest startRequest(Object apiMethod, HttpContext req, URI uri, String clientId, String apiKey, boolean internalRequest, TransitResponseBuilder.DialectWrapper dialect) {
+    public LogRequest startRequest(Object apiMethod, HttpContext req, URI uri, String clientId, String apiKey, String appVersion, boolean internalRequest, TransitResponseBuilder.DialectWrapper dialect) {
         if (clientId == null) {
             clientId = "" + ++counter;
         }
 
-        return new LogRequest(apiMethod, req, uri, clientId, apiKey, internalRequest, dialect.getDialect().name());
+        return new LogRequest(apiMethod, req, uri, clientId, apiKey, appVersion, internalRequest, dialect.getDialect().name());
     }
 
     private static String getHostname() {
@@ -95,14 +97,16 @@ public class OneBusAwayRequestLogger {
         private String clientId;
         private String url;
         private String apiKey;
+        private String appVersion;
         private boolean internalRequest;
 
-        protected LogRequest(Object apiMethod, HttpContext req, URI uri, String clientId, String apiKey, boolean internalRequest, String dialect) {
+        protected LogRequest(Object apiMethod, HttpContext req, URI uri, String clientId, String apiKey, String appVersion, boolean internalRequest, String dialect) {
 
             this.clientId = clientId;
             this.apiMethod = apiMethod;
 
             this.apiKey = apiKey;
+            this.appVersion = appVersion;
             this.internalRequest = internalRequest;
             this.dialect = dialect;
 
@@ -128,10 +132,11 @@ public class OneBusAwayRequestLogger {
             gar.userIp(userIp);
             gar.userLanguage(userLanguage);
             gar.customMetric(1, "" + (internalRequest ? 1 : 0));
-            gar.customDimention(1, apiKey != null ? apiKey : "");
+            gar.customDimention(1, TextUtils.isEmpty(apiKey) ? EMPTY : apiKey);
             gar.customDimention(2, apiMethod.getClass().getSimpleName());
             gar.customDimention(3, dialect);
             gar.customDimention(6, HOSTNAME);
+            gar.customDimention(7, TextUtils.isEmpty(appVersion) ? EMPTY : appVersion);
             gar.clientId(clientId);
             gar.documentUrl(url);
 
