@@ -513,7 +513,7 @@ public class GtfsGraphBuilderImpl implements GraphBuilder {
     private List<CoordinatePoint> getEncodedPolygon(Polygon poly, UTMProjection proj, boolean latFirst) {
         Polygon simplePoly = (Polygon)DouglasPeuckerSimplifier.simplify(poly, _boundingSimplifierRadiusInMeters);
         List<CoordinatePoint> coords = buildLineString(proj, simplePoly.getExteriorRing(), latFirst);
-        for (int i = 0; i < poly.getNumInteriorRing(); i++) {
+        for (int i = 0; i < simplePoly.getNumInteriorRing(); i++) {
           coords.addAll(buildLineString(proj, simplePoly.getInteriorRingN(i), latFirst));
         }        
         return coords;
