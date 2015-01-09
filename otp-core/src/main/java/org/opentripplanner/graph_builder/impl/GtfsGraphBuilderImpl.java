@@ -21,19 +21,7 @@ import com.vividsolutions.jts.geom.MultiPolygon;
 import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.geom.Polygon;
 import com.vividsolutions.jts.simplify.DouglasPeuckerSimplifier;
-import java.io.File;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-
 import lombok.Setter;
-
 import org.onebusaway.csv_entities.EntityHandler;
 import org.onebusaway.geospatial.model.CoordinatePoint;
 import org.onebusaway.geospatial.model.XYPoint;
@@ -42,16 +30,7 @@ import org.onebusaway.geospatial.services.UTMLibrary;
 import org.onebusaway.geospatial.services.UTMProjection;
 import org.onebusaway.gtfs.impl.GtfsRelationalDaoImpl;
 import org.onebusaway.gtfs.impl.calendar.CalendarServiceDataFactoryImpl;
-import org.onebusaway.gtfs.model.Agency;
-import org.onebusaway.gtfs.model.FareAttribute;
-import org.onebusaway.gtfs.model.IdentityBean;
-import org.onebusaway.gtfs.model.Pathway;
-import org.onebusaway.gtfs.model.Route;
-import org.onebusaway.gtfs.model.ServiceCalendar;
-import org.onebusaway.gtfs.model.ServiceCalendarDate;
-import org.onebusaway.gtfs.model.ShapePoint;
-import org.onebusaway.gtfs.model.Stop;
-import org.onebusaway.gtfs.model.Trip;
+import org.onebusaway.gtfs.model.*;
 import org.onebusaway.gtfs.model.calendar.CalendarServiceData;
 import org.onebusaway.gtfs.serialization.GtfsReader;
 import org.onebusaway.gtfs.services.GenericMutableDao;
@@ -71,6 +50,17 @@ import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.services.FareServiceFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 
 /**
  * {@link GraphBuilder} plugin that supports adding transit network data from a GTFS feed to the
@@ -432,9 +422,8 @@ public class GtfsGraphBuilderImpl implements GraphBuilder {
             }
 
             Trip trip = (Trip) bean;
-            if (_defaultBikesAllowed && trip.getTripBikesAllowed() == 0
-                    && trip.getRoute().getBikesAllowed() == 0) {
-                trip.setTripBikesAllowed(2);
+            if (_defaultBikesAllowed && trip.getRoute().getBikesAllowed() == 0) {
+                trip.setBikesAllowed(1);
             }
         }
     }

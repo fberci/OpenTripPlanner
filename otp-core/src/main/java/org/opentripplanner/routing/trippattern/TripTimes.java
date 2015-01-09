@@ -288,9 +288,9 @@ public abstract class TripTimes {
             return false;
 
         if (bicycle)
-            if ((trip.getTripBikesAllowed() != 1) &&    // trip does not explicitly allow bikes and
+            if ((trip.getBikesAllowed() != 1) &&    // trip does not explicitly allow bikes and
                 (trip.getRoute().getBikesAllowed() != 1 // route does not explicitly allow bikes or
-                || trip.getTripBikesAllowed() == 2))    // trip explicitly forbids bikes
+                || trip.getBikesAllowed() == 2))    // trip explicitly forbids bikes
                 return false;
         
         // Check transfer table rules
