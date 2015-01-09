@@ -25,5 +25,6 @@ public class TransitTrip {
     private String tripShortName;
     private String serviceId;
     private String directionId;
+    private boolean bikesAllowed;
     private boolean wheelchairAccessible;
 }

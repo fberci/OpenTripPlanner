@@ -454,6 +454,7 @@ public class TransitResponseBuilder {
         transitRoute.setLongName(route.getLongName());
         transitRoute.setShortName(route.getShortName());
         transitRoute.setTextColor(route.getTextColor());
+        transitRoute.setBikesAllowed(route.getBikesAllowed() == 1);
         if(_dialect == Dialect.OBA) {
 	        transitRoute.setType(route.getType());
         } else {
@@ -503,6 +504,7 @@ public class TransitResponseBuilder {
         transitRoute.setUrl(route.getUrl());
         transitRoute.setVariants(transitVariants);
         transitRoute.setAlertIds(alertIds);
+        transitRoute.setBikesAllowed(route.getBikesAllowed() == 1);
 
 //        _cacheService.<Route, TransitRoute>put(CACHE_ROUTE_DETAILS, route, transitRoute);
         return transitRoute;
@@ -594,6 +596,7 @@ public class TransitResponseBuilder {
         transitTrip.setId(trip.getId().toString());
         transitTrip.setRouteId(trip.getRoute().getId().toString());
         transitTrip.setTripShortName(trip.getTripShortName());
+        transitTrip.setBikesAllowed(trip.getBikesAllowed() != 0 ? trip.getBikesAllowed() == 1 : trip.getRoute().getBikesAllowed() == 1);
         transitTrip.setWheelchairAccessible(trip.getWheelchairAccessible() == TableTripPattern.FLAG_WHEELCHAIR_ACCESSIBLE);
         
         return transitTrip;

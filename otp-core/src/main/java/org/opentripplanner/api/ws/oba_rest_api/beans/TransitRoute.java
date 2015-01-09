@@ -28,4 +28,5 @@ public class TransitRoute {
     private String color;
     private String textColor;
     private String agencyId;
+    private boolean bikesAllowed;
 }
