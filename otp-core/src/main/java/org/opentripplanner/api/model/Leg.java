@@ -251,6 +251,10 @@ public class Leg {
 	@JsonSerialize
 	public Boolean walkingBike;
 
+    @XmlAttribute
+    @JsonSerialize
+    public Boolean transitBike;
+
     /**
      * Whether this leg is a transit leg or not.
      * @return Boolean true if the leg is a transit leg

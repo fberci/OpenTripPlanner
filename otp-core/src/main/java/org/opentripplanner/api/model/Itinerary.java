@@ -48,6 +48,10 @@ public class Itinerary {
      */
     public long walkTime = 0;
     /**
+     * How much time is spent biking, in seconds.
+     */
+    public long bikeTime = 0;
+    /**
      * How much time is spent on transit, in seconds.
      */
     public long transitTime = 0;

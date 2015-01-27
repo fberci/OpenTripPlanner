@@ -388,7 +388,8 @@ public class PlanGenerator {
         leg.interlineWithPreviousLeg = states[0].getBackEdge() instanceof PatternInterlineDwell;
 
         leg.rentedBike = states[0].isBikeRenting() && states[states.length - 1].isBikeRenting();
-		leg.walkingBike = states[states.length - 1].isBackWalkingBike();
+		leg.walkingBike = !leg.isTransitLeg() && states[states.length - 1].isBackWalkingBike();
+        leg.transitBike = leg.isTransitLeg() && (!states[0].getOptions().getModes().getWalk() && states[0].getOptions().getModes().getBicycle());
 
         return leg;
     }
@@ -506,8 +507,10 @@ public class PlanGenerator {
                     itinerary.waitingTime += state.getTimeDeltaSeconds();
                     break;
 
-                case WALK:
                 case BICYCLE:
+                    itinerary.bikeTime += state.getTimeDeltaSeconds();
+
+                case WALK:
                 case CAR:
                 case CUSTOM_MOTOR_VEHICLE:
                     itinerary.walkTime += state.getTimeDeltaSeconds();
